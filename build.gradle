@@ -7,7 +7,7 @@ plugins {
     id "com.github.gmazzo.buildconfig" version "3.0.0"
 }
 
-def ROBOT_MAIN_CLASS = "org.team2471.bunnybots2023.Main"
+def ROBOT_MAIN_CLASS = "org.team2471.frc2024.Main"
 
 buildConfig {
     buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")

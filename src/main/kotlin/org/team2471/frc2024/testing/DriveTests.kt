@@ -1,8 +1,8 @@
-package org.team2471.bunnybots2023.testing
+package org.team2471.frc2024.testing
 
 
-import org.team2471.bunnybots2023.Drive
-import org.team2471.bunnybots2023.OI
+import org.team2471.frc2024.Drive
+import org.team2471.frc2024.OI
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use

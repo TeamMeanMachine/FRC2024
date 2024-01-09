@@ -1,14 +1,14 @@
 @file:JvmName("Main")
 
-package org.team2471.bunnybots2023
+package org.team2471.frc2024
 
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
-import org.team2471.bunnybots2023.testing.driveTests
-import org.team2471.bunnybots2023.testing.steeringTests
+import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
