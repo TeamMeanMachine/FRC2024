@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.bunnybots2023.testing.driveTests
 import org.team2471.bunnybots2023.testing.steeringTests
-import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
@@ -48,8 +47,6 @@ object Robot : MeanlibRobot() {
         OI
         println("Activating Drive!")
         Drive
-//        Intake
-//        println("Activating Intake!")
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
         AutoChooser
@@ -88,24 +85,13 @@ object Robot : MeanlibRobot() {
         println("telop begin")
         Drive.aimPDController = Drive.teleopPDController
         Drive.headingSetpoint = Drive.heading
-//        Drive.coastMode()
     }
 
-//    val testMap : Map<String, () -> Unit> = mapOf(
-//        Pair
-//    )
     override suspend fun test()  {
         println("test mode begin. Hi.")
 
-//        turretOITest()
         Drive.steeringTests()
         Drive.driveTests()
-
-//        Drive.setAngleOffsets()
-
-        //val selectedTest = SmartDashboard.getString("RobotTests/selected", "None")
-
-
     }
 
 
@@ -113,9 +99,6 @@ object Robot : MeanlibRobot() {
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
         Drive.disable()
-        periodic {
-//            println()
-        }
     }
 
     private fun initTimeMeasurement(){

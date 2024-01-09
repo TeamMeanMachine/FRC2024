@@ -72,9 +72,6 @@ object AutoChooser {
     }
 
     init {
-//        DriverStation.reportWarning("Starting auto init warning", false)
-//        DriverStation.reportError("Starting auto init error", false)         //            trying to get individual message in event log to get timestamp -- untested
-
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)

@@ -462,11 +462,7 @@ suspend fun Drive.currentTest() = use(this) {
             downPressed = false
             power -= 0.001
         }
-//        for (moduleCount in 0..3) {
-//            val module = modules[moduleCount] as Drive.Module
-//        }
-//        println()
-//        println("power: $power")
+
         var currModule = modules[0] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
         currModule.turnMotor.setPositionSetpoint(0.0)
@@ -481,15 +477,5 @@ suspend fun Drive.currentTest() = use(this) {
         currModule.turnMotor.setPositionSetpoint(0.0)
         
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
-    //    val currModule2 = modules[3] as Drive.Module
-      //  currModule2.driveMotor.setPercentOutput(power)
-        //currModule2.turnMotor.setPositionSetpoint(0.0)
-       // println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
-
-    //        drive(
-//            Vector2(0.0, power),
-//            0.0,
-//            false
-//        )
     }
 }
