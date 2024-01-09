@@ -25,7 +25,7 @@ object Robot : MeanlibRobot() {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
         for (iFace in networkInterfaces) {
-            println("${iFace.name}")
+            println(iFace.name)
             if (iFace.name == "eth0") {
                 println("NETWORK NAME--->${iFace.name}<----")
                 var macString = ""
@@ -52,8 +52,6 @@ object Robot : MeanlibRobot() {
         println("Activating Turret! ${Turret.turretSetpoint}")
         Limelight
         println("Activating Limelight! ${Limelight.limelightAngle}")
-        Pixy
-        println("Activating Pixy ${Pixy.screenHeight}")
 //        Intake
 //        println("Activating Intake!")
         Shooter
@@ -78,7 +76,6 @@ object Robot : MeanlibRobot() {
         Shooter.enable()
         Turret.enable()
         Intake.enable()
-        Pixy.enable()
         println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
         println("ending enable")
     }
@@ -151,6 +148,7 @@ object Robot : MeanlibRobot() {
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() {
     println("start robot")
     RobotBase.startRobot { Robot }
