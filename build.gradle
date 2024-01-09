@@ -55,7 +55,7 @@ repositories {
     maven { setUrl("https://maven.ctr-electronics.com/release/") }
     maven { setUrl("https://www.revrobotics.com/content/sw/max/sdk/maven/")}
     maven { setUrl("https://maven.photonvision.org/repository/internal")}
-    maven { url 'https://nexus.otake.pw/repository/maven-public/' }
+//    maven { url 'https://nexus.otake.pw/repository/maven-public/' }
 
 }
 

@@ -22,7 +22,7 @@ object OI : Subsystem("OI") {
         get() = driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
 
     val driveTranslation: Vector2
-        get() = Vector2(driveTranslationX, -driveTranslationY) //does owen want this cubed?
+        get() = Vector2(driveTranslationX, driveTranslationY) //does owen want this cubed?
 
     val driveRotation: Double
         get() = (driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
@@ -59,32 +59,9 @@ object OI : Subsystem("OI") {
 
     init {
         driverController::back.whenTrue {
-            Drive.zeroGyro();
+            Drive.zeroGyro()
             Drive.initializeSteeringMotors()
         }
         driverController::x.whenTrue { Drive.xPose() }
-        driverController::rightBumper.whenTrue { holdToIntake() }
-        driverController::b.whenTrue { toggleBallCollection() }
-        driverController::leftBumper.whenTrue { holdToSpit() }
-        driverController::y.whenTrue { Intake.intakeUp()}
-        driverController::a.whenTrue { Intake.intakeDown()}
-        ({ driverController.dPad == Controller.Direction.DOWN}).whenTrue { Limelight.toggleLight() }
-
-
-
-        operatorController::rightTriggerFullPress.whenTrue { fire() }
-        operatorController::b.whenTrue { toggleBallCollection() }
-        operatorController::back.whenTrue { Turret.zeroTurret() }
-        operatorController::start.whenTrue { Turret.turretPredAim = !Turret.turretPredAim }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Limelight.toggleLight() }
-        operatorController::a.whenTrue { Turret.autoAim = !Turret.autoAim}
-//        ({operatorController.dPad == Controller.Direction.LEFT}).whenTrue {
-//            Turret.turretLeft()
-//        }
-//        ({operatorController.dPad == Controller.Direction.RIGHT}).whenTrue {
-//            Turret.turretRight()
-//        }
-
-
     }
 }

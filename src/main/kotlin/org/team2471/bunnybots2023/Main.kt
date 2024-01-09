@@ -48,19 +48,12 @@ object Robot : MeanlibRobot() {
         OI
         println("Activating Drive!")
         Drive
-        Turret
-        println("Activating Turret! ${Turret.turretSetpoint}")
-        Limelight
-        println("Activating Limelight! ${Limelight.limelightAngle}")
 //        Intake
 //        println("Activating Intake!")
-        Shooter
-        println("Activating Shooter!")
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
-        Intake
         AutoChooser
-        println("Activating AutoChooser! Is Red ${AutoChooser.redSide}")
+        println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {
@@ -73,9 +66,6 @@ object Robot : MeanlibRobot() {
     override suspend fun enable() {
         println("starting enable")
         Drive.enable()
-        Shooter.enable()
-        Turret.enable()
-        Intake.enable()
         println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
         println("ending enable")
     }

@@ -6,23 +6,12 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
-//import org.team2471.frc.lib.coroutines.delay
-import org.team2471.frc.lib.coroutines.parallel
-import org.team2471.frc.lib.coroutines.periodic
-//import org.team2471.bunnybots2022.Drive
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.units.feet
-import org.team2471.frc.lib.units.inches
-import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
-import kotlin.math.absoluteValue
 
 private lateinit var autonomi: Autonomi
 
@@ -135,167 +124,12 @@ object AutoChooser {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    private suspend fun bunnyBot2023() = use(Drive, Shooter) {
-        println("inside bunnyBot2023() auto function")
-        Drive.initializeSteeringMotors()
-        Drive.zeroGyro()
-        Limelight.ledModeEntry.setDouble(0.0)
-        Intake.intakeUp()
-        val totePath = autonomi["BunnyBot2023"]?.get("MoveToTotes")
-        var doneWithPath = false
-        if (totePath != null) {
-            parallel({
-                println("GONNA DRIVE NOWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
-                Drive.driveAlongPath(totePath, true)
-                doneWithPath = true
-            }, {
-                val t = Timer()
-                var waitTime = 0.0
-                t.start()
-                periodic {
-                    if (doneWithPath) {
-                        Drive.abortPath()
-                        this.stop()
-                    } else {
-                        if (Limelight.seesTargets /*&& t.get() - waitTime > 1.0*/ || !Robot.isAutonomous) {
-                            println("saw target for more then 1 second, aborting path")
-                            doneWithPath = true
-                        } else {
-                            waitTime = t.get()
-                        }
-                    }
-
-                }
-            })
-            val t = Timer()
-            val tTwo = Timer()
-            var blindTime = 0.0
-            var waiting = false
-            var shooting = false
-            var looking = true
-            tTwo.start()
-            periodic {
-                if (Robot.isAutonomous) {
-                    if (Limelight.seesTargets) {
-
-//                        println("driving to bucket at robot centric:${Limelight.enemyBuckets[0].botCentCoords}  field centric: ${Limelight.enemyBuckets[0].botCentCoords + Drive.position} from ${Drive.position} ")
-
-                        if (Limelight.enemyBuckets[0].dist > 4.0.feet) {
-                            Drive.drive(
-                                Vector2(
-                                    Limelight.enemyBuckets[0].botCentCoords.x  /*Limelight.botCentFilterX.calculate(Limelight.enemyBuckets[0].botCentCoords.x)*/,
-                                    Limelight.enemyBuckets[0].botCentCoords.y/*Limelight.botCentFilterY.calculate(Limelight.enemyBuckets[0].botCentCoords.y)*/
-                                ).normalize() * 0.5,
-                                0.0,
-                                false
-                            )
-                        }
-                        if (Limelight.enemyBuckets.isNotEmpty()) {
-                            println("turret Error ${Turret.turretError.asDegrees.absoluteValue} distance ${Limelight.enemyBuckets[0].dist} ")
-                        }
-
-                        if (Limelight.enemyBuckets.isNotEmpty()) {
-                            if (waiting) {
-                                Shooter.uptakeMotor.setPercentOutput(0.0)
-                                if (t.get() > 1.2) {
-                                    waiting = false
-                                    looking = true
-                                }
-                                println("waiting")
-                                if (!Shooter.ballReady) {
-                                    Shooter.uptakeMotor.setPercentOutput(1.0)
-                                } else {
-                                    Shooter.uptakeMotor.setPercentOutput(0.0)
-                                }
-
-                            } else if (shooting) {
-                                Shooter.uptakeMotor.setPercentOutput(1.0)
-                                if (!Shooter.ballReady) {
-                                    shooting = false
-                                    waiting = true
-                                    t.start()
-                                }
-
-                                println("shooting")
-                            } else if (looking) {
-                                if (Turret.turretError.asDegrees.absoluteValue < 5.0 && Limelight.enemyBuckets[0].dist < 5.0.feet && Shooter.ballReady) {
-                                    looking = false
-                                    shooting = true
-                                    t.start()
-                                }
-                                if (!Shooter.ballReady) {
-                                    Shooter.uptakeMotor.setPercentOutput(1.0)
-                                } else {
-                                    Shooter.uptakeMotor.setPercentOutput(0.0)
-                                }
-                                if (Limelight.enemyBuckets[0].dist < 5.0.feet) {
-                                    Drive.drive(
-                                        Vector2(0.0, 0.0),
-                                        0.0,
-                                        false
-                                    )
-                                } else {
-                                    Drive.drive(
-                                        Vector2(
-                                            Limelight.enemyBuckets[0].botCentCoords.x  /*Limelight.botCentFilterX.calculate(Limelight.enemyBuckets[0].botCentCoords.x)*/,
-                                            Limelight.enemyBuckets[0].botCentCoords.y/*Limelight.botCentFilterY.calculate(Limelight.enemyBuckets[0].botCentCoords.y)*/
-                                        ).normalize() * 0.5,
-                                        0.0,
-                                        false
-                                    )
-                                }
-                                Turret.rawTurretSetpoint += 1.0.degrees
-                                println("looking")
-                            }
-                            if (looking && !shooting && !waiting && tTwo.get() - blindTime > 2.0) {
-                                println("GONNA DRIVE NOWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
-                                Drive.drive(
-                                    Vector2(0.0, 1.0),
-                                    0.0, false
-                                )
-                            } else {
-                                blindTime = tTwo.get()
-                                Drive.drive(
-                                    Vector2(0.0, 0.0),
-                                    0.0,
-                                    false
-                                )
-                            }
-                        }
-                        //   turret shoot at target
-                    } else {
-                        Drive.drive(
-                            Vector2(0.0, 0.0),
-                            0.0,
-                            false
-                        )
-                        Turret.rawTurretSetpoint += 1.0.degrees
-
-                        Shooter.uptakeMotor.setPercentOutput(0.0)
-                        println("i no see!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-//                        waitTime = t.get()
-                    }
-                } else {
-                    this.stop()
-                }
-            }
-            //drive to target and shoot
-//                }
-
-        } else {
-            println("BUNNYBOTS PATH IS NULL!!!!!!!!")
-        }
-
-        // drive, shoot, intake, intake motors, limeLight
-    }
-
     suspend fun autonomous() = use(Drive, name = "Autonomous") {
         println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.recentTimeTaken()}")
         SmartDashboard.putString("autoStatus", "init")
         println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
-            "BunnyBot2023" -> bunnyBot2023()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -313,10 +147,6 @@ object AutoChooser {
             }
         }
     }
-
-
-
-
 }
 
 

@@ -2,32 +2,21 @@ package org.team2471.bunnybots2023
 
 import com.kauailabs.navx.frc.AHRS
 import edu.wpi.first.wpilibj.SPI
-import edu.wpi.first.wpilibj.interfaces.Gyro
 
-class NavxWrapper : Gyro {
+class NavxWrapper {
     private val navx = AHRS(SPI.Port.kMXP)
+    val angle: Double
+        get() = navx.yaw.toDouble()
+    val roll: Double
+        get() = navx.roll.toDouble()
+    val pitch: Double
+        get() = navx.pitch.toDouble()
+    val rate: Double
+        get() = navx.rawGyroZ.toDouble()
 
-    override fun getAngle(): Double {
-        return navx.yaw.toDouble()
-    }
+//    fun calibrate() = Unit
 
-    fun getRoll(): Double {
-        return navx.roll.toDouble()
-    }
-
-    fun getPitch(): Double {
-        return navx.pitch.toDouble()
-    }
-
-    override fun getRate(): Double = navx.rawGyroZ.toDouble()
-
-    override fun close() {
-        navx.close()
-    }
-
-    override fun calibrate() = Unit
-
-    override fun reset() = navx.reset()
+    fun reset() = navx.reset()
 
     var deltaTime: Double = 1.0
         set(value) {
