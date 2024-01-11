@@ -1,8 +1,12 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -66,6 +70,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
+
+    private val advantagePoseEntry = table.getEntry("Combined Advantage Pose")
+
 
     val rateCurve = MotionCurve()
 
@@ -165,6 +172,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val isHumanDriving
         get() = OI.driveTranslation.length != 0.0 || OI.driveRotation != 0.0
 
+
+    val DRIVE_WHEEL_INERTIA = 25.0 //grams * m^2
+    val STEERING_WHEEL_INERTIA = 0.4096955
+
+    val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
+    val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
+
     init {
         println("drive init")
         initializeSteeringMotors()
@@ -230,6 +244,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
+
+                val combinedWPIField = convertTMMtoWPI(position.x.feet, position.y.feet, heading)
+                advantagePoseEntry.setDoubleArray(doubleArrayOf(combinedWPIField.x,  combinedWPIField.y, combinedWPIField.rotation.degrees))
             }
         }
     }
@@ -257,6 +274,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun zeroGyro() {
         heading = 0.0.degrees
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
+    }
+    fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {
+        val modX = -y.asMeters + fieldCenterOffsetInMeters.y
+        val modY = x.asMeters + fieldCenterOffsetInMeters.x
+        return Pose2d(modX,modY, Rotation2d((-heading+180.0.degrees).wrap().asRadians))
     }
 
     override suspend fun default() {
@@ -334,8 +356,30 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             private val D = 0.00075
         }
 
+        val driveMotorSim: FlywheelSim =
+            FlywheelSim(
+                DCMotor.getNEO(1),
+                42.0 / 5.5,
+                DRIVE_WHEEL_INERTIA
+            )
+
+        val turnMotorSim =
+            FlywheelSim(
+                DCMotor.getNEO(1),
+                (360.0 / 42.0 / 12.0 / 5.08) * (360.5 / 274.04),
+                STEERING_WHEEL_INERTIA
+            )
+
+        var simWheelPosition: Double = 0.0
+
         override val angle: Angle
-            get() = turnMotor.position.degrees * parameters.invertSteerFactor
+            get() {
+                return if (RobotBase.isReal()) {
+                    turnMotor.position.degrees * parameters.invertSteerFactor
+                } else {
+                    angleSetpoint
+                }
+            }
 
         val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
 
@@ -366,18 +410,44 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var prevDistance: Double = 0.0
 
         override var odometer: Double
-            get() = odometerEntry.getDouble(0.0)
-            set(value) { odometerEntry.setDouble(value) }
+            get() {
+                return if (RobotBase.isReal()) {
+                    odometerEntry.getDouble(0.0)
+                } else {
+                    simWheelPosition
+                }
+            }
+            set(value) {
+                if (RobotBase.isReal()) {
+                    odometerEntry.setDouble(value)
+                } else {
+                    simWheelPosition = value
+                }
+            }
 
         override fun zeroEncoder() {
             driveMotor.position = 0.0
+            simWheelPosition = 0.0
         }
 
         override var angleSetpoint: Angle = 0.0.degrees
-            set(value) = turnMotor.setPositionSetpoint(value.unWrap(angle).asDegrees * parameters.invertSteerFactor)
+            set(value) {
+                if (RobotBase.isReal()) {
+                    turnMotor.setPositionSetpoint(value.unWrap(angle).asDegrees * parameters.invertSteerFactor)
+                } else {
+                    field = value
+                }
+            }
 
         override fun setDrivePower(power: Double) {
-            driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
+            if (RobotBase.isReal()) {
+                driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
+            } else {
+                driveMotorSim.setInputVoltage(power * 12.0)
+                driveMotorSim.update(0.02)
+                //                                rotation in 0.02 seconds    *      wheel circumference
+                simWheelPosition += (driveMotorSim.angularVelocityRPM / 60.0 * 0.02) * 3.0 / 12.0 * Math.PI
+            }
         }
 
 
