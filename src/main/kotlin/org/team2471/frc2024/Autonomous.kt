@@ -26,7 +26,6 @@ enum class Side {
     }
 }
 
-private var startingSide = Side.RIGHT
 val selAuto
     get() = SmartDashboard.getString("Autos/selected", "no auto selected")
 
@@ -67,7 +66,7 @@ object AutoChooser {
         addOption("Outer Two Auto", "outerTwoAuto")
         addOption("Inner Three Auto", "innerThreeAuto")
         addOption("NodeDeck", "nodeDeck")
-        addOption("BunnyBot2023", "BunnyBot2023")
+        addOption("HIII", "HIII")
 
     }
 
@@ -126,6 +125,7 @@ object AutoChooser {
         SmartDashboard.putString("autoStatus", "init")
         println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
         when (selAuto) {
+            "HIII" -> hiii()
             "Tests" -> testAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
@@ -143,6 +143,9 @@ object AutoChooser {
                 Drive.driveAlongPath(path, true)
             }
         }
+    }
+    fun hiii() {
+        println("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
     }
 }
 

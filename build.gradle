@@ -45,9 +45,6 @@ deploy {
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
-// Set this to true to enable desktop support.
-//def includeDesktopSupport = false
-
 repositories {
     mavenCentral()
     maven { setUrl("https://frcmaven.wpi.edu/artifactory/release/")}
@@ -119,6 +116,14 @@ jar {
 
 deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
+
+// Simulation configuration (e.g. environment variables).
+wpi.sim.addGui().defaultEnabled = true
+wpi.sim.addDriverstation()
+
+//Sets the websocket client remote host.
+wpi.sim.envVar("HALSIMWS_HOST", "10.0.0.2")
+wpi.sim.addWebsocketsServer().defaultEnabled = true
 
 wrapper {
     gradleVersion = '7.6'
