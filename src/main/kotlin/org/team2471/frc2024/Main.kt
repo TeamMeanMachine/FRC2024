@@ -51,6 +51,8 @@ object Robot : MeanlibRobot() {
         Drive.heading = 0.0.degrees
         AutoChooser
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
+        AprilTagLimelight
+        NoteLimelight
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {
