@@ -1,4 +1,7 @@
 package org.team2471.frc2024
 
-object AprilTagLimelight : {
+import org.team2471.frc.lib.framework.Subsystem
+
+object AprilTagLimelight : Subsystem("ApriltagLimelight") {
+
 }
