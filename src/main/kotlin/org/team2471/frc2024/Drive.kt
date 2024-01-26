@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.control.PDConstantFController
@@ -31,7 +32,7 @@ import kotlin.math.min
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
-    val robotHalfWidth = (30.0/2.0).inches
+    val robotHalfWidth = (25.0/2.0).inches
     val table = NetworkTableInstance.getDefault().getTable(name)
     val navXGyroEntry = table.getEntry("NavX Gyro")
 
@@ -87,7 +88,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kHeadingFeedForward = 0.001,
         kMoveWhileSpin = 0.0,
         invertDriveFactor = -1.0,
-        invertSteerFactor = -1.0
+        invertSteerFactor = 1.0
     )
 
 
@@ -96,7 +97,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
      * **/
     override val modules: Array<SwerveDrive.Module> = arrayOf(
         Module(
-            MotorController(SparkMaxID(Sparks.FRONT_LEFT_DRIVE)),
+            MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-13.1, 13.1),
             Preferences.getDouble("Angle Offset 0",-259.95).degrees,
@@ -105,7 +106,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             0
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_DRIVE)),
+            MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(13.1, 13.1),
             Preferences.getDouble("Angle Offset 1",-351.13).degrees,
@@ -114,7 +115,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             1
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.REAR_RIGHT_DRIVE)),
+            MotorController(FalconID(Falcons.REAR_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.REAR_RIGHT_STEER)),
             Vector2(13.1, -13.1),
             Preferences.getDouble("Angle Offset 2",-271.56).degrees,
@@ -123,7 +124,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             2
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.REAR_LEFT_DRIVE)),
+            MotorController(FalconID(Falcons.REAR_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.REAR_LEFT_STEER)),
             Vector2(-13.1, -13.1),
             Preferences.getDouble("Angle Offset 3",-231.51).degrees,
