@@ -32,7 +32,7 @@ object Intake: Subsystem("Intake") {
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
 
-    val proximity: Int
+    private val proximity: Int
         get() = colorSensor.proximity
 
     init {
@@ -63,6 +63,9 @@ object Intake: Subsystem("Intake") {
             periodic {
                 colorEntry.setString(colorSensor.color.toHexString())
                 proximityEntry.setInteger(colorSensor.proximity.toLong())
+
+                intakeCurrentEntry.setDouble(intakeMotors.current)
+                feederCurrentEntry.setDouble(feederMotor.current)
 
                 if (proximity > proximityThresholdEntry.getDouble(500.0)) {
                     intakeMotors.setPercentOutput(0.0)

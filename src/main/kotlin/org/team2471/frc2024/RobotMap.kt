@@ -11,9 +11,12 @@ object Sparks {
     const val FRONT_RIGHT_STEER = 16
     const val REAR_RIGHT_STEER = 6
     const val REAR_LEFT_STEER = 5
+
+    const val CLIMBER = 999999999
 }
 
 object AnalogSensors {
+    const val PIVOT = 999999
 }
 
 object DigitalSensors {
@@ -33,6 +36,11 @@ object Falcons {
     const val INTAKE_UPPER = 999
 
     const val FEEDER = 9999
+
+    const val PIVOT = 99999
+
+    const val SHOOTER_LOWER = 9999999
+    const val SHOOTER_UPPER = 99999999
 }
 
 object CANCoders {
