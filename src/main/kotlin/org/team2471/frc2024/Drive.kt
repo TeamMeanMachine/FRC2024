@@ -357,22 +357,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             private val D = 0.00075
         }
 
-        val driveMotorSim: FlywheelSim =
-            FlywheelSim(
-                DCMotor.getNEO(1),
-                42.0 / 5.5,
-                DRIVE_WHEEL_INERTIA
-            )
-
-        val turnMotorSim =
-            FlywheelSim(
-                DCMotor.getNEO(1),
-                (360.0 / 42.0 / 12.0 / 5.08) * (360.5 / 274.04),
-                STEERING_WHEEL_INERTIA
-            )
-
-        var simWheelPosition: Double = 0.0
-
         override val angle: Angle
             get() {
                 return if (RobotBase.isReal()) {
@@ -412,23 +396,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override var odometer: Double
             get() {
-                return if (RobotBase.isReal()) {
-                    odometerEntry.getDouble(0.0)
-                } else {
-                    simWheelPosition
-                }
+                return odometerEntry.getDouble(0.0)
             }
             set(value) {
-                if (RobotBase.isReal()) {
-                    odometerEntry.setDouble(value)
-                } else {
-                    simWheelPosition = value
-                }
+                odometerEntry.setDouble(value)
             }
 
         override fun zeroEncoder() {
             driveMotor.position = 0.0
-            simWheelPosition = 0.0
         }
 
         override var angleSetpoint: Angle = 0.0.degrees
@@ -441,14 +416,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
         override fun setDrivePower(power: Double) {
-            if (RobotBase.isReal()) {
-                driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
-            } else {
-                driveMotorSim.setInputVoltage(power * 12.0)
-                driveMotorSim.update(0.02)
-                //                                rotation in 0.02 seconds    *      wheel circumference
-                simWheelPosition += (driveMotorSim.angularVelocityRPM / 60.0 * 0.02) * 3.0 / 12.0 * Math.PI
-            }
+            driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
         }
 
 
@@ -458,10 +426,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         init {
             println("Drive.module.init")
             print(angle.asDegrees)
+            driveMotor.config {
+//                brakeMode()
+                //                    wheel diam / 12 in per foot * pi / ticks / gear ratio
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI / 42.0 / 5.5
+                currentLimit(25, 30, 1)
+//                openLoopRamp(0.2)
+            }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 42.0 / 12.0 / 5.08) * (360.5 / 274.04)
                 inverted(false)
-                setSensorPhase(false)
                 coastMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
@@ -470,13 +444,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     p(0.0002)
 //                    d(0.0000025)
                 }
-            }
-            driveMotor.config {
-                brakeMode()
-                //                    wheel diam / 12 in per foot * pi / ticks / gear ratio
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI / 42.0 / 5.5
-                currentLimit(25, 30, 1)
-                openLoopRamp(0.2)
             }
             GlobalScope.launch {
                 periodic {
