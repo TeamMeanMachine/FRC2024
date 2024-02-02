@@ -63,5 +63,11 @@ object OI : Subsystem("OI") {
             Drive.initializeSteeringMotors()
         }
         driverController::x.whenTrue { Drive.xPose() }
+
+        when(operatorController::dPad.get()) {
+            Controller.Direction.DOWN -> Climber.relayOff()
+            Controller.Direction.UP -> Climber.relayOff()
+            else -> 1+1
+        }
     }
 }
