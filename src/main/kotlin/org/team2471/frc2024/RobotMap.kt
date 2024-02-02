@@ -24,6 +24,8 @@ object DigitalSensors {
     const val REAR_RIGHT = 5
     const val FRONT_RIGHT = 4
     const val FRONT_LEFT = 3
+
+    const val CLIMBER = 0
 }
 
 object Falcons {

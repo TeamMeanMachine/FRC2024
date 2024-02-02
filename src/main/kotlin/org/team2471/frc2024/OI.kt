@@ -66,7 +66,7 @@ object OI : Subsystem("OI") {
 
         when(operatorController::dPad.get()) {
             Controller.Direction.DOWN -> Climber.relayOff()
-            Controller.Direction.UP -> Climber.relayOff()
+            Controller.Direction.UP -> Climber.relayOn()
             else -> 1+1
         }
     }
