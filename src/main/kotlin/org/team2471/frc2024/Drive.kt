@@ -99,8 +99,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
-            Vector2(-13.1, 13.1),
-            Preferences.getDouble("Angle Offset 0",-259.95).degrees,
+            Vector2(-10.75, 10.75),
+            /*Preferences.getDouble("Angle Offset 0",-259.95).degrees*/0.0.degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -108,8 +108,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
-            Vector2(13.1, 13.1),
-            Preferences.getDouble("Angle Offset 1",-351.13).degrees,
+            Vector2(10.75, 10.75),
+            /*Preferences.getDouble("Angle Offset 1",-351.13).degrees*/0.0.degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -117,8 +117,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.REAR_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.REAR_RIGHT_STEER)),
-            Vector2(13.1, -13.1),
-            Preferences.getDouble("Angle Offset 2",-271.56).degrees,
+            Vector2(10.75, -10.75),
+            /*Preferences.getDouble("Angle Offset 2",-271.56).degrees*/0.0.degrees,
             DigitalSensors.REAR_RIGHT,
             odometer2Entry,
             2
@@ -126,8 +126,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.REAR_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.REAR_LEFT_STEER)),
-            Vector2(-13.1, -13.1),
-            Preferences.getDouble("Angle Offset 3",-231.51).degrees,
+            Vector2(-10.75, -10.75),
+            /*Preferences.getDouble("Angle Offset 3",-231.51).degrees*/0.0.degrees,
             DigitalSensors.REAR_LEFT,
             odometer3Entry,
             3
@@ -248,6 +248,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val combinedWPIField = convertTMMtoWPI(position.x.feet, position.y.feet, heading)
                 advantagePoseEntry.setDoubleArray(doubleArrayOf(combinedWPIField.x,  combinedWPIField.y, combinedWPIField.rotation.degrees))
+//                println("#1: ${modules[2].angle}")
+
             }
         }
     }
@@ -513,7 +515,7 @@ suspend fun Drive.currentTest() = use(this) {
         currModule = modules[3] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
         currModule.turnMotor.setPositionSetpoint(0.0)
-        
+
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
 }

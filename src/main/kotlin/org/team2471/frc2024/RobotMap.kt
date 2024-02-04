@@ -8,11 +8,11 @@ object Talons {
 
 object Sparks {
     const val FRONT_LEFT_STEER = 16
-    const val FRONT_RIGHT_STEER = 3
+    const val FRONT_RIGHT_STEER = 17
     const val REAR_RIGHT_STEER = 2
-    const val REAR_LEFT_STEER = 17
+    const val REAR_LEFT_STEER = 3
 
-    const val CLIMBER = 999999999
+    const val CLIMBER = 9
 }
 
 object AnalogSensors {
@@ -22,7 +22,7 @@ object AnalogSensors {
 object DigitalSensors {
     const val REAR_LEFT = 6
     const val REAR_RIGHT = 5
-    const val FRONT_RIGHT = 4
+    const val FRONT_RIGHT = 1
     const val FRONT_LEFT = 3
 
     const val CLIMBER = 0

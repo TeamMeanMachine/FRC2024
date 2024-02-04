@@ -64,10 +64,12 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
-        when(operatorController::dPad.get()) {
-            Controller.Direction.DOWN -> Climber.relayOff()
-            Controller.Direction.UP -> Climber.relayOn()
-            else -> 1+1
+        ({operatorController.dPad == Controller.Direction.UP}).whenTrue {
+            Climber.relayOn()
+        }
+
+        ({operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
+            Climber.relayOff()
         }
     }
 }

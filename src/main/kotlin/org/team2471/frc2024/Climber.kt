@@ -18,24 +18,40 @@ object Climber: Subsystem("Climber") {
     private val climberCurrentEntry = table.getEntry("Climber Current")
     private val climberEncoderEntry = table.getEntry("Climber Encoder Value")
 
+//    val testRevEncoder = DigitalInput(0)
+
     private val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
 
-    private val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
+//    private val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
 
-    private val relay = Relay(1)
+    private val relay = Relay(0)
+
+    private var relayOn: Boolean = false
 
     fun relayOn() {
-        relay.set(Relay.Value.kOn)
+        println("******************************************RELAY ON")
+//        relay.set(Relay.Value.kForward)
+        relayOn = true
     }
 
     fun relayOff() {
-        relay.set(Relay.Value.kOff)
+        println("*************************************RELAY OFF")
+//        relay.set(Relay.Value.kReverse)
+        relayOn = false
     }
 
     init {
         GlobalScope.launch {
             periodic {
-                climberEncoderEntry.setDouble(climberEncoder.absolutePosition)
+                climberEncoderEntry.setDouble(climberMotor.position)
+
+                if (relayOn) {
+                    relay.set(Relay.Value.kForward)
+                } else {
+                    relay.set(Relay.Value.kOff)
+
+                }
+//                println(climberMotor.getAlternateEncoder(1))
             }
         }
     }

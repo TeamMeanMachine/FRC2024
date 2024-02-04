@@ -49,6 +49,7 @@ object Robot : MeanlibRobot() {
         Drive
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
+        Climber
         AutoChooser
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
