@@ -7,42 +7,43 @@ object Talons {
 
 
 object Sparks {
-    const val FRONT_LEFT_STEER = 16
-    const val FRONT_RIGHT_STEER = 17
-    const val REAR_RIGHT_STEER = 2
-    const val REAR_LEFT_STEER = 3
+    const val FRONT_LEFT_STEER = 10
+    const val FRONT_RIGHT_STEER = 8
+    const val BACK_RIGHT_STEER = 4
+    const val BACK_LEFT_STEER = 11
 
     const val CLIMBER = 9
+    const val AMP = 14
 }
 
 object AnalogSensors {
-    const val PIVOT = 999999
+    const val PIVOT = 2
 }
 
 object DigitalSensors {
-    const val REAR_LEFT = 6
-    const val REAR_RIGHT = 5
-    const val FRONT_RIGHT = 1
-    const val FRONT_LEFT = 3
+    const val BACK_LEFT = 3
+    const val BACK_RIGHT = 1
+    const val FRONT_RIGHT = 4
+    const val FRONT_LEFT = 2
 
-    const val CLIMBER = 0
+    const val CLIMBER = 5
 }
 
 object Falcons {
     const val FRONT_LEFT_DRIVE = 18
     const val FRONT_RIGHT_DRIVE = 1
-    const val REAR_LEFT_DRIVE = 19
-    const val REAR_RIGHT_DRIVE = 24
+    const val BACK_LEFT_DRIVE = 19
+    const val BACK_RIGHT_DRIVE = 24
 
-    const val INTAKE_LOWER = 99
-    const val INTAKE_UPPER = 999
+    const val INTAKE_BOTTOM = 25
+    const val INTAKE_TOP = 28
 
-    const val FEEDER = 9999
+    const val FEEDER = 2
 
-    const val PIVOT = 99999
+    const val PIVOT = 7
 
-    const val SHOOTER_LOWER = 9999999
-    const val SHOOTER_UPPER = 99999999
+    const val SHOOTER_BOTTOM = 13
+    const val SHOOTER_TOP = 6
 }
 
 object CANCoders {
@@ -50,6 +51,7 @@ object CANCoders {
 }
 
 object Solenoids {
+    const val CLIMB_SWITCH = 0
 }
 
 object OtherCAN {

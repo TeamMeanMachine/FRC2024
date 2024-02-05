@@ -14,7 +14,7 @@ object Shooter: Subsystem("Shooter") {
     private val shooterPercentEntry = table.getEntry("Shooter Percent")
     private val shooterCurrentEntry = table.getEntry("Shooter Current")
 
-    private val shooterMotors = MotorController(FalconID(Falcons.SHOOTER_LOWER), FalconID(Falcons.SHOOTER_UPPER))
+    private val shooterMotors = MotorController(FalconID(Falcons.SHOOTER_BOTTOM), FalconID(Falcons.SHOOTER_TOP))
 
     init {
         shooterPercentEntry.setDouble(1.0)

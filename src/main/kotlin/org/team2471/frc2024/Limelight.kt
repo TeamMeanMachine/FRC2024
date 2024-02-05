@@ -1,3 +1,4 @@
+/*
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableEntry
@@ -14,12 +15,18 @@ import kotlin.math.tan
 
 object Limelight : Subsystem("Limelight") {
     val intakeNT = NetworkTableInstance.getDefault().getTable("limelight-intake")
-    val shootNT =  NetworkTableInstance.getDefault().getTable("limelight-shoot")
+    val shootNT  = NetworkTableInstance.getDefault().getTable("limelight-shoot")
+    val nt = NetworkTableInstance.getDefault().getTable("Limelights")
 
     private val intakeLimelightModeEntry : NetworkTableEntry = intakeNT.getEntry("pipeline")
 
     private val intakeSeesTargetsEntry : NetworkTableEntry = intakeNT.getEntry("tv")
     private val shootSeesTargetsEntry : NetworkTableEntry = shootNT.getEntry("tv")
+
+    // output stuff
+    private val latencyEntryIntake : NetworkTableEntry = nt.getEntry("Intake Latency")
+    private val latencyEntryShoot : NetworkTableEntry = nt.getEntry("Shoot Latency")
+    private val limelightModeEntry : NetworkTableEntry = nt.getEntry("Intake Limelight Mode")
 
     var intakeLimelightMode : LimelightPipeline = LimelightPipeline.NOTE
         set(value) { intakeLimelightModeEntry.setNumber(value.mode) }
@@ -38,14 +45,15 @@ object Limelight : Subsystem("Limelight") {
 
         GlobalScope.launch(MeanlibDispatcher) {
 
-            periodic {
+*/
+/*            periodic {
                 if (seesApriltags()) {
-//                    //val botposeData : DoubleArray = AprilTagLimelight.limelightNetworkTable.getEntry("botpose_wpired").getDoubleArray(DoubleArray(0))
-//                    print(botposeData)
-//                    val totalLatency : Double = botposeData[6]
-//                    //AprilTagLimelight.totalLatencyEntry.setDouble(totalLatency)
-//                    val fieldPose : Vector2 = wpiRedToMMCoords(Vector2(botposeData[0], botposeData[1]))
-//                    val rotation : Double = botposeData[5]
+                    val botposeData : DoubleArray = limelightNetworkTable.getEntry("botpose_wpired").getDoubleArray(DoubleArray(0))
+                    print(botposeData)
+                    val totalLatency : Double = botposeData[6]
+                    totalLatencyEntry.setDouble(totalLatency)
+                    val fieldPose : Vector2 = wpiRedToMMCoords(Vector2(botposeData[0], botposeData[1]))
+                    val rotation : Double = botposeData[5]
 
                     var intakeAprilTagsSeen = 0
                     var shootAprilTagsSeen = 0
@@ -73,7 +81,8 @@ object Limelight : Subsystem("Limelight") {
 
                 }
             }
-        }
+        }*//*
+
     }
 
     override suspend fun default() {
@@ -93,19 +102,19 @@ object Limelight : Subsystem("Limelight") {
     }
 
 
-//    fun getNoteCoords(boundingBoxLowerY : Double, xDegreeOffset: Double): Vector2 {
-//        val angleFromBottom = boundingBoxLowerY/ NoteLimelight.limelightScreenHeight * NoteLimelight.limelightVerticalFOV
-//        val tangentAngle = (NoteLimelight.limelightVerticalFOV /2 - angleFromBottom) * Math.PI/180.0
-//        val distance = NoteLimelight.noteDistFromCenter + 1/12 * (sin(tangentAngle) + ((NoteLimelight.limelightHeight - (1- cos(tangentAngle)))/ tan(tangentAngle)))
-//        return NoteLimelight.limelightToRobotCoords(Vector2(distance / tan(xDegreeOffset), distance))
-//    }
+    fun getNoteCoords(boundingBoxLowerY : Double, xDegreeOffset: Double): Vector2 {
+        val angleFromBottom = boundingBoxLowerY/ NoteLimelight.limelightScreenHeight * NoteLimelight.limelightVerticalFOV
+        val tangentAngle = (NoteLimelight.limelightVerticalFOV /2 - angleFromBottom) * Math.PI/180.0
+        val distance = NoteLimelight.noteDistFromCenter + 1/12 * (sin(tangentAngle) + ((NoteLimelight.limelightHeight - (1- cos(tangentAngle)))/ tan(tangentAngle)))
+        return NoteLimelight.limelightToRobotCoords(Vector2(distance / tan(xDegreeOffset), distance))
+    }
 
-//    fun limelightToRobotCoords(position: Vector2): Vector2 {
-//        return position - limelightOffset
-//    }
+    fun limelightToRobotCoords(position: Vector2): Vector2 {
+        return position - limelightOffset
+    }
 }
 
 enum class LimelightPipeline(val mode: Int) {
     APRILTAG(3),
     NOTE(0),
-}
+}*/

@@ -18,13 +18,9 @@ object Climber: Subsystem("Climber") {
     private val climberCurrentEntry = table.getEntry("Climber Current")
     private val climberEncoderEntry = table.getEntry("Climber Encoder Value")
 
-//    val testRevEncoder = DigitalInput(0)
-
     private val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
 
-//    private val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
-
-    private val relay = Relay(0)
+    private val relay = Relay(Solenoids.CLIMB_SWITCH)
 
     private var relayOn: Boolean = false
 
@@ -51,7 +47,6 @@ object Climber: Subsystem("Climber") {
                     relay.set(Relay.Value.kOff)
 
                 }
-//                println(climberMotor.getAlternateEncoder(1))
             }
         }
     }

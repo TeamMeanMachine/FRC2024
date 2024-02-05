@@ -26,7 +26,7 @@ object Intake: Subsystem("Intake") {
     private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
-    private val intakeMotors = MotorController(FalconID(Falcons.INTAKE_LOWER), FalconID(Falcons.INTAKE_UPPER))
+    private val intakeMotors = MotorController(FalconID(Falcons.INTAKE_BOTTOM), FalconID(Falcons.INTAKE_TOP))
     private val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
