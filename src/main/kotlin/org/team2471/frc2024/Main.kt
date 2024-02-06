@@ -12,6 +12,8 @@ import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.testing.motorTest
+import org.team2471.frc2024.testing.motorsTest
 import java.net.NetworkInterface
 
 
@@ -49,6 +51,8 @@ object Robot : MeanlibRobot() {
         Drive
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
+        Intake
+        Shooter
         Climber
         AutoChooser
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
@@ -91,8 +95,9 @@ object Robot : MeanlibRobot() {
     override suspend fun test()  {
         println("test mode begin. Hi.")
 
-        Drive.driveTests()
-        Drive.steeringTests()
+        Intake.motorsTest()
+
+        println("test mode done")
 //        Drive.setAngleOffsets()
     }
 

@@ -16,7 +16,7 @@ object OI : Subsystem("OI") {
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
-        get() = driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
+        get() = -driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
 
     private val driveTranslationY: Double
         get() = driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
@@ -64,12 +64,9 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
-        ({operatorController.dPad == Controller.Direction.UP}).whenTrue {
-            Climber.relayOn()
-        }
-
-        ({operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
-            Climber.relayOff()
+        operatorController::a.whenTrue {
+            Intake.intakeMotors.setPercentOutput(0.3)
+            Intake.feedSetPower(0.3)
         }
     }
 }

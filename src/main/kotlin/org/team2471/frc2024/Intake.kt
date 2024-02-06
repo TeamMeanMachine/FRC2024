@@ -26,11 +26,13 @@ object Intake: Subsystem("Intake") {
     private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
-    private val intakeMotors = MotorController(FalconID(Falcons.INTAKE_BOTTOM), FalconID(Falcons.INTAKE_TOP))
-    private val feederMotor = MotorController(FalconID(Falcons.FEEDER))
+    val intakeMotors = MotorController(FalconID(Falcons.INTAKE_BOTTOM), FalconID(Falcons.INTAKE_TOP))
+    val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
+
+    private var staged = false
 
     private val proximity: Int
         get() = colorSensor.proximity
@@ -46,15 +48,15 @@ object Intake: Subsystem("Intake") {
 
         intakeMotors.config {
             // Copied from bunny. Prolly way off
-            currentLimit(20, 30, 1)
+            currentLimit(35, 40, 1)
             coastMode()
             inverted(false)
-            followersInverted(true)
+            followersInverted(false)
         }
 
         feederMotor.config {
             // Also copied from bunny. Still prolly way off
-            currentLimit(20, 30, 1)
+            currentLimit(35, 40, 1)
             coastMode()
             inverted(false)
         }
@@ -64,16 +66,28 @@ object Intake: Subsystem("Intake") {
                 colorEntry.setString(colorSensor.color.toHexString())
                 proximityEntry.setInteger(colorSensor.proximity.toLong())
 
+                println("color: ${colorSensor.color}   prox: ${colorSensor.proximity}")
                 intakeCurrentEntry.setDouble(intakeMotors.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
 
-                if (proximity > proximityThresholdEntry.getDouble(500.0)) {
+                if (proximity > 128) { //proximityThresholdEntry.getDouble(125.0)) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
+                    staged = true
                 }
             }
         }
 
     }
 
+    override suspend fun default() {
+        periodic {
+            colorEntry.setDouble(0.0)
+        }
+    }
+
+    fun feedSetPower(power: Double) {
+        feederMotor.setPercentOutput(power)
+        if (staged) staged = false
+    }
 }

@@ -14,23 +14,38 @@ object Shooter: Subsystem("Shooter") {
     private val shooterPercentEntry = table.getEntry("Shooter Percent")
     private val shooterCurrentEntry = table.getEntry("Shooter Current")
 
-    private val shooterMotors = MotorController(FalconID(Falcons.SHOOTER_BOTTOM), FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorOne = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
+    val shooterMotorTwo = MotorController(FalconID(Falcons.SHOOTER_TOP))
 
     init {
         shooterPercentEntry.setDouble(1.0)
 
-        shooterMotors.config {
+        shooterMotorOne.config {
             // Copied from bunny. Prolly way off
-            currentLimit(20, 30, 1)
+            currentLimit(35, 40, 1)
             coastMode()
-            inverted(false)
+            inverted(true)
+            followersInverted(true)
+        }
+
+        shooterMotorOne.config {
+            // Copied from bunny. Prolly way off
+            currentLimit(35, 40, 1)
+            coastMode()
+            inverted(true)
             followersInverted(true)
         }
 
         GlobalScope.launch {
             periodic {
-                shooterCurrentEntry.setDouble(shooterMotors.current)
+                shooterCurrentEntry.setDouble(shooterMotorOne.current)
             }
+        }
+    }
+
+    override suspend fun default() {
+        periodic {
+            shooterCurrentEntry.setDouble(shooterMotorOne.current)
         }
     }
 }

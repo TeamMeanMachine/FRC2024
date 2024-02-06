@@ -18,28 +18,23 @@ object Climber: Subsystem("Climber") {
     private val climberCurrentEntry = table.getEntry("Climber Current")
     private val climberEncoderEntry = table.getEntry("Climber Encoder Value")
 
-    private val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
+    val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
 
     private val relay = Relay(Solenoids.CLIMB_SWITCH)
 
-    private var relayOn: Boolean = false
-
-    fun relayOn() {
-        println("******************************************RELAY ON")
-//        relay.set(Relay.Value.kForward)
-        relayOn = true
-    }
-
-    fun relayOff() {
-        println("*************************************RELAY OFF")
-//        relay.set(Relay.Value.kReverse)
-        relayOn = false
-    }
+    var relayOn: Boolean = false
 
     init {
+        climberMotor.config {
+            currentLimit(20, 30, 1)
+            inverted(true)
+            brakeMode()
+        }
+
         GlobalScope.launch {
             periodic {
                 climberEncoderEntry.setDouble(climberMotor.position)
+
 
                 if (relayOn) {
                     relay.set(Relay.Value.kForward)
@@ -49,5 +44,13 @@ object Climber: Subsystem("Climber") {
                 }
             }
         }
+    }
+
+    suspend fun climbUp() {
+
+    }
+
+    suspend fun climbDown() {
+
     }
 }
