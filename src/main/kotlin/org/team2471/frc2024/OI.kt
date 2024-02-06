@@ -60,13 +60,8 @@ object OI : Subsystem("OI") {
     init {
         driverController::back.whenTrue {
             Drive.zeroGyro()
-            Drive.initializeSteeringMotors()
+            Drive.initializeSteeringMotors() //not needed 02/05
         }
         driverController::x.whenTrue { Drive.xPose() }
-
-        operatorController::a.whenTrue {
-            Intake.intakeMotors.setPercentOutput(0.3)
-            Intake.feedSetPower(0.3)
-        }
     }
 }

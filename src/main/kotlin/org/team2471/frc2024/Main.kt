@@ -54,6 +54,7 @@ object Robot : MeanlibRobot() {
         Intake
         Shooter
         Climber
+        Pivot
         AutoChooser
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
@@ -95,10 +96,10 @@ object Robot : MeanlibRobot() {
     override suspend fun test()  {
         println("test mode begin. Hi.")
 
-        Intake.motorsTest()
+//        Climber.motorTest()
 
         println("test mode done")
-//        Drive.setAngleOffsets()
+        Drive.setAngleOffsets()
     }
 
 

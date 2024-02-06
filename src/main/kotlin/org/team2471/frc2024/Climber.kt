@@ -26,14 +26,15 @@ object Climber: Subsystem("Climber") {
 
     init {
         climberMotor.config {
-            currentLimit(20, 30, 1)
+            currentLimit(39, 60, 1)
             inverted(true)
-            brakeMode()
+            coastMode()
         }
 
         GlobalScope.launch {
             periodic {
                 climberEncoderEntry.setDouble(climberMotor.position)
+                climberCurrentEntry.setDouble(climberMotor.current)
 
 
                 if (relayOn) {

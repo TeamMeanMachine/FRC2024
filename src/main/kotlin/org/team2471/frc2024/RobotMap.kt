@@ -23,10 +23,10 @@ object AnalogSensors {
 object DigitalSensors {
     const val BACK_LEFT = 3
     const val BACK_RIGHT = 1
-    const val FRONT_RIGHT = 4
+    const val FRONT_RIGHT = 5
     const val FRONT_LEFT = 2
 
-    const val CLIMBER = 5
+    const val CLIMBER = 4
 }
 
 object Falcons {

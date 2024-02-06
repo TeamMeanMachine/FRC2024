@@ -18,33 +18,42 @@ object Pivot: Subsystem("Pivot") {
 
     private val ticksEntry = table.getEntry("Pivot Ticks")
     private val ticksOffsetEntry = table.getEntry("Pivot Tick Offset")
-
     private val angleEntry = table.getEntry("Pivot Angle")
+    private val angleSetspointEntry = table.getEntry("Pivot Angle Setpoint")
 
-    private val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
+    val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
     private val pivotEncoder = AnalogInput(AnalogSensors.PIVOT)
 
     private val gearRatio = 1 / 61.71
 
+    private const val MIN_HARDSTOP = 0.0
+
+    private const val MAX_HARDSTOP = 111.0
+
     val pivotTicks: Int
         get() = pivotEncoder.value
     val pivotAngle: Angle
-//                                                                                   Ticks to degrees ↓↓↓↓↓
-           get() = (pivotEncoder.value.degrees + ticksOffsetEntry.getDouble(0.0).degrees) / 11.2
+//                                                                                       Ticks to degrees ↓↓↓↓↓
+           get() = (-pivotEncoder.value.degrees + ticksOffsetEntry.getDouble(3665.0).degrees) / 11.2
+
+    var angleSetpoint: Angle = pivotAngle
+        set(value) {
+            var temp = value
+            field = temp.asDegrees.coerceIn(MIN_HARDSTOP, MAX_HARDSTOP).degrees
+            pivotMotor.setPositionSetpoint(field.asDegrees)
+        }
 
     init {
-        ticksOffsetEntry.setDouble(0.0)
+        ticksOffsetEntry.setDouble(3665.0)
 
         pivotMotor.config() {
             //                              ticks / gear ratio
             feedbackCoefficient = (360.0 / 2048.0 / gearRatio)
-
             brakeMode()
-            inverted(false)
+            inverted(true)
 
             currentLimit(30, 40, 20)
-
         }
 
         GlobalScope.launch {
@@ -54,7 +63,6 @@ object Pivot: Subsystem("Pivot") {
                 pivotCurrentEntry.setDouble(pivotMotor.current)
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 angleEntry.setDouble(pivotAngle.asDegrees)
-
             }
         }
 

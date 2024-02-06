@@ -5,17 +5,14 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.input.whenTrue
-import org.team2471.frc2024.Climber
-import org.team2471.frc2024.Intake
-import org.team2471.frc2024.OI
-import org.team2471.frc2024.Shooter
+import org.team2471.frc2024.*
 
 
 suspend fun Intake.motorsTest() {
     var switch = 0
-    var intakeP = 0.3
-    var feedP = 0.4
-    var shootP = 0.9 //0.2
+    var intakeP = 0.0
+    var feedP = 0.6
+    var shootP = 0.0 //0.2
     var shoot2 = 0.15
     periodic {
         if (OI.operatorController.dPad == Controller.Direction.UP) {
@@ -48,8 +45,14 @@ suspend fun Intake.motorsTest() {
 
 suspend fun Climber.motorTest() {
     periodic {
-        climberMotor.setPercentOutput(0.6 * OI.operatorLeftY)
+        climberMotor.setPercentOutput(OI.operatorLeftY)
         OI.operatorController::a.whenTrue { relayOn = !relayOn }
         println("relayOn: $relayOn")
     }
+}
+
+suspend fun Pivot.motorTest() {
+    pivotMotor.setPercentOutput(0.2)
+    delay(0.5)
+    pivotMotor.setPercentOutput(0.0)
 }

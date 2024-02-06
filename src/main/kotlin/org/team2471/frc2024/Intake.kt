@@ -3,10 +3,12 @@ package org.team2471.frc2024
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.I2C
+import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
+import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 
@@ -45,6 +47,7 @@ object Intake: Subsystem("Intake") {
 
         intakePercentEntry.setDouble(0.7)
         feederPercentEntry.setDouble(0.7)
+        var x = feederCurrentEntry.getDouble(0.0)
 
         intakeMotors.config {
             // Copied from bunny. Prolly way off
@@ -62,19 +65,40 @@ object Intake: Subsystem("Intake") {
         }
 
         GlobalScope.launch {
+            val t = Timer()
+            t.start()
+            var stagedT= 0.0
+
             periodic {
                 colorEntry.setString(colorSensor.color.toHexString())
                 proximityEntry.setInteger(colorSensor.proximity.toLong())
 
-                println("color: ${colorSensor.color}   prox: ${colorSensor.proximity}")
                 intakeCurrentEntry.setDouble(intakeMotors.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
 
-                if (proximity > 128) { //proximityThresholdEntry.getDouble(125.0)) {
-                    intakeMotors.setPercentOutput(0.0)
-                    feederMotor.setPercentOutput(0.0)
-                    staged = true
-                }
+//                if (proximity > 200) { //proximityThresholdEntry.getDouble(125.0)) {
+//                    if (!staged) {
+//                        intakeMotors.setPercentOutput(0.0)
+//                        feederMotor.setPercentOutput(0.0)
+//                        staged = true
+//                        stagedT = t.get()
+//                    } else {
+////                        if (t.get() - 1 > stagedT) {
+////                            intakeMotors.setPercentOutput(0.0)
+////                            feederMotor.setPercentOutput(0.0)
+////                        } else {
+////                            intakeMotors.setPercentOutput(0.1)
+////                            feederMotor.setPercentOutput(0.1)
+////                        }
+//                        if (proximity > 300) {
+//                            intakeMotors.setPercentOutput(0.0)
+//                            feederMotor.setPercentOutput(0.0)
+//                        } else {
+//                            intakeMotors.setPercentOutput(0.1)
+//                            feederMotor.setPercentOutput(0.1)
+//                        }
+//                    }
+//                }
             }
         }
 
@@ -83,11 +107,21 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         periodic {
             colorEntry.setDouble(0.0)
+            intakeCurrentEntry.setDouble(intakeMotors.current)
+            feederCurrentEntry.setDouble(feederMotor.current)
         }
     }
 
     fun feedSetPower(power: Double) {
         feederMotor.setPercentOutput(power)
         if (staged) staged = false
+    }
+
+    suspend fun rollToStage() {
+        intakeMotors.setPercentOutput(0.05)
+        feederMotor.setPercentOutput(0.05)
+        delay(0.5)
+        intakeMotors.setPercentOutput(0.0)
+        feederMotor.setPercentOutput(0.0)
     }
 }
