@@ -141,11 +141,12 @@ object AutoChooser {
     }
 
 
-    private suspend fun testAuto() {
+    private suspend fun testAuto() = use(Drive) {
         val testPath = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
         if (testPath != null) {
             val testAutonomous = autonomi["Tests"]
             val path = testAutonomous?.get(testPath)
+            println(testPath)
             if (path != null) {
                 Drive.driveAlongPath(path, true)
             }
