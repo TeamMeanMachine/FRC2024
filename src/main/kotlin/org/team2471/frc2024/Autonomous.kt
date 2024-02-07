@@ -36,7 +36,14 @@ object AutoChooser {
 
     var cacheFile: File? = null
     var redSide: Boolean = true
-        get() = isRedAllianceEntry.getBoolean(true)
+        get() {
+            if (DriverStation.getAlliance().isEmpty) {
+//                println("DriverStation.getAlliance() = null!!!!!!!!!!!!!!!!!! defaulting to isRedAlliance to true")
+                return true
+            } else {
+                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+            }
+        }
         set(value) {
             field = value
             isRedAllianceEntry.setBoolean(value)
