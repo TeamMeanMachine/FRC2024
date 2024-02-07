@@ -32,10 +32,10 @@ import kotlin.math.min
 object Drive : Subsystem("Drive"), SwerveDrive {
     val robotHalfWidth = (25.0/2.0).inches
 
-    const val turnZero0 = -34.0
-    const val turnZero1 = 321.5
-    const val turnZero2 = 21.7
-    const val turnZero3 = 17.2
+//    const val turnZero0 = -34.0
+//    const val turnZero1 = 321.5
+//    const val turnZero2 = 21.7
+//    const val turnZero3 = 17.2
 
     val table = NetworkTableInstance.getDefault().getTable(name)
     val navXGyroEntry = table.getEntry("NavX Gyro")
@@ -104,7 +104,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            turnZero0.degrees,
+            Preferences.getDouble("Angle Offset 0",-259.95).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -113,7 +113,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            turnZero1.degrees,
+            Preferences.getDouble("Angle Offset 1",-351.13).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -122,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            turnZero2.degrees,
+            Preferences.getDouble("Angle Offset 2",-271.56).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -131,7 +131,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            turnZero3.degrees,
+            Preferences.getDouble("Angle Offset 3",-231.51).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -310,8 +310,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees - module.turnMotor.position)
-            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position} rawOffset: ${module.absoluteAngle.asDegrees - module.turnMotor.position}")
+            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
+            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position} rawOffset: ${module.absoluteAngle.asDegrees}")
         }
     }
 
@@ -370,7 +370,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val absoluteAngle: Angle
             get() {
-                return (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
+                return (digitalEncoder.absolutePosition.degrees - angleOffset).wrap()
             }
 
         override val treadWear: Double
@@ -461,7 +461,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         fun setAngleOffset() {
             val digitalAngle = digitalEncoder.absolutePosition
-            angleOffset = digitalAngle.degrees * 360.0
+            angleOffset = digitalAngle.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
             println("Angle Offset $index = $digitalAngle")
         }

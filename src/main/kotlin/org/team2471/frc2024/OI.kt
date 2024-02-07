@@ -63,5 +63,9 @@ object OI : Subsystem("OI") {
             Drive.initializeSteeringMotors() //not needed 02/05
         }
         driverController::x.whenTrue { Drive.xPose() }
+
+
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Climb.relayOn = false; /*Climb.climberSetpoint -= 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Climb.relayOn = true; /*Climb.climberSetpoint += 5.0.inches*/ }
     }
 }

@@ -50,7 +50,8 @@ object Pivot: Subsystem("Pivot") {
         pivotMotor.config() {
             //                              ticks / gear ratio
             feedbackCoefficient = (360.0 / 2048.0 / gearRatio)
-            brakeMode()
+//            brakeMode()
+            coastMode()
             inverted(true)
 
             currentLimit(30, 40, 20)
@@ -66,6 +67,14 @@ object Pivot: Subsystem("Pivot") {
             }
         }
 
+    }
+
+    override fun postEnable() {
+        pivotMotor.brakeMode()
+    }
+
+    override fun onDisable() {
+        pivotMotor.coastMode()
     }
 
 }

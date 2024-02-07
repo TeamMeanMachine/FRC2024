@@ -28,7 +28,7 @@ object Shooter: Subsystem("Shooter") {
             followersInverted(true)
         }
 
-        shooterMotorOne.config {
+        shooterMotorTwo.config {
             // Copied from bunny. Prolly way off
             currentLimit(35, 40, 1)
             coastMode()

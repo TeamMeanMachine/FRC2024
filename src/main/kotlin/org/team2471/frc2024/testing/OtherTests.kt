@@ -2,7 +2,6 @@ package org.team2471.frc2024.testing
 
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
-import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.input.whenTrue
 import org.team2471.frc2024.*
@@ -43,7 +42,7 @@ suspend fun Intake.motorsTest() {
     }
 }
 
-suspend fun Climber.motorTest() {
+suspend fun Climb.motorTest() {
     periodic {
         climberMotor.setPercentOutput(OI.operatorLeftY)
         OI.operatorController::a.whenTrue { relayOn = !relayOn }
