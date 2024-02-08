@@ -64,6 +64,11 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
+        ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
+        operatorController::a.whenTrue {
+            println("going to climbwith trigger")
+            climbWithTrigger()
+        }
 
         ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Climb.relayOn = false; /*Climb.climberSetpoint -= 5.0.inches*/ }
         ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Climb.relayOn = true; /*Climb.climberSetpoint += 5.0.inches*/ }
