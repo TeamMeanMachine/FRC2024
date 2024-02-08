@@ -13,24 +13,31 @@ object Shooter: Subsystem("Shooter") {
 
     private val shooterPercentEntry = table.getEntry("Shooter Percent")
     private val shooterCurrentEntry = table.getEntry("Shooter Current")
+    private val shooterTwoCurrentEntry = table.getEntry("Shooter Two Current")
+    private val rpmOneEntry = table.getEntry("RPM One")
+    private val rpmTwoEntry = table.getEntry("RPM Two")
 
-    val shooterMotorOne = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
-    val shooterMotorTwo = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
+    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    var rpmOne = 0.0
+        get() = shooterMotorBottom.velocity
 
+    var rpmTwo = 0.0
+        get() = shooterMotorTop.velocity
     init {
         shooterPercentEntry.setDouble(1.0)
 
-        shooterMotorOne.config {
+        shooterMotorBottom.config {
             // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
         }
 
-        shooterMotorTwo.config {
+        shooterMotorTop.config {
             // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
@@ -38,14 +45,18 @@ object Shooter: Subsystem("Shooter") {
 
         GlobalScope.launch {
             periodic {
-                shooterCurrentEntry.setDouble(shooterMotorOne.current)
+                shooterCurrentEntry.setDouble(shooterMotorBottom.current)
+                if (rpmOne > 20.0) println("rpmOne = $rpmOne rpmTwo = $rpmTwo")
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-            shooterCurrentEntry.setDouble(shooterMotorOne.current)
+            shooterCurrentEntry.setDouble(shooterMotorBottom.current)
+            shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
+            rpmOneEntry.setDouble(rpmOne)
+            rpmTwoEntry.setDouble(rpmTwo)
         }
     }
 }

@@ -35,6 +35,14 @@ object Intake: Subsystem("Intake") {
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
 
     private var staged = false
+    var intaking = false
+        set(value) {
+            println("intaking set to $value")
+            field = value
+            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
+            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
+            Shooter.shooterMotorBottom.setPercentOutput(if (value) 1.0 else 0.0)
+        }
 
     private val proximity: Int
         get() = colorSensor.proximity

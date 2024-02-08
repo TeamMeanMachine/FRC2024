@@ -17,8 +17,8 @@ object Pivot: Subsystem("Pivot") {
     private val pivotCurrentEntry = table.getEntry("Pivot Current")
 
     private val ticksEntry = table.getEntry("Pivot Ticks")
-    private val ticksOffsetEntry = table.getEntry("Pivot Tick Offset")
-    private val angleEntry = table.getEntry("Pivot Angle")
+    private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
+    private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetspointEntry = table.getEntry("Pivot Angle Setpoint")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
@@ -27,43 +27,61 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    private const val MIN_HARDSTOP = 0.0
+    // All in degrees
+    const val CLOSESPEAKERPOSE = 60
 
-    private const val MAX_HARDSTOP = 111.0
+    private const val MINHARDSTOP = 6.0
+
+    const val MAXHARDSTOP = 113.0
+
+    // Ticks
+    private const val MINTICKS = 2222
 
     val pivotTicks: Int
         get() = pivotEncoder.value
-    val pivotAngle: Angle
-//                                                                                       Ticks to degrees ↓↓↓↓↓
-           get() = (-pivotEncoder.value.degrees + ticksOffsetEntry.getDouble(3665.0).degrees) / 11.2
+    val pivotEncoderAngle: Angle
+//                                        ticks to degrees  ↓↓↓↓↓
+        get() = ((-pivotEncoder.value + MINTICKS).degrees / 11.2) + MINHARDSTOP.degrees
 
-    var angleSetpoint: Angle = pivotAngle
+    val pivotMotorAngle: Angle
+        get() = pivotMotor.position.degrees
+
+    var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
-            var temp = value
-            field = temp.asDegrees.coerceIn(MIN_HARDSTOP, MAX_HARDSTOP).degrees
+            field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
             pivotMotor.setPositionSetpoint(field.asDegrees)
+            println("Setpoint changed to: $field")
         }
 
+
+
+
     init {
-        ticksOffsetEntry.setDouble(3665.0)
+//        ticksOffsetEntry.setDouble(3665.0)
 
         pivotMotor.config() {
-            //                              ticks / gear ratio
-            feedbackCoefficient = (360.0 / 2048.0 / gearRatio)
+            pid {
+                p(0.0003)
+                d(0.000001)
+            }
+
+            //                              ticks / gear ratio   fudge factor
+            feedbackCoefficient = (360.0 / 2048.0 / gearRatio) * (107.0 / 305.0)
 //            brakeMode()
             coastMode()
             inverted(true)
 
-            currentLimit(30, 40, 20)
+            currentLimit(35, 40, 20)
         }
+
+        pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
         GlobalScope.launch {
             periodic {
-                pivotMotor.setRawOffset(pivotAngle.asDegrees)
-
                 pivotCurrentEntry.setDouble(pivotMotor.current)
                 ticksEntry.setDouble(pivotTicks.toDouble())
-                angleEntry.setDouble(pivotAngle.asDegrees)
+                encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
+                motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
             }
         }
 
