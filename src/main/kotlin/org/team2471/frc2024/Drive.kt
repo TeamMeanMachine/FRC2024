@@ -267,7 +267,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         println("prefs at enable=${Preferences.getDouble("odometer 0",0.0)}")
     }
 
+    override fun postEnable() {
+        brakeMode()
+    }
+
     override fun onDisable() {
+        coastMode()
         if (odometer0Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(0.0))
         if (odometer1Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(0.0))
         if (odometer2Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(0.0))

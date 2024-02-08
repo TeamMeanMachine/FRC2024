@@ -37,7 +37,7 @@ object Climb: Subsystem("Climb") {
         }
 
 
-    var relayOn: Boolean = false
+    var relayOn: Boolean
         get() = relay.get() == Relay.Value.kForward
         set(value) {
             if (value) {
@@ -45,7 +45,6 @@ object Climb: Subsystem("Climb") {
             } else {
                 relay.set(Relay.Value.kOff)
             }
-            field = value
         }
 
     const val MIN_CLIMB_INCHES = 23.5
