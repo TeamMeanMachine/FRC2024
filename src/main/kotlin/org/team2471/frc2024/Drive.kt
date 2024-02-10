@@ -143,10 +143,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     private var gyroOffset = 0.0.degrees
 
     override var heading: Angle
-        get() = (gyroOffset + gyro.angle.degrees).wrap()
+        get() = (gyroOffset - gyro.angle.degrees).wrap()
         set(value) {
             gyro.reset()
-            gyroOffset = -gyro.angle.degrees + value
+            gyroOffset = gyro.angle.degrees + value
         }
 
     override val headingRate: AngularVelocity
