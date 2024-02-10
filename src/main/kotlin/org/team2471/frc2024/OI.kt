@@ -65,19 +65,19 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
-        operatorController::leftBumper.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
-        operatorController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
+        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
+        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
+        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
 
         driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
+//        driverController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
+        driverController::rightBumper.whenTrue { spit() }
+
 
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
-        operatorController::a.whenTrue {
-            println("going to climb with trigger")
-            climbWithTrigger()
-        }
 
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Climb.relayOn = false; /*Climb.climberSetpoint -= 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Climb.relayOn = true; /*Climb.climberSetpoint += 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpm -= 10.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpm += 10.0; /*Climb.climberSetpoint += 5.0.inches*/ }
 
         ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
         ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }

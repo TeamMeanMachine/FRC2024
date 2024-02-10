@@ -19,6 +19,7 @@ object Climb: Subsystem("Climb") {
     private val climberCurrentEntry = table.getEntry("Climb Current")
     private val climberEncoderEntry = table.getEntry("Climb Encoder Value")
     private val climberHeightEntry = table.getEntry("Motor Height")
+    private val climbSetpointEntry = table.getEntry("Climb Setpoint")
     private val relayOnEntry = table.getEntry("Relay On")
 
     val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
@@ -61,12 +62,14 @@ object Climb: Subsystem("Climb") {
             coastMode()
         }
         climberMotor.setRawOffset(MIN_CLIMB_INCHES)
+        climbSetpoint = MIN_CLIMB_INCHES.inches
 
         GlobalScope.launch {
             periodic {
                 climberCurrentEntry.setDouble(climberMotor.current)
                 climberEncoderEntry.setDouble(climberEncoder.get())
                 climberHeightEntry.setDouble(climberHeight.asInches)
+                climbSetpointEntry.setDouble(climbSetpoint.asInches)
                 relayOnEntry.setBoolean(relayOn)
 
 
@@ -81,15 +84,12 @@ object Climb: Subsystem("Climb") {
 
     override suspend fun default() {
         periodic {
-            climbSetpoint = (-OI.operatorController.leftThumbstickY * (MAX_CLIMB_INCHES - MIN_CLIMB_INCHES) + MIN_CLIMB_INCHES).inches
+//            climbSetpoint = (-OI.operatorController.leftThumbstickY * (MAX_CLIMB_INCHES - MIN_CLIMB_INCHES) + MIN_CLIMB_INCHES).inches
         }
     }
-
-    suspend fun climbUp() {
-
-    }
-
-    suspend fun climbDown() {
-
+    override fun preEnable() {
+        println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        climbSetpoint = climberHeight
+        println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
     }
 }
