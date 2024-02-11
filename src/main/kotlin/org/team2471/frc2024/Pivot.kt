@@ -64,7 +64,7 @@ object Pivot: Subsystem("Pivot") {
     init {
 //        ticksOffsetEntry.setDouble(3665.0)
 
-        pivotMotor.config() {
+        pivotMotor.config {
             pid {
                 p(0.0003)
                 d(0.000001)

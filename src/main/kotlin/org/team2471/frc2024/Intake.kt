@@ -101,7 +101,7 @@ object Intake: Subsystem("Intake") {
         val t = Timer()
         periodic {
             if (intaking) {
-                if (t.get() > 0.05) {
+                if (t.get() > 0.1) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
                 } else if (proximity > 140) {
@@ -113,31 +113,6 @@ object Intake: Subsystem("Intake") {
             } else {
                 t.start()
             }
-
-//            if (intakeMotors.current > 10.0 && !OI.driverController.leftBumper) {
-//                intakeMotors.setPercentOutput(0.0)
-//                feederMotor.setPercentOutput(0.0)
-//            }
-/*            if (intaking) {
-                if (!OI.driverController.leftBumper) {
-                    if (intakeMotors.current > 5.0 || !staged) {
-                        staging = true
-                        intakeMotors.setPercentOutput(0.1)
-                        feederMotor.setPercentOutput(0.1)
-                    }
-                    if (proximity > 1000.0 || staged) {
-                        staged = true
-                        staging = false
-                        feederMotor.setPercentOutput(0.0)
-                        intakeMotors.setPercentOutput(0.0)
-                    }
-                } else {
-                    intakeMotors.setPercentOutput(0.7)
-                    feederMotor.setPercentOutput(0.7)
-                }
-            }*/
-
-
         }
     }
 

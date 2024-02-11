@@ -25,14 +25,14 @@ object Shooter: Subsystem("Shooter") {
         get() = shooterMotorBottom.velocity
 
     val rpmTwo
-        get() = shooterMotorTop.velocity * 60.0
+        get() = shooterMotorTop.velocity
 
     var kFeedForward = 20.0 / (6000.0 * (66.0 / 23.0))
     var rpm: Double = 0.0
         set(value) {
             println("setting rpm to $value")
-            shooterMotorTop.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
-            shooterMotorBottom.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
+            shooterMotorTop.setVelocitySetpoint(0.0, value * kFeedForward) //value, value * kFeedForward)
+            shooterMotorBottom.setVelocitySetpoint(0.0, value * kFeedForward) //value, value * kFeedForward)
             field = 0.0 //value
         }
     init {
