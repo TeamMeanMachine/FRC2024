@@ -91,7 +91,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kdHeading = 0.02,
         kHeadingFeedForward = 0.001,
         kMoveWhileSpin = 0.0,
-        invertDriveFactor = -1.0,
+        invertDriveFactor = 1.0,
         invertSteerFactor = -1.0
     )
 
@@ -294,6 +294,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override suspend fun default() {
+
         periodic {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
@@ -309,9 +310,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn * maxRotation,
                 useGyro2,
                 false
-                )
-            }
+            )
         }
+    }
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested
             val module = (modules[moduleCount] as Module)
@@ -450,6 +451,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             GlobalScope.launch {
                 periodic {
 //                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
+
                 }
             }
         }
@@ -496,11 +498,11 @@ suspend fun Drive.currentTest() = use(this) {
         }
         if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
             upPressed = false
-            power += 0.001
+            power += 0.05
         }
         if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
             downPressed = false
-            power -= 0.001
+            power -= 0.05
         }
 
         var currModule = modules[0] as Drive.Module
