@@ -13,7 +13,7 @@ object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.1
+    private val deadBandDriver = 0.05
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
@@ -73,13 +73,12 @@ object OI : Subsystem("OI") {
 //        driverController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
         driverController::rightBumper.whenTrue { spit() }
 
-
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
 
         ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpm -= 10.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
         ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpm += 10.0; /*Climb.climberSetpoint += 5.0.inches*/ }
 
-        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
-        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
+        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 2.degrees }
+        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 2.degrees }
     }
 }

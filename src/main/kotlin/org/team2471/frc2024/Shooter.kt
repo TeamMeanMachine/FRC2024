@@ -31,9 +31,9 @@ object Shooter: Subsystem("Shooter") {
     var rpm: Double = 0.0
         set(value) {
             println("setting rpm to $value")
-            shooterMotorTop.setVelocitySetpoint(value, value * kFeedForward)
-            shooterMotorBottom.setVelocitySetpoint(value, value * kFeedForward)
-            field = value
+            shooterMotorTop.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
+            shooterMotorBottom.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
+            field = 0.0 //value
         }
     init {
         shooterPercentEntry.setDouble(1.0)
@@ -48,7 +48,7 @@ object Shooter: Subsystem("Shooter") {
         }
 
         shooterMotorTop.config {
-            feedbackCoefficient = 1.0 //66.0/23.0
+            feedbackCoefficient = 1.0 //66.0 / 23.0
             currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
@@ -59,18 +59,17 @@ object Shooter: Subsystem("Shooter") {
             periodic {
                 shooterCurrentEntry.setDouble(shooterMotorBottom.current)
                 if (rpmOne > 20.0) println("rpmOne = $rpmOne rpmTwo = $rpmTwo")
-                shooterCurrentEntry.setDouble(shooterMotorBottom.current)
-                shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
-                rpmOneEntry.setDouble(rpmOne)
-                rpmTwoEntry.setDouble(rpmTwo)
-                rpmEntry.setDouble(rpm)
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-
+            shooterCurrentEntry.setDouble(shooterMotorBottom.current)
+            shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
+            rpmOneEntry.setDouble(rpmOne)
+            rpmTwoEntry.setDouble(rpmTwo)
+            rpmEntry.setDouble(rpm)
         }
     }
 }

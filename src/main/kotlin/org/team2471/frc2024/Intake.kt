@@ -35,12 +35,14 @@ object Intake: Subsystem("Intake") {
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
 
     private var staged = false
+    private var staging = false
     var intaking = false
         set(value) {
             println("intaking set to $value")
             field = value
-            intakeMotors.setPercentOutput(if (value) 0.9 else 0.0)
-            feederMotor.setPercentOutput(if (value) 0.9 else 0.0)
+            if (staging || staged) return
+            intakeMotors.setPercentOutput(if (value) 0.7 else 0.0)
+            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
 //            Shooter.shooterMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
 //            Shooter.shooterMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
 
@@ -96,49 +98,52 @@ object Intake: Subsystem("Intake") {
     }
 
     override suspend fun default() {
-//        val t = Timer()
+        val t = Timer()
         periodic {
-            if (proximity > 140) { //proximityThresholdEntry.getDouble(125.0)) {
-//                if (t.get() > 0.1) {
+            if (intaking) {
+                if (t.get() > 0.05) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
-//                }
-//                    if (!staged) {
-//                        intakeMotors.setPercentOutput(0.0)
-//                        feederMotor.setPercentOutput(0.0)
-//                        staged = true
-//                        stagedT = t.get()
-//                    } else {
-//                        if (t.get() - 1 > stagedT) {
-//                            intakeMotors.setPercentOutput(0.0)
-//                            feederMotor.setPercentOutput(0.0)
-//                        } else {
-//                            intakeMotors.setPercentOutput(0.1)
-//                            feederMotor.setPercentOutput(0.1)
-//                        }
-//                        if (proximity > 300) {
-
-//                        } else {
-//                            intakeMotors.setPercentOutput(0.1)
-//                            feederMotor.setPercentOutput(0.1)
-//                        }
-//                    }
-            }/* else {
+                } else if (proximity > 140) {
+                    intakeMotors.setPercentOutput(0.3)
+                    feederMotor.setPercentOutput(0.3)
+                } else {
+                    t.start()
+                }
+            } else {
                 t.start()
+            }
+
+//            if (intakeMotors.current > 10.0 && !OI.driverController.leftBumper) {
+//                intakeMotors.setPercentOutput(0.0)
+//                feederMotor.setPercentOutput(0.0)
+//            }
+/*            if (intaking) {
+                if (!OI.driverController.leftBumper) {
+                    if (intakeMotors.current > 5.0 || !staged) {
+                        staging = true
+                        intakeMotors.setPercentOutput(0.1)
+                        feederMotor.setPercentOutput(0.1)
+                    }
+                    if (proximity > 1000.0 || staged) {
+                        staged = true
+                        staging = false
+                        feederMotor.setPercentOutput(0.0)
+                        intakeMotors.setPercentOutput(0.0)
+                    }
+                } else {
+                    intakeMotors.setPercentOutput(0.7)
+                    feederMotor.setPercentOutput(0.7)
+                }
             }*/
+
+
         }
     }
 
-    fun feedSetPower(power: Double) {
+    suspend fun feedSetPower(power: Double) {
         feederMotor.setPercentOutput(power)
+        delay(0.1)
         if (staged) staged = false
-    }
-
-    suspend fun rollToStage() {
-        intakeMotors.setPercentOutput(0.05)
-        feederMotor.setPercentOutput(0.05)
-        delay(0.5)
-        intakeMotors.setPercentOutput(0.0)
-        feederMotor.setPercentOutput(0.0)
     }
 }
