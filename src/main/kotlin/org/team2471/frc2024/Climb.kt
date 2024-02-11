@@ -19,7 +19,8 @@ object Climb: Subsystem("Climb") {
     private val climberCurrentEntry = table.getEntry("Climb Current")
     private val climberEncoderEntry = table.getEntry("Climb Encoder Value")
     private val climberHeightEntry = table.getEntry("Motor Height")
-    private val rotationsPerInchEntry = table.getEntry("Rotations Per Inch")
+    private val climbSetpointEntry = table.getEntry("Climb Setpoint")
+    private val relayOnEntry = table.getEntry("Relay On")
 
     val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
     val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
@@ -27,24 +28,24 @@ object Climb: Subsystem("Climb") {
 
     val climberHeight: Length
         get() = climberMotor.position.inches
-    var climberSetpoint: Length = climberHeight
+    var climbSetpoint: Length = climberHeight
         set(value) {
             val safeValue = value.asInches.coerceIn(MIN_CLIMB_INCHES, MAX_CLIMB_INCHES).inches
-            println("going to value $safeValue")
+//            println("going to value $safeValue")
 //            relayOn = (safeValue > climberHeight) //if going up, turn relay on. if going down, turn relay off.
             climberMotor.setPositionSetpoint(safeValue.asInches)
             field = safeValue
         }
 
 
-    var relayOn: Boolean = false
+    var relayOn: Boolean
+        get() = relay.get() == Relay.Value.kForward
         set(value) {
             if (value) {
                 relay.set(Relay.Value.kForward)
             } else {
                 relay.set(Relay.Value.kOff)
             }
-            field = value
         }
 
     const val MIN_CLIMB_INCHES = 23.5
@@ -56,34 +57,39 @@ object Climb: Subsystem("Climb") {
             currentLimit(39, 60, 1)
             inverted(true)
             pid {
-                p(0.00005)
+                p(0.0004)
             }
             coastMode()
         }
         climberMotor.setRawOffset(MIN_CLIMB_INCHES)
+        climbSetpoint = MIN_CLIMB_INCHES.inches
 
         GlobalScope.launch {
             periodic {
                 climberCurrentEntry.setDouble(climberMotor.current)
                 climberEncoderEntry.setDouble(climberEncoder.get())
                 climberHeightEntry.setDouble(climberHeight.asInches)
+                climbSetpointEntry.setDouble(climbSetpoint.asInches)
+                relayOnEntry.setBoolean(relayOn)
 
 
                 if (relayOn) {
                     relay.set(Relay.Value.kForward)
                 } else {
                     relay.set(Relay.Value.kOff)
-
                 }
             }
         }
     }
 
-    suspend fun climbUp() {
-
+    override suspend fun default() {
+        periodic {
+//            climbSetpoint = (-OI.operatorController.leftThumbstickY * (MAX_CLIMB_INCHES - MIN_CLIMB_INCHES) + MIN_CLIMB_INCHES).inches
+        }
     }
-
-    suspend fun climbDown() {
-
+    override fun preEnable() {
+        println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        climbSetpoint = climberHeight
+        println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
     }
 }

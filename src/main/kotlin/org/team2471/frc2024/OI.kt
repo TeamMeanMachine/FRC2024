@@ -7,6 +7,7 @@ import org.team2471.frc.lib.math.cube
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.motion.following.xPose
+import org.team2471.frc.lib.units.degrees
 
 object OI : Subsystem("OI") {
     val driverController = XboxController(0)
@@ -25,7 +26,7 @@ object OI : Subsystem("OI") {
         get() = Vector2(driveTranslationX, driveTranslationY) //does owen want this cubed?
 
     val driveRotation: Double
-        get() = (driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
+        get() = -(driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
 
     val driveLeftTrigger: Double
         get() = driverController.leftTrigger
@@ -64,8 +65,21 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
+        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
+        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
+        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
 
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Climb.relayOn = false; /*Climb.climberSetpoint -= 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Climb.relayOn = true; /*Climb.climberSetpoint += 5.0.inches*/ }
+        driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
+//        driverController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
+        driverController::rightBumper.whenTrue { spit() }
+
+
+        ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
+
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpm -= 10.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpm += 10.0; /*Climb.climberSetpoint += 5.0.inches*/ }
+
+        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
+        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
     }
 }

@@ -13,24 +13,43 @@ object Shooter: Subsystem("Shooter") {
 
     private val shooterPercentEntry = table.getEntry("Shooter Percent")
     private val shooterCurrentEntry = table.getEntry("Shooter Current")
+    private val shooterTwoCurrentEntry = table.getEntry("Shooter Two Current")
+    private val rpmOneEntry = table.getEntry("RPM Bottom")
+    private val rpmTwoEntry = table.getEntry("RPM Top")
+    private val rpmEntry = table.getEntry("rpm Setpoint")
 
-    val shooterMotorOne = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
-    val shooterMotorTwo = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
+    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
 
+    val rpmOne
+        get() = shooterMotorBottom.velocity
+
+    val rpmTwo
+        get() = shooterMotorTop.velocity * 60.0
+
+    var kFeedForward = 20.0 / (6000.0 * (66.0 / 23.0))
+    var rpm: Double = 0.0
+        set(value) {
+            println("setting rpm to $value")
+            shooterMotorTop.setVelocitySetpoint(value, value * kFeedForward)
+            shooterMotorBottom.setVelocitySetpoint(value, value * kFeedForward)
+            field = value
+        }
     init {
         shooterPercentEntry.setDouble(1.0)
 
-        shooterMotorOne.config {
-            // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+        shooterMotorBottom.config {
+            //add pid later, right now, p makes it go
+            feedbackCoefficient = 1.0 //66.0 / 23.0
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
         }
 
-        shooterMotorTwo.config {
-            // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+        shooterMotorTop.config {
+            feedbackCoefficient = 1.0 //66.0/23.0
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
@@ -38,14 +57,20 @@ object Shooter: Subsystem("Shooter") {
 
         GlobalScope.launch {
             periodic {
-                shooterCurrentEntry.setDouble(shooterMotorOne.current)
+                shooterCurrentEntry.setDouble(shooterMotorBottom.current)
+                if (rpmOne > 20.0) println("rpmOne = $rpmOne rpmTwo = $rpmTwo")
+                shooterCurrentEntry.setDouble(shooterMotorBottom.current)
+                shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
+                rpmOneEntry.setDouble(rpmOne)
+                rpmTwoEntry.setDouble(rpmTwo)
+                rpmEntry.setDouble(rpm)
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-            shooterCurrentEntry.setDouble(shooterMotorOne.current)
+
         }
     }
 }
