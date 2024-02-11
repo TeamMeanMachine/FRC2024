@@ -101,10 +101,10 @@ object Intake: Subsystem("Intake") {
         val t = Timer()
         periodic {
             if (intaking) {
-                if (t.get() > 0.1) {
+                if (t.get() > 0.14) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
-                } else if (proximity > 140) {
+                } else if (proximity > 135) {
                     intakeMotors.setPercentOutput(0.3)
                     feederMotor.setPercentOutput(0.3)
                 } else {

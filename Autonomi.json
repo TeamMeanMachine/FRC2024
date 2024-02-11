@@ -8,7 +8,10 @@
 		"kpHeading": 0.0,
 		"kdHeading": 0.0,
 		"kHeadingFeedForward": 0.0,
-		"alignRobotToPath": false
+		"alignRobotToPath": false,
+		"kMoveWhileSpin": 1.0,
+		"invertDriveFactor": 1.0,
+		"invertSteerFactor": 1.0
 	},
 	"mapAutonomous": {
 		"Tests": {
@@ -70,16 +73,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
@@ -193,16 +196,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
@@ -224,8 +227,8 @@
 									"y": 0.0
 								},
 								"m_position": {
-									"x": 0.0,
-									"y": 8.0
+									"x": 8.0,
+									"y": 0.0
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": 0.0,
@@ -316,16 +319,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
@@ -511,16 +514,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
@@ -706,16 +709,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
@@ -829,16 +832,16 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
 					"m_headingCurve": {
 						"m_defaultValue": 0.0,
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 1.7976931348623157E308,
-						"m_minValue": -1.7976931348623157E308,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
 					},
