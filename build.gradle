@@ -99,8 +99,8 @@ dependencies {
     compileOnly 'com.github.gmazzo.buildconfig:com.github.gmazzo.buildconfig.gradle.plugin:3.0.0'
 
 //    implementation 'pw.otake.pseudoresonance:pixy2-java-api:1.4.1'
-    implementation("org.photonvision:PhotonLib-java:v2023.4.2")
-    implementation("org.photonvision:PhotonTargeting-java:v2023.4.2")
+    implementation("org.photonvision:photonlib-java:v2024.2.3")
+    implementation("org.photonvision:photontargeting-java:v2024.2.3")
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')

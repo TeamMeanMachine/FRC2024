@@ -17,16 +17,16 @@ object OI : Subsystem("OI") {
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
-        get() = -driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
+        get() = driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
 
     private val driveTranslationY: Double
-        get() = driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
+        get() = -driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
 
     val driveTranslation: Vector2
         get() = Vector2(driveTranslationX, driveTranslationY) //does owen want this cubed?
 
     val driveRotation: Double
-        get() = -(driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
+        get() = (driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
 
     val driveLeftTrigger: Double
         get() = driverController.leftTrigger
