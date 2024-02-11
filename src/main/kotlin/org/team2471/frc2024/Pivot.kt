@@ -21,6 +21,7 @@ object Pivot: Subsystem("Pivot") {
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+    private val stageAngleEntry = table.getEntry("Stage Angle")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
@@ -29,9 +30,10 @@ object Pivot: Subsystem("Pivot") {
     private val gearRatio = 1 / 61.71
 
     // All in degrees
-    const val CLOSESPEAKERPOSE = 60
+    val CLOSESPEAKERPOSE
+        get() = stageAngleEntry.getDouble(20.0)
 
-    const val MINHARDSTOP = 6.0
+    const val MINHARDSTOP = 10.0
 
     const val MAXHARDSTOP = 113.0
 
@@ -63,6 +65,7 @@ object Pivot: Subsystem("Pivot") {
 
     init {
 //        ticksOffsetEntry.setDouble(3665.0)
+        stageAngleEntry.setDouble(20.0)
 
         pivotMotor.config {
             pid {
