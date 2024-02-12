@@ -45,7 +45,7 @@ object Shooter: Subsystem("Shooter") {
     var kFeedForward = 70.0 / 6380.0
     var rpm: Double = 0.0
         set(value) {
-            println("setting rpm to $rpm")
+//            println("setting rpm to $rpm")
             shooterMotorTop.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
             shooterMotorBottom.setVelocitySetpoint(0.0, 0.0) //value, value * kFeedForward)
             field = value
