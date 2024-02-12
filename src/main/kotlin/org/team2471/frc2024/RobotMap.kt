@@ -25,6 +25,7 @@ object DigitalSensors {
     const val BACK_RIGHT = 1
     const val FRONT_RIGHT = 5
     const val FRONT_LEFT = 2
+    const val BUTTON = 6
 
     const val CLIMBER = 4
 }

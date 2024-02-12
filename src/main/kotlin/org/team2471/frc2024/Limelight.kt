@@ -1,4 +1,4 @@
-/*
+package org.team2471.frc2024/*
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableEntry

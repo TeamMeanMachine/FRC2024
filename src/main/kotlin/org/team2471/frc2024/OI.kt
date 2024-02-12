@@ -13,20 +13,20 @@ object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.1
+    private val deadBandDriver = 0.05
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
-        get() = -driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
+        get() = driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
 
     private val driveTranslationY: Double
-        get() = driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
+        get() = -driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
 
     val driveTranslation: Vector2
         get() = Vector2(driveTranslationX, driveTranslationY) //does owen want this cubed?
 
     val driveRotation: Double
-        get() = -(driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
+        get() = (driverController.rightThumbstickX.deadband(deadBandDriver)).cube() // * 0.6
 
     val driveLeftTrigger: Double
         get() = driverController.leftTrigger
@@ -72,14 +72,18 @@ object OI : Subsystem("OI") {
         driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
 //        driverController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
         driverController::rightBumper.whenTrue { spit() }
-
+        driverController::rightTriggerFullPress.whenTrue { fire() }
+//        driverController::a.whenTrue { Shooter.shooting = !Shooter.shooting }
 
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
 
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpm -= 10.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpm += 10.0; /*Climb.climberSetpoint += 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpm -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpm += 5.0; /*Climb.climberSetpoint += 5.0.inches*/ }
+//        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Shooter.rpmBottom -= 0.05; /*Climb.climberSetpoint -= 5.0.inches*/ }
+//        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Shooter.rpmBottom += 0.05; /*Climb.climberSetpoint -= 5.0.inches*/ }
 
-        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
-        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
+
+        ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
+        ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
     }
 }

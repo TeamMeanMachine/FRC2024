@@ -2,6 +2,8 @@ package org.team2471.frc2024
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -28,21 +30,22 @@ object Intake: Subsystem("Intake") {
     private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
-    val intakeMotors = MotorController(FalconID(Falcons.INTAKE_BOTTOM), FalconID(Falcons.INTAKE_TOP))
+    val intakeMotors = MotorController(FalconID(Falcons.INTAKE_TOP), FalconID(Falcons.INTAKE_BOTTOM))
     val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
+    private val button = DigitalInput(DigitalSensors.BUTTON)
 
     private var staged = false
+    private var staging = false
     var intaking = false
         set(value) {
             println("intaking set to $value")
             field = value
-            intakeMotors.setPercentOutput(if (value) 0.9 else 0.0)
-            feederMotor.setPercentOutput(if (value) 0.9 else 0.0)
-//            Shooter.shooterMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
-//            Shooter.shooterMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
+            if (staging || staged) return
+            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
+            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
 
         }
 
@@ -96,49 +99,39 @@ object Intake: Subsystem("Intake") {
     }
 
     override suspend fun default() {
-//        val t = Timer()
+        val t = Timer()
         periodic {
-            if (proximity > 140) { //proximityThresholdEntry.getDouble(125.0)) {
-//                if (t.get() > 0.1) {
+            println("button ${button.get()}")
+            if (intaking) {
+                if (!button.get() && (!staging || !staged)) {
+                    staging = true
+                    intakeMotors.setPercentOutput(0.3)
+                    feederMotor.setPercentOutput(0.3)
+                }
+                if (proximity > 500) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
+                    staged = true
+                    staging = false
+                }
+//                if (t.get() > 0.14) {
+//                    intakeMotors.setPercentOutput(0.0)
+//                    feederMotor.setPercentOutput(0.0)
+//                } else if (proximity > 135) {
+//                    intakeMotors.setPercentOutput(0.3)
+//                    feederMotor.setPercentOutput(0.3)
+//                } else {
+//                    t.start()
 //                }
-//                    if (!staged) {
-//                        intakeMotors.setPercentOutput(0.0)
-//                        feederMotor.setPercentOutput(0.0)
-//                        staged = true
-//                        stagedT = t.get()
-//                    } else {
-//                        if (t.get() - 1 > stagedT) {
-//                            intakeMotors.setPercentOutput(0.0)
-//                            feederMotor.setPercentOutput(0.0)
-//                        } else {
-//                            intakeMotors.setPercentOutput(0.1)
-//                            feederMotor.setPercentOutput(0.1)
-//                        }
-//                        if (proximity > 300) {
-
-//                        } else {
-//                            intakeMotors.setPercentOutput(0.1)
-//                            feederMotor.setPercentOutput(0.1)
-//                        }
-//                    }
-            }/* else {
+            } else {
                 t.start()
-            }*/
+            }
         }
     }
 
-    fun feedSetPower(power: Double) {
+    suspend fun feedSetPower(power: Double) {
         feederMotor.setPercentOutput(power)
+        delay(0.1)
         if (staged) staged = false
-    }
-
-    suspend fun rollToStage() {
-        intakeMotors.setPercentOutput(0.05)
-        feederMotor.setPercentOutput(0.05)
-        delay(0.5)
-        intakeMotors.setPercentOutput(0.0)
-        feederMotor.setPercentOutput(0.0)
     }
 }
