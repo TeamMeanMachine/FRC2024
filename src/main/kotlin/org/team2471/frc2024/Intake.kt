@@ -103,7 +103,7 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         periodic {
-//            println("button ${button.get()}")
+            //println("button ${button.get()}")
             if (intaking) {
 //                if (!button.get() && (!staging || !staged)) {
 //                    staging = true
