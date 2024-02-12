@@ -29,16 +29,18 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
+    const val TESTPOSE = 41
+
     // All in degrees
-    val CLOSESPEAKERPOSE
-        get() = stageAngleEntry.getDouble(20.0)
+    val CLOSESPEAKERPOSE = 62
+//        get() = stageAngleEntry.getDouble(60.0)
 
     const val MINHARDSTOP = 10.0
 
     const val MAXHARDSTOP = 113.0
 
     // Ticks
-    private const val MINTICKS = 2225
+    private const val MINTICKS = 2231
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -91,6 +93,7 @@ object Pivot: Subsystem("Pivot") {
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
                 encoderVoltageEntry.setDouble(encoderVoltage)
+                angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
             }
         }
 

@@ -436,7 +436,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
                 feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (91.0 / 96.0)
                 currentLimit(60, 65, 1)
-//                openLoopRamp(0.2)
+                openLoopRamp(0.3)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)

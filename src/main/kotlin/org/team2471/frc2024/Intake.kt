@@ -35,7 +35,7 @@ object Intake: Subsystem("Intake") {
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-    private val button = DigitalInput(DigitalSensors.BUTTON)
+//    private val button = DigitalInput(DigitalSensors.BUTTON)
 
     private var staged = false
     private var staging = false
@@ -44,8 +44,10 @@ object Intake: Subsystem("Intake") {
             println("intaking set to $value")
             field = value
             if (staging || staged) return
-            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
-            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
+//            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
+//            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
+            intakeMotors.setPercentOutput(if ( value) 0.6 else 0.0)
+            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
 
         }
 
@@ -101,13 +103,13 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         periodic {
-            println("button ${button.get()}")
+//            println("button ${button.get()}")
             if (intaking) {
-                if (!button.get() && (!staging || !staged)) {
-                    staging = true
-                    intakeMotors.setPercentOutput(0.3)
-                    feederMotor.setPercentOutput(0.3)
-                }
+//                if (!button.get() && (!staging || !staged)) {
+//                    staging = true
+//                    intakeMotors.setPercentOutput(0.3)
+//                    feederMotor.setPercentOutput(0.3)
+//                }
                 if (proximity > 500) {
                     intakeMotors.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)

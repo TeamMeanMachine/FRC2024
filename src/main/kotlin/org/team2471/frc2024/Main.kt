@@ -96,48 +96,47 @@ object Robot : MeanlibRobot() {
         Drive.headingSetpoint = Drive.heading
     }
 
-    override suspend fun test()
-        {
-            println("test mode begin. Hi.")
+    override suspend fun test() {
+        println("test mode begin. Hi.")
 
 //        Climber.motorTest()
-            Drive.currentTest()
+//            Drive.currentTest()
+        Drive.setAngleOffsets()
 
 
-            println("test mode done")
-//        Drive.setAngleOffsets()
-        }
-
-
-        override suspend fun disable() {
-            OI.driverController.rumble = 0.0
-            OI.operatorController.rumble = 0.0
-            Drive.disable()
-            Climb.disable()
-            Intake.disable()
-            Pivot.disable()
-            Shooter.disable()
-        }
-
-        private fun initTimeMeasurement() {
-            startMeasureTime = System.nanoTime()
-            lastMeasureTime = startMeasureTime
-        }
-
-        private fun updateNanosTaken() {
-            lastMeasureTime = System.nanoTime()
-        }
-
-        fun totalTimeTaken(): Long {
-            return System.nanoTime() - startMeasureTime
-        }
-
-        fun recentTimeTaken(): Long {
-            val timeTaken = System.nanoTime() - lastMeasureTime
-            updateNanosTaken()
-            return timeTaken
-        }
+        println("test mode done")
     }
+
+
+    override suspend fun disable() {
+        OI.driverController.rumble = 0.0
+        OI.operatorController.rumble = 0.0
+        Drive.disable()
+        Climb.disable()
+        Intake.disable()
+        Pivot.disable()
+        Shooter.disable()
+    }
+
+    private fun initTimeMeasurement() {
+        startMeasureTime = System.nanoTime()
+        lastMeasureTime = startMeasureTime
+    }
+
+    private fun updateNanosTaken() {
+        lastMeasureTime = System.nanoTime()
+    }
+
+    fun totalTimeTaken(): Long {
+        return System.nanoTime() - startMeasureTime
+    }
+
+    fun recentTimeTaken(): Long {
+        val timeTaken = System.nanoTime() - lastMeasureTime
+        updateNanosTaken()
+        return timeTaken
+    }
+}
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {

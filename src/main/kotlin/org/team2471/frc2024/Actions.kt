@@ -2,9 +2,11 @@ package org.team2471.frc2024
 
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 suspend fun climbWithTrigger() = use(Climb) {
     println("inside climbWIthTrigger!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -30,14 +32,17 @@ suspend fun spit() = use(Intake) {
 }
 
 suspend fun fire() = use(Shooter, Intake){
-    Shooter.rpm = Shooter.shootingRpm
+    Shooter.rpmTop = Shooter.shootingRpmTop
+    Shooter.rpmBottom = Shooter.shootingRpmBottom
     val t = Timer()
     t.start()
     periodic {
-        if (((Shooter.rpmTop + Shooter.rpmBottom) - (Shooter.rpm * 2)).absoluteValue < 10.0) {
-            println("at rpm shooting now!!!")
+        println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
+        if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 4.0) {
+            println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
             this.stop()
         }
+
         if (t.get() > 2.0) {
             println("waited 1.0 seconds shooting at lower power")
             this.stop()
