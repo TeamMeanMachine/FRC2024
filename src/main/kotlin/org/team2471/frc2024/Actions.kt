@@ -2,11 +2,8 @@ package org.team2471.frc2024
 
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
-import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 
 suspend fun climbWithTrigger() = use(Climb) {
     println("inside climbWIthTrigger!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -23,7 +20,8 @@ suspend fun spit() = use(Intake) {
     println("starting spit periodic")
     periodic {
         if (OI.driverController.rightBumper) {
-            Intake.intakeMotors.setPercentOutput(-0.9)
+            Intake.intakeMotorTop.setPercentOutput(-0.9)
+            Intake.intakeMotorBottom.setPercentOutput(-0.9)
             Intake.feederMotor.setPercentOutput(-0.9)
         } else {
             this.stop()
@@ -32,10 +30,10 @@ suspend fun spit() = use(Intake) {
 }
 
 suspend fun fire() = use(Shooter, Intake){
-    Shooter.rpmTop = Shooter.shootingRpmTop
-    Shooter.rpmBottom = Shooter.shootingRpmBottom
+/*    Shooter.rpmTop = Shooter.shootingRpmTop
+    Shooter.rpmBottom = Shooter.shootingRpmBottom*/
     val t = Timer()
-    t.start()
+/*    t.start()
     periodic {
         println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
         if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 4.0) {
@@ -47,16 +45,19 @@ suspend fun fire() = use(Shooter, Intake){
             println("waited 1.0 seconds shooting at lower power")
             this.stop()
         }
-    }
-    Intake.intakeMotors.setPercentOutput(0.5)
+    }*/
+    Intake.intakeMotorTop.setPercentOutput(0.5)
+    Intake.intakeMotorBottom.setPercentOutput(0.5)
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if (t.get() > 1.0) {
+        if (t.get() > 2.0) {
             println("exiting shooting")
             this.stop()
         }
     }
     Intake.intaking = false
 //    Shooter.shooting = false
+    Shooter.rpmTop = 0.0
+    Shooter.rpmBottom = 0.0
 }

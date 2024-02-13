@@ -39,8 +39,8 @@ object NoteDetector: Subsystem("NoteDetector") {
 
                 for (target : PhotonTrackedTarget in camera.latestResult.targets) {
                     tempNotes.add(Note(
-                        robotCoords = getTargetRobotCoords(target),
-                        xScreenDegreeOffsetThingAngleStatisticsAverageOfSidesOfBoundingBoxThatICantAccessExceptionalDataRightHereRightNowCallSiteCallItRightNow = target.yaw.degrees
+                        getTargetRobotCoords(target),
+                        target.yaw.degrees
                     ))
                 }
 

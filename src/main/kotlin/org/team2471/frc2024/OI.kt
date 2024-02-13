@@ -67,7 +67,7 @@ object OI : Subsystem("OI") {
 
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
-        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
+        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees + 2.0.degrees }
         operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE.degrees }
 
 
@@ -75,7 +75,7 @@ object OI : Subsystem("OI") {
 //        driverController::rightBumper.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees }
         driverController::rightBumper.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
-//        driverController::a.whenTrue { Shooter.shooting = !Shooter.shooting }
+        driverController::a.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
 
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
 

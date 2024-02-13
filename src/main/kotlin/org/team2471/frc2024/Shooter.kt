@@ -31,6 +31,20 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
+    var shootingRPM = false
+        set(value) {
+            println("Shooter $value")
+            if (value) {
+                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 15!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                rpmTop = shootingRpmTopEntry.getDouble(70.0)
+                rpmBottom = shootingRpmBottomEntry.getDouble(70.0)
+            } else {
+                rpmTop = 0.0
+                rpmBottom = 0.0
+            }
+            field = value
+        }
+
     val motorRpmTop
         get() = shooterMotorTop.velocity
 
@@ -65,12 +79,12 @@ object Shooter: Subsystem("Shooter") {
     init {
         shooterPercentEntry.setDouble(1.0)
         if (!shootingRpmTopEntry.exists()) {
-            shootingRpmTopEntry.setDouble(20.0)
+            shootingRpmTopEntry.setDouble(75.0)
             shootingRpmTopEntry.setPersistent()
         }
 
         if (!shootingRpmBottomEntry.exists()) {
-            shootingRpmBottomEntry.setDouble(21.0)
+            shootingRpmBottomEntry.setDouble(60.0)
             shootingRpmBottomEntry.setPersistent()
         }
 
@@ -124,8 +138,8 @@ object Shooter: Subsystem("Shooter") {
 
     override suspend fun default() {
         periodic {
-            rpmTop = 0.0
-            rpmBottom = 0.0
+//            rpmTop = 0.0
+//            rpmBottom = 0.0
         }
     }
 }

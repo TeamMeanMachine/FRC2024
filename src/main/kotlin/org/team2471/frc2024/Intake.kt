@@ -2,8 +2,6 @@ package org.team2471.frc2024
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -30,7 +28,8 @@ object Intake: Subsystem("Intake") {
     private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
-    val intakeMotors = MotorController(FalconID(Falcons.INTAKE_TOP), FalconID(Falcons.INTAKE_BOTTOM))
+    val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP))
+    val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM))
     val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
@@ -46,7 +45,8 @@ object Intake: Subsystem("Intake") {
             if (staging || staged) return
 //            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
 //            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
-            intakeMotors.setPercentOutput(if ( value) 0.6 else 0.0)
+            intakeMotorTop.setPercentOutput(if (value) 0.5 else 0.0)
+            intakeMotorBottom.setPercentOutput(if (value) 0.6 else 0.0)
             feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
 
         }
@@ -64,7 +64,15 @@ object Intake: Subsystem("Intake") {
         feederPercentEntry.setDouble(0.8)
         var x = feederCurrentEntry.getDouble(0.0)
 
-        intakeMotors.config {
+        intakeMotorTop.config {
+            // Copied from bunny. Prolly way off
+            currentLimit(35, 40, 1)
+            coastMode()
+            inverted(false)
+            followersInverted(false)
+        }
+
+        intakeMotorBottom.config {
             // Copied from bunny. Prolly way off
             currentLimit(35, 40, 1)
             coastMode()
@@ -88,10 +96,10 @@ object Intake: Subsystem("Intake") {
                 colorEntry.setString(colorSensor.color.toHexString())
                 proximityEntry.setInteger(colorSensor.proximity.toLong())
 
-                intakeCurrentEntry.setDouble(intakeMotors.current)
+                intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
                 colorEntry.setDouble(0.0)
-                intakeCurrentEntry.setDouble(intakeMotors.current)
+                intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
 
 
@@ -111,7 +119,8 @@ object Intake: Subsystem("Intake") {
 //                    feederMotor.setPercentOutput(0.3)
 //                }
                 if (proximity > 500) {
-                    intakeMotors.setPercentOutput(0.0)
+                    intakeMotorTop.setPercentOutput(0.0)
+                    intakeMotorBottom.setPercentOutput(0.0)
                     feederMotor.setPercentOutput(0.0)
                     staged = true
                     staging = false
