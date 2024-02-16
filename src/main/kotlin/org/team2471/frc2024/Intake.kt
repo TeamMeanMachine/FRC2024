@@ -2,6 +2,7 @@ package org.team2471.frc2024
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -34,7 +35,7 @@ object Intake: Subsystem("Intake") {
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-//    private val button = DigitalInput(DigitalSensors.BUTTON)
+    private val button = DigitalInput(DigitalSensors.BUTTON)
 
     private var staged = false
     private var staging = false
@@ -111,7 +112,7 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         periodic {
-            //println("button ${button.get()}")
+            println("button ${button.get()}")
             if (intaking) {
 //                if (!button.get() && (!staging || !staged)) {
 //                    staging = true
