@@ -33,7 +33,8 @@ suspend fun Intake.motorsTest() {
             switch += 1
             if (switch > 2) switch = 0
         }
-        intakeMotors.setPercentOutput(intakeP)
+        intakeMotorTop.setPercentOutput(intakeP)
+        intakeMotorBottom.setPercentOutput(intakeP)
         feederMotor.setPercentOutput(feedP)
 //        Shooter.shooterMotorBottom.setPercentOutput(shootP)
         shoot2 = shootP //if (shootP - .05 > 0) shootP - 0.05 else shootP

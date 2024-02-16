@@ -61,6 +61,8 @@ object AutoChooser {
         addOption("2 Foot Circle", "2 Foot Circle")
         addOption("4 Foot Circle", "4 Foot Circle")
         addOption("8 Foot Circle", "8 Foot Circle")
+        addOption("Full Field Straight B","Full Field Straight B")
+        addOption("Full Field Straight R","Full Field Straight R")
         addOption("Hook Path", "Hook Path")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
 
@@ -148,7 +150,10 @@ object AutoChooser {
             val path = testAutonomous?.get(testPath)
             println(testPath)
             if (path != null) {
+                println("Path is not null")
                 Drive.driveAlongPath(path, true)
+            } else {
+                println("Path is null!!! :(")
             }
         }
     }
