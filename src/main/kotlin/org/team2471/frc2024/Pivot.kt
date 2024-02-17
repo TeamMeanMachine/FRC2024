@@ -41,8 +41,8 @@ object Pivot: Subsystem("Pivot") {
     const val MAXHARDSTOP = 111.5
 
     // Ticks
-    private const val MINTICKS = 2230
-    private const val MAXTICKS = 1005
+    private const val MINTICKS = 333
+    private const val MAXTICKS = 250
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -59,7 +59,7 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
-//            pivotMotor.setPositionSetpoint(field.asDegrees) disable pivot
+            pivotMotor.setPositionSetpoint(field.asDegrees)
             println("Setpoint changed to: $field")
         }
 

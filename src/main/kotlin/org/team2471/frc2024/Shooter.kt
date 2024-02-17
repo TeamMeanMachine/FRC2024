@@ -35,7 +35,8 @@ object Shooter: Subsystem("Shooter") {
         set(value) {
             println("Shooter $value")
             if (value) {
-                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 15!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
+                // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 rpmTop = shootingRpmTopEntry.getDouble(70.0)
                 rpmBottom = shootingRpmBottomEntry.getDouble(70.0)
             } else {
