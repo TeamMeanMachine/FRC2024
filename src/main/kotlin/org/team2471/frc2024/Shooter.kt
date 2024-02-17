@@ -138,8 +138,7 @@ object Shooter: Subsystem("Shooter") {
 
     override suspend fun default() {
         periodic {
-//            rpmTop = 0.0
-//            rpmBottom = 0.0
+            motorRpmTopEntry.setDouble(motorRpmTop)
         }
     }
 }

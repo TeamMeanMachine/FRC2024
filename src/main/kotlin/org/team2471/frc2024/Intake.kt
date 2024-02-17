@@ -3,6 +3,7 @@ package org.team2471.frc2024
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -43,11 +44,9 @@ object Intake: Subsystem("Intake") {
         set(value) {
             println("intaking set to $value")
             field = value
-            if (staging || staged) return
-//            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
-//            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
-            intakeMotorTop.setPercentOutput(if (value) 0.5 else 0.0)
-            intakeMotorBottom.setPercentOutput(if (value) 0.6 else 0.0)
+//            if (staging || staged) return
+            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
+            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
             feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
 
         }
@@ -112,7 +111,7 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         periodic {
-            println("button ${button.get()}")
+            //println("button ${button.get()}")
             if (intaking) {
 //                if (!button.get() && (!staging || !staged)) {
 //                    staging = true

@@ -59,7 +59,7 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
-            pivotMotor.setPositionSetpoint(field.asDegrees)
+//            pivotMotor.setPositionSetpoint(field.asDegrees) disable pivot
             println("Setpoint changed to: $field")
         }
 
