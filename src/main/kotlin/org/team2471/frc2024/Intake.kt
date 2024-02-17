@@ -2,6 +2,8 @@ package org.team2471.frc2024
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -34,7 +36,7 @@ object Intake: Subsystem("Intake") {
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-//    private val button = DigitalInput(DigitalSensors.BUTTON)
+    private val button = DigitalInput(DigitalSensors.BUTTON)
 
     private var staged = false
     private var staging = false
@@ -42,11 +44,9 @@ object Intake: Subsystem("Intake") {
         set(value) {
             println("intaking set to $value")
             field = value
-            if (staging || staged) return
-//            intakeMotors.setPercentOutput(if (value) 0.5 else 0.0)
-//            feederMotor.setPercentOutput(if (value) 0.45 else 0.0)
-            intakeMotorTop.setPercentOutput(if (value) 0.5 else 0.0)
-            intakeMotorBottom.setPercentOutput(if (value) 0.6 else 0.0)
+//            if (staging || staged) return
+            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
+            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
             feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
 
         }

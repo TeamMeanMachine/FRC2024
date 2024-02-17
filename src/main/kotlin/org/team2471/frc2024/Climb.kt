@@ -30,7 +30,10 @@ object Climb: Subsystem("Climb") {
         get() = climberMotor.position.inches
     var climbSetpoint: Length = climberHeight
         set(value) {
-            val safeValue = value.asInches.coerceIn(MIN_CLIMB_INCHES, MAX_CLIMB_INCHES).inches
+            var safeValue = value.asInches.coerceIn(MIN_CLIMB_INCHES, MAX_CLIMB_INCHES).inches
+            if (relayOn && safeValue > climberHeight) {
+                safeValue = climberHeight
+            }
 //            println("going to value $safeValue")
 //            relayOn = (safeValue > climberHeight) //if going up, turn relay on. if going down, turn relay off.
             climberMotor.setPositionSetpoint(safeValue.asInches)
