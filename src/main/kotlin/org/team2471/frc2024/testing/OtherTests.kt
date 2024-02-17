@@ -46,8 +46,8 @@ suspend fun Intake.motorsTest() {
 suspend fun Climb.motorTest() {
     periodic {
         climberMotor.setPercentOutput(OI.operatorLeftY)
-        OI.operatorController::a.whenTrue { relayOn = !relayOn }
-        println("relayOn: $relayOn")
+//        OI.operatorController::a.whenTrue { relayOn = !relayOn }
+//        println("relayOn: $relayOn")
     }
 }
 

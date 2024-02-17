@@ -30,7 +30,7 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    const val TESTPOSE = 46
+    const val TESTPOSE = 55
 
     // All in degrees
     val CLOSESPEAKERPOSE = 62
@@ -41,8 +41,8 @@ object Pivot: Subsystem("Pivot") {
     const val MAXHARDSTOP = 111.5
 
     // Ticks
-    private const val MINTICKS = 333
-    private const val MAXTICKS = 250
+    private const val MINTICKS = 323
+    private const val MAXTICKS = 238
 
     val pivotTicks: Int
         get() = pivotEncoder.value

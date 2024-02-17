@@ -41,7 +41,7 @@ object Climb: Subsystem("Climb") {
         }
 
 
-    var relayOn: Boolean
+    private var relayOn: Boolean
         get() = relay.get() == Relay.Value.kForward
         set(value) {
             if (value) {
@@ -91,8 +91,17 @@ object Climb: Subsystem("Climb") {
         }
     }
     override fun preEnable() {
+        relayOn = false
         println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         climbSetpoint = climberHeight
         println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
+    }
+
+    fun activateRelay() {
+        relayOn = true
+        println("RELAY ON!!!")
+//        delay(0.5)
+//        relayOn = false
+//        println("waited 0.5 seconds RELAY OFF")
     }
 }

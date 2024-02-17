@@ -23,7 +23,7 @@ object AnalogSensors {
 object DigitalSensors {
     const val BACK_LEFT = 3
     const val BACK_RIGHT = 1
-    const val FRONT_RIGHT = 5
+    const val FRONT_RIGHT = 0
     const val FRONT_LEFT = 2
     const val BUTTON = 6
 

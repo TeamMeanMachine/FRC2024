@@ -3,7 +3,6 @@ package org.team2471.frc2024
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -23,6 +22,7 @@ object Intake: Subsystem("Intake") {
     private val colorEntry = table.getEntry("ColorSensor Color")
     private val proximityEntry = table.getEntry("ColorSensor Proximity")
     private val proximityThresholdEntry = table.getEntry("ColorSensor Proximity Threshold")
+    private val buttonEntry = table.getEntry("Button")
 
     private val intakePercentEntry = table.getEntry("Intake Percent")
     private val intakeCurrentEntry = table.getEntry("Intake Current")
@@ -36,23 +36,29 @@ object Intake: Subsystem("Intake") {
 
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-    private val button = DigitalInput(DigitalSensors.BUTTON)
+    private val buttonSensor = DigitalInput(DigitalSensors.BUTTON)
 
-    private var staged = false
-    private var staging = false
+//    private var staged = false
+//    private var staging = false
     var intaking = false
         set(value) {
             println("intaking set to $value")
             field = value
 //            if (staging || staged) return
-            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
-            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
-            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
+//            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
+//            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
+//            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
 
         }
 
+    val button: Boolean
+        get() = !buttonSensor.get()
+
     private val proximity: Int
         get() = colorSensor.proximity
+
+    private var detectedCargo = false
+    var holdingCargo = false
 
     init {
         intakingEntry.setBoolean(false)
@@ -101,6 +107,7 @@ object Intake: Subsystem("Intake") {
                 colorEntry.setDouble(0.0)
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
+                buttonEntry.setBoolean(button)
 
 
             }
@@ -111,38 +118,38 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         periodic {
-            //println("button ${button.get()}")
             if (intaking) {
-//                if (!button.get() && (!staging || !staged)) {
-//                    staging = true
-//                    intakeMotors.setPercentOutput(0.3)
-//                    feederMotor.setPercentOutput(0.3)
-//                }
-                if (proximity > 500) {
-                    intakeMotorTop.setPercentOutput(0.0)
-                    intakeMotorBottom.setPercentOutput(0.0)
-                    feederMotor.setPercentOutput(0.0)
-                    staged = true
-                    staging = false
+                if (!detectedCargo && !holdingCargo) {
+                    setIntakeMotorsPercent(0.7)
                 }
-//                if (t.get() > 0.14) {
-//                    intakeMotors.setPercentOutput(0.0)
-//                    feederMotor.setPercentOutput(0.0)
-//                } else if (proximity > 135) {
-//                    intakeMotors.setPercentOutput(0.3)
-//                    feederMotor.setPercentOutput(0.3)
-//                } else {
-//                    t.start()
-//                }
+                if (button && !detectedCargo) {
+                    println("detected piece, slowing intake")
+                    setIntakeMotorsPercent(0.1)
+                    detectedCargo = true
+                }
+                if (proximity > 500 && !holdingCargo) {
+                    setIntakeMotorsPercent(0.0)
+                    println("stopping intake")
+                    holdingCargo = true
+                    detectedCargo = false
+                }
+                if (detectedCargo) {
+                    if (t.get() > 2.0) {
+                        detectedCargo = false
+                    }
+                } else {
+                    t.start()
+                }
             } else {
+                setIntakeMotorsPercent(0.0)
                 t.start()
             }
         }
     }
 
-    suspend fun feedSetPower(power: Double) {
-        feederMotor.setPercentOutput(power)
-        delay(0.1)
-        if (staged) staged = false
+    fun setIntakeMotorsPercent(value: Double) {
+        intakeMotorTop.setPercentOutput(value)
+        intakeMotorBottom.setPercentOutput(value)
+        feederMotor.setPercentOutput(value)
     }
 }

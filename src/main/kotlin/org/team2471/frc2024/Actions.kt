@@ -18,6 +18,7 @@ suspend fun climbWithTrigger() = use(Climb) {
 
 suspend fun spit() = use(Intake) {
     println("starting spit periodic")
+    Intake.holdingCargo = false
     periodic {
         if (OI.driverController.rightBumper) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
