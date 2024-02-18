@@ -66,5 +66,5 @@ object NoteDetector: Subsystem("NoteDetector") {
 
 data class Note(
     val robotCoords : Vector2,
-    val xScreenDegreeOffsetThingAngleStatisticsAverageOfSidesOfBoundingBoxThatICantAccessExceptionalDataRightHereRightNowCallSiteCallItRightNow : Angle
+    val degOffset : Angle
 )
