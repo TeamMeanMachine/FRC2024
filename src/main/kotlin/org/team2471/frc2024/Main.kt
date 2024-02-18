@@ -34,7 +34,7 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-                isCompBot = (macString != "0-12847512372")
+                isCompBot = (macString != "0-1284751573")
                 println("I am compbot = $isCompBot")
             }
         }
@@ -102,6 +102,8 @@ object Robot : MeanlibRobot() {
 //        Climber.motorTest()
 //            Drive.currentTest()
         Drive.setAngleOffsets()
+//        Drive.steeringTests()
+//        Drive.driveTests()
 
 
 
