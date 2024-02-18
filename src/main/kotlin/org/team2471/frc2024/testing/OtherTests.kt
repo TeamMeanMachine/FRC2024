@@ -4,6 +4,7 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.input.whenTrue
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.*
 
 
@@ -55,4 +56,18 @@ suspend fun Pivot.motorTest() {
     pivotMotor.setPercentOutput(0.2)
     delay(0.5)
     pivotMotor.setPercentOutput(0.0)
+}
+
+suspend fun Pivot.feedForwardTest() {
+    var power = 0.0
+    val startingAngle = pivotEncoderAngle
+    periodic {
+        pivotMotor.setPercentOutput(power)
+        println("power: $power pivot: ${pivotEncoderAngle.asDegrees} current ${pivotMotor.current}")
+        if (pivotEncoderAngle - startingAngle > 0.5.degrees) {
+            println("power is now $power")
+            this.stop()
+        }
+        power += 0.0001
+    }
 }

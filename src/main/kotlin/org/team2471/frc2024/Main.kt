@@ -11,6 +11,7 @@ import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.feedForwardTest
 import org.team2471.frc2024.testing.motorsTest
 import org.team2471.frc2024.testing.tuneDrivePositionController
 import java.net.NetworkInterface
@@ -101,9 +102,10 @@ object Robot : MeanlibRobot() {
 
 //        Climber.motorTest()
 //            Drive.currentTest()
-        Drive.setAngleOffsets()
+//        Drive.setAngleOffsets()
 //        Drive.steeringTests()
 //        Drive.driveTests()
+        Pivot.feedForwardTest()
 
 
 

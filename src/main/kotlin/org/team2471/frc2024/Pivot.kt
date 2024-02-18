@@ -10,8 +10,11 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Robot.isCompBot
+import kotlin.math.absoluteValue
+import kotlin.math.cos
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -24,6 +27,7 @@ object Pivot: Subsystem("Pivot") {
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
+    private val pivotErrorEntry = table.getEntry("Pivot Error")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
@@ -60,9 +64,11 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
-            pivotMotor.setPositionSetpoint(field.asDegrees)
-            println("Setpoint changed to: $field")
+            println("set pivot angle to $field")
         }
+
+    val pivotError: Double
+        get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
 
 
@@ -73,7 +79,7 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.config {
             pid {
-                p(0.0002)
+                p(0.00008)
                 d(0.000004)
             }
 
@@ -97,10 +103,14 @@ object Pivot: Subsystem("Pivot") {
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
                 encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
+                pivotErrorEntry.setDouble(pivotError)
 
+                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
-
-//                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+                if (pivotError > 0.25) {
+                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * cos((pivotEncoderAngle + 20.0.degrees).asRadians) /*+ 0.000001*/)
+                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
+                }
             }
         }
 
