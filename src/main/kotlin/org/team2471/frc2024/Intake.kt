@@ -12,6 +12,7 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.Robot.isCompBot
 
 object Intake: Subsystem("Intake") {
     private val table = NetworkTableInstance.getDefault().getTable("Intake")
@@ -74,16 +75,16 @@ object Intake: Subsystem("Intake") {
             // Copied from bunny. Prolly way off
             currentLimit(35, 40, 1)
             coastMode()
-            inverted(false)
-            followersInverted(false)
+            inverted(isCompBot)
+            followersInverted(isCompBot)
         }
 
         intakeMotorBottom.config {
             // Copied from bunny. Prolly way off
             currentLimit(35, 40, 1)
             coastMode()
-            inverted(false)
-            followersInverted(false)
+            inverted(isCompBot)
+            followersInverted(isCompBot)
         }
 
         feederMotor.config {

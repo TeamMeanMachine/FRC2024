@@ -11,6 +11,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.Robot.isCompBot
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -30,19 +31,19 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    const val TESTPOSE = 55
+    const val TESTPOSE = 32
 
     // All in degrees
     val CLOSESPEAKERPOSE = 62
 //        get() = stageAngleEntry.getDouble(60.0)
 
-    const val MINHARDSTOP = 6.0
+    const val MINHARDSTOP = 5.5
 
-    const val MAXHARDSTOP = 111.5
+    const val MAXHARDSTOP = 110.2
 
     // Ticks
-    private const val MINTICKS = 323
-    private const val MAXTICKS = 238
+    private val MINTICKS = if (isCompBot) 2540.0 else 323.0
+    private val MAXTICKS = if (isCompBot) 1410.0 else 238.0
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -51,7 +52,7 @@ object Pivot: Subsystem("Pivot") {
         get() = pivotEncoder.voltage
 
     val pivotEncoderAngle: Angle
-        get() = linearMap(MINTICKS.toDouble(), MAXTICKS.toDouble(), MINHARDSTOP, MAXHARDSTOP, pivotEncoder.value.toDouble()).degrees
+        get() = linearMap(MINTICKS, MAXTICKS, MINHARDSTOP, MAXHARDSTOP, pivotEncoder.value.toDouble()).degrees
 
     val pivotMotorAngle: Angle
         get() = pivotMotor.position.degrees
@@ -73,7 +74,7 @@ object Pivot: Subsystem("Pivot") {
         pivotMotor.config {
             pid {
                 p(0.0002)
-                d(0.00001)
+                d(0.000004)
             }
 
             //                              ticks / gear ratio   fudge factor
@@ -85,6 +86,8 @@ object Pivot: Subsystem("Pivot") {
             currentLimit(35, 40, 20)
         }
 
+        pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+
 
         GlobalScope.launch {
             periodic {
@@ -95,7 +98,9 @@ object Pivot: Subsystem("Pivot") {
                 encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
-                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+
+
+//                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
             }
         }
 

@@ -17,7 +17,7 @@ object Sparks {
 }
 
 object AnalogSensors {
-    const val PIVOT = 2
+    const val PIVOT = 0
 }
 
 object DigitalSensors {

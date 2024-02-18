@@ -55,8 +55,8 @@ object Shooter: Subsystem("Shooter") {
     val shootingRpmBottom: Double
         get() = shootingRpmBottomEntry.getDouble(21.0)
 
-    var kFeedForwardTop = 60.0 / 6380.0
-    var kFeedForwardBottom = 69.0 / 6380.0
+    var kFeedForwardTop = 85.0 / 6380.0
+    var kFeedForwardBottom = 90.0 / 6380.0
 /*    var rpm: Double = 0.0
         set(value) {
             println("setting rpm to $rpm")
@@ -90,9 +90,10 @@ object Shooter: Subsystem("Shooter") {
         }
 
         shooterMotorBottom.config {
+            feedbackCoefficient = 53.0 * (400.0 / 350.0)
             //add pid later, right now, p makes it go
             pid {
-                p(0.0000015)
+                p(0.00015)
             }
             currentLimit(30, 40, 1)
             coastMode()
@@ -101,8 +102,9 @@ object Shooter: Subsystem("Shooter") {
         }
 
         shooterMotorTop.config {
+            feedbackCoefficient = 53.0 * (400.0 / 350.0)
             pid {
-                p(0.000015)
+                p(0.00015)
             }
             currentLimit(30, 40, 1)
             coastMode()
