@@ -3,7 +3,7 @@ import edu.wpi.first.gradlerio.GradleRIOPlugin
 plugins {
     id "java"
     id "org.jetbrains.kotlin.jvm" version "1.7.20"
-    id "edu.wpi.first.GradleRIO" version "2024.1.1"
+    id "edu.wpi.first.GradleRIO" version "2024.2.1"
     id "com.github.gmazzo.buildconfig" version "3.0.0"
 }
 
