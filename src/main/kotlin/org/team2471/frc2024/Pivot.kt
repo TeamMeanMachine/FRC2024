@@ -9,6 +9,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
+import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
@@ -35,7 +36,7 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    const val TESTPOSE = 32
+    const val TESTPOSE = 25 //32
 
     // All in degrees
     val CLOSESPEAKERPOSE = 62
@@ -46,8 +47,8 @@ object Pivot: Subsystem("Pivot") {
     const val MAXHARDSTOP = 110.2
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 2540.0 else 323.0
-    private val MAXTICKS = if (isCompBot) 1410.0 else 238.0
+    private val MINTICKS = if (isCompBot) 2540.0 else 2124.0
+    private val MAXTICKS = if (isCompBot) 1410.0 else 940.0
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -108,8 +109,8 @@ object Pivot: Subsystem("Pivot") {
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
                 if (pivotError > 0.25) {
-                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * cos((pivotEncoderAngle + 20.0.degrees).asRadians) /*+ 0.000001*/)
-                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
+                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians).squareWithSign()) /*+ 0.000001*/)
+//                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
                 }
             }
         }
