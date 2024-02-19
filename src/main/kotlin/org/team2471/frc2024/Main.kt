@@ -22,6 +22,7 @@ object Robot : MeanlibRobot() {
     var startMeasureTime = System.nanoTime()
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
+    var beforeFirstEnable = true
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
@@ -56,6 +57,8 @@ object Robot : MeanlibRobot() {
         Climb
         Pivot
         AutoChooser
+        AprilTag
+        PoseEstimator
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
         // drop down menu for selecting tests
@@ -67,6 +70,7 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun enable() {
+        beforeFirstEnable = false
         println("starting enable")
         Drive.enable()
         Climb.enable()

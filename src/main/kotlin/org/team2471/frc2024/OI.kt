@@ -90,6 +90,8 @@ object OI : Subsystem("OI") {
         ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Shooter.rpmBottom -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
         ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Shooter.rpmBottom += 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
 
+        operatorController::start.whenTrue { resetCameras() }
+
 
 
     }

@@ -11,6 +11,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.Angle.Companion.cos
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Robot.isCompBot
@@ -28,7 +29,6 @@ object Pivot: Subsystem("Pivot") {
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
-    private val pivotErrorEntry = table.getEntry("Pivot Error")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
@@ -104,7 +104,7 @@ object Pivot: Subsystem("Pivot") {
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
                 encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
-                pivotErrorEntry.setDouble(pivotError)
+//                pivotErrorEntry.setDouble(pivotError)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
