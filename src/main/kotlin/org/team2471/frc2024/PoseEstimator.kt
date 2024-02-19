@@ -12,10 +12,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.motion.following.lookupPose
-import org.team2471.frc.lib.units.asRadians
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.units.feet
-import org.team2471.frc.lib.units.radians
+import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Robot.beforeFirstEnable
 
 object PoseEstimator {
@@ -36,8 +33,11 @@ object PoseEstimator {
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
     val currentPose
-        get() = Drive.position - offset
+        get() = robotPosM - offset
     var preEnableHadTarget = false
+
+    val robotPosM
+        get() = Vector2(Drive.position.x.feet.asMeters, Drive.position.y.feet.asMeters)
     // val heading
     //   get() = (Drive.heading - headingOffset).wrap()
 
@@ -56,7 +56,7 @@ object PoseEstimator {
                 offsetEntry.setDoubleArray(doubleArrayOf(offset.x, offset.y))
                 //Todo: starting positions for autos
 //                if (DriverStation.isDisabled() && beforeFirstEnable && !preEnableHadTarget && !Drive.demoMode){
-//                    Drive.position = FieldManager.startingPosition
+//                    robotPosM = FieldManager.startingPosition
 //                    Drive.heading = if (FieldManager.isBlueAlliance) 180.0.degrees else 0.0.degrees
 //                }
 //                val maPose = MAPoseEstimator.latestPose
@@ -67,7 +67,8 @@ object PoseEstimator {
     }
     fun addVision(detection: AprilDetection, numTarget: Int, kApril: Double? = null) {
         //Ignoring Vision data if timestamp is before the last zero
-            if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || Drive.position == Vector2(0.0,0.0)) {
+
+            if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || robotPosM == Vector2(0.0,0.0)) {
                 println("Ignoring update during reset") // and initialization ...")
                 return
             } else {
@@ -76,27 +77,27 @@ object PoseEstimator {
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
                     val latencyPose = Drive.lookupPose(detection.timestamp)
                     if (DriverStation.isDisabled() && latencyPose == null && beforeFirstEnable) {
-                        val apriltagPose = Vector2(detection.pose.x, detection.pose.y)
+                        val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
                         preEnableHadTarget = true
-                        Drive.position = apriltagPose
+                        Drive.position = apriltagPoseF
                         Drive.heading = detection.pose.rotation.radians.radians
                     }
                     if (latencyPose != null) {
-                        val odomDiff = Drive.position - latencyPose.position
+                        val odomDiff = robotPosM - latencyPose.position
                         val headingDiff = Drive.heading - latencyPose.heading
                         val apriltagPose = Vector2(detection.pose.x, detection.pose.y) + odomDiff
                         //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
-                        offset = offset * (1.0 - kAprilFinal) + (Drive.position - apriltagPose) * kAprilFinal
+                        offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
                         //apriltagHeadingEntry.setDouble(apriltagHeading.asDegrees)
                         //headingOffset = headingOffset * (1.0 - kHeading) + apriltagHeading.unWrap180(Drive.heading) * kHeading
                         //TODO: figure out coercing
 //                        val coercedOffsetX = offset.x.coerceIn(
-//                            -FieldManager.fieldHalfInFeet.x + Drive.position.x,
-//                            FieldManager.fieldHalfInFeet.x + Drive.position.x
+//                            -FieldManager.fieldHalfInFeet.x + robotPosM.x,
+//                            FieldManager.fieldHalfInFeet.x + robotPosM.x
 //                        )
 //                        val coercedOffsetY = offset.y.coerceIn(
-//                            -FieldManager.fieldHalfInFeet.y + Drive.position.y,
-//                            FieldManager.fieldHalfInFeet.y + Drive.position.y
+//                            -FieldManager.fieldHalfInFeet.y + robotPosM.y,
+//                            FieldManager.fieldHalfInFeet.y + robotPosM.y
 //                        )
 //                        val coercedOffset = Vector2(coercedOffsetX, coercedOffsetY)
 //                        if (coercedOffset.distance(offset) > 0.0) {

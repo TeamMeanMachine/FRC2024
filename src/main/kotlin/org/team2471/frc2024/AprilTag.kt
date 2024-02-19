@@ -130,7 +130,7 @@ object AprilTag {
                         }
                         if (maybePoseIB != null) {
                             seesAprilTagEntry.setBoolean(numTargetIB > 0)
-                            advantagePoseSREntry.setDoubleArray(
+                            advantagePoseIBEntry.setDoubleArray(
                                 doubleArrayOf(
                                     maybePoseIB.x,
                                     maybePoseIB.y,
@@ -150,6 +150,7 @@ object AprilTag {
     }
 
     private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEstimator): Pose2d? {
+
         try {
             if (!camera.isConnected) {
                 return null
@@ -171,7 +172,6 @@ object AprilTag {
                 }
             }
             if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
-                println("AprilTag: Pose Ambiguity too low")
                 return null
             }
             //println("at least 2 valid targets found ${poseList}")
@@ -203,6 +203,7 @@ object AprilTag {
 
                 return result.estimatedPose.toPose2d()
             } else {
+
                 return null
             }
         } catch (ex: Exception) {

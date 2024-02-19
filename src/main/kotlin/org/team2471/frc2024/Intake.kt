@@ -68,7 +68,7 @@ object Intake: Subsystem("Intake") {
         proximityThresholdEntry.setDouble(500.0)
 
         intakePercentEntry.setDouble(0.8)
-        feederPercentEntry.setDouble(0.8)
+        feederPercentEntry.setDouble(if (isCompBot) 0.8 else 0.2)
         var x = feederCurrentEntry.getDouble(0.0)
 
         intakeMotorTop.config {
@@ -151,6 +151,6 @@ object Intake: Subsystem("Intake") {
     fun setIntakeMotorsPercent(value: Double) {
         intakeMotorTop.setPercentOutput(value)
         intakeMotorBottom.setPercentOutput(value)
-        feederMotor.setPercentOutput(value)
+        feederMotor.setPercentOutput(value / 5.0)
     }
 }

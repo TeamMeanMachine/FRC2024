@@ -76,7 +76,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
 
-    private val advantagePoseEntry = table.getEntry("Combined Advantage Pose")
+    private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
 
     val rateCurve = MotionCurve()
@@ -159,8 +159,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-//    override val carpetFlow = Vector2(-1.0, 0.0)  // blue start
-    override val carpetFlow = Vector2(1.0, 0.0)  // red start
+    override val carpetFlow = Vector2(-1.0, 0.0)  // blue start
+//    override val carpetFlow = Vector2(1.0, 0.0)  // red start
 //    override val carpetFlow = Vector2(0.0, 1.0)  // sideways
     override val kCarpet = 0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
@@ -218,6 +218,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
 
+                advantagePoseEntry.setDoubleArray(
+                    doubleArrayOf(
+                        position.x.feet.asMeters,
+                        position.y.feet.asMeters,
+                        heading.asDegrees
+                    )
+                )
+
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
                 motorAngle2Entry.setDouble((modules[2] as Module).angle.wrap().asDegrees)
@@ -251,11 +259,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
-
-                val combinedWPIField = convertTMMtoWPI(position.x.feet, position.y.feet, heading)
-                advantagePoseEntry.setDoubleArray(doubleArrayOf(combinedWPIField.x,  combinedWPIField.y, combinedWPIField.rotation.degrees))
-//                println("#1: ${modules[2].angle}")
-
             }
         }
     }
@@ -286,7 +289,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun zeroGyro() {
-        heading = 0.0.degrees
+        if (isBlueAlliance) {
+            heading = 0.0.degrees
+        } else {
+            heading = 180.0.degrees
+        }
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
     }
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {

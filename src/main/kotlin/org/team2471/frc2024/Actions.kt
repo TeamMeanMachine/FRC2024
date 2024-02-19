@@ -66,6 +66,7 @@ suspend fun fire() = use(Shooter, Intake){
             this.stop()
         }
     }
+    Intake.holdingCargo = false
     Intake.intaking = false
 //    Shooter.shooting = false
     Shooter.rpmTop = 0.0
