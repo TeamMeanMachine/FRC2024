@@ -55,8 +55,8 @@ object Shooter: Subsystem("Shooter") {
     val shootingRpmBottom: Double
         get() = shootingRpmBottomEntry.getDouble(21.0)
 
-    var kFeedForwardTop = 85.0 / 6380.0
-    var kFeedForwardBottom = 65.0 / 6380.0
+    var kFeedForwardTop = 70.0 / 6380.0
+    var kFeedForwardBottom = 70.0 / 6380.0
 /*    var rpm: Double = 0.0
         set(value) {
             println("setting rpm to $rpm")

@@ -44,6 +44,7 @@ object Intake: Subsystem("Intake") {
     var intaking = false
         set(value) {
             println("intaking set to $value")
+            holdingCargo = false
             field = value
 //            if (staging || staged) return
 //            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
@@ -58,7 +59,6 @@ object Intake: Subsystem("Intake") {
     private val proximity: Int
         get() = colorSensor.proximity
 
-    private var detectedCargo = false
     var holdingCargo = false
 
     init {
@@ -110,7 +110,6 @@ object Intake: Subsystem("Intake") {
                 feederCurrentEntry.setDouble(feederMotor.current)
                 buttonEntry.setBoolean(button)
 
-
             }
         }
 
@@ -118,17 +117,19 @@ object Intake: Subsystem("Intake") {
 
     override suspend fun default() {
         val t = Timer()
+        var detectedCargo = false
         periodic {
             if (intaking) {
                 if (!detectedCargo && !holdingCargo) {
-                    setIntakeMotorsPercent(0.7)
+                    setIntakeMotorsPercent(0.1)
                 }
                 if (button && !detectedCargo) {
                     println("detected piece, slowing intake")
                     setIntakeMotorsPercent(0.1)
                     detectedCargo = true
                 }
-                if (proximity > 500 && !holdingCargo) {
+                val limit = if (isCompBot) 200 else 500
+                if (proximity > limit && !holdingCargo) {
                     setIntakeMotorsPercent(0.0)
                     println("stopping intake")
                     holdingCargo = true
