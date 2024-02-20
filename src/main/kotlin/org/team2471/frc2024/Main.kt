@@ -7,11 +7,13 @@ import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
-import org.team2471.frc2024.testing.driveTests
-import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.feedForwardTest
+import org.team2471.frc2024.testing.motorsTest
+import org.team2471.frc2024.testing.tuneDrivePositionController
 import java.net.NetworkInterface
 
 
@@ -20,6 +22,7 @@ object Robot : MeanlibRobot() {
     var startMeasureTime = System.nanoTime()
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
+    var beforeFirstEnable = true
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
@@ -33,7 +36,7 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-                isCompBot = (macString != "0-12847512372")
+                isCompBot = (macString != "0-1284751573")
                 println("I am compbot = $isCompBot")
             }
         }
@@ -49,8 +52,13 @@ object Robot : MeanlibRobot() {
         Drive
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
-        Climber
+        Intake
+        Shooter
+        Climb
+        Pivot
         AutoChooser
+        AprilTag
+        PoseEstimator
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
         // drop down menu for selecting tests
@@ -62,8 +70,13 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun enable() {
+        beforeFirstEnable = false
         println("starting enable")
         Drive.enable()
+        Climb.enable()
+        Intake.enable()
+        Pivot.enable()
+        Shooter.enable()
         println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
         println("ending enable")
     }
@@ -88,12 +101,19 @@ object Robot : MeanlibRobot() {
         Drive.headingSetpoint = Drive.heading
     }
 
-    override suspend fun test()  {
+    override suspend fun test() {
         println("test mode begin. Hi.")
 
-        Drive.driveTests()
-        Drive.steeringTests()
+//        Climber.motorTest()
+//            Drive.currentTest()
 //        Drive.setAngleOffsets()
+//        Drive.steeringTests()
+//        Drive.driveTests()
+        Pivot.feedForwardTest()
+
+
+
+        println("test mode done")
     }
 
 
@@ -101,14 +121,18 @@ object Robot : MeanlibRobot() {
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
         Drive.disable()
+        Climb.disable()
+        Intake.disable()
+        Pivot.disable()
+        Shooter.disable()
     }
 
-    private fun initTimeMeasurement(){
+    private fun initTimeMeasurement() {
         startMeasureTime = System.nanoTime()
         lastMeasureTime = startMeasureTime
     }
 
-    private fun updateNanosTaken(){
+    private fun updateNanosTaken() {
         lastMeasureTime = System.nanoTime()
     }
 

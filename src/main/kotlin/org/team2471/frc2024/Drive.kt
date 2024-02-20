@@ -32,6 +32,12 @@ import kotlin.math.min
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
     val robotHalfWidth = (25.0/2.0).inches
+
+//    const val turnZero0 = -34.0
+//    const val turnZero1 = 321.5
+//    const val turnZero2 = 21.7
+//    const val turnZero3 = 17.2
+
     val table = NetworkTableInstance.getDefault().getTable(name)
     val navXGyroEntry = table.getEntry("NavX Gyro")
 
@@ -71,7 +77,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
 
-    private val advantagePoseEntry = table.getEntry("Combined Advantage Pose")
+    private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
 
     val rateCurve = MotionCurve()
@@ -86,7 +92,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kdHeading = 0.02,
         kHeadingFeedForward = 0.001,
         kMoveWhileSpin = 0.0,
-        invertDriveFactor = -1.0,
+        invertDriveFactor = 1.0,
         invertSteerFactor = -1.0
     )
 
@@ -99,7 +105,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-259.95).degrees,
+            Preferences.getDouble("Angle Offset 0",-35.95).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -108,7 +114,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-351.13).degrees,
+            Preferences.getDouble("Angle Offset 1",-41.13).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -117,7 +123,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",-271.56).degrees,
+            Preferences.getDouble("Angle Offset 2",151.56).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -126,7 +132,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",-231.51).degrees,
+            Preferences.getDouble("Angle Offset 3",15.71).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -138,10 +144,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     private var gyroOffset = 0.0.degrees
 
     override var heading: Angle
-        get() = (gyroOffset + gyro.angle.degrees).wrap()
+        get() = (gyroOffset - gyro.angle.degrees).wrap()
         set(value) {
             gyro.reset()
-            gyroOffset = -gyro.angle.degrees + value
+            gyroOffset = gyro.angle.degrees + value
         }
 
     override val headingRate: AngularVelocity
@@ -150,13 +156,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
     override val combinedPosition: Vector2
-        get() = Vector2(0.0, 0.0)
+        get() = PoseEstimator.currentPose
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(0.0, 1.0)
-    override val kCarpet = 0.0104 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
-    override val kTread = 0.0 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
+    override val carpetFlow = Vector2(-1.0, 0.0)  // blue start
+//    override val carpetFlow = Vector2(1.0, 0.0)  // red start
+//    override val carpetFlow = Vector2(0.0, 1.0)  // sideways
+    override val kCarpet = 0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
+    override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
@@ -211,6 +219,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
 
+                advantagePoseEntry.setDoubleArray(
+                    doubleArrayOf(
+                        position.x.feet.asMeters,
+                        position.y.feet.asMeters,
+                        heading.asDegrees
+                    )
+                )
+
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
                 motorAngle2Entry.setDouble((modules[2] as Module).angle.wrap().asDegrees)
@@ -244,25 +260,25 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
-
-                val combinedWPIField = convertTMMtoWPI(position.x.feet, position.y.feet, heading)
-                advantagePoseEntry.setDoubleArray(doubleArrayOf(combinedWPIField.x,  combinedWPIField.y, combinedWPIField.rotation.degrees))
-//                println("#1: ${modules[2].angle}")
-
             }
         }
     }
 
     override fun preEnable() {
-        initializeSteeringMotors()
         odometer0Entry.setDouble(Preferences.getDouble("odometer 0",0.0))
         odometer1Entry.setDouble(Preferences.getDouble("odometer 1",0.0))
         odometer2Entry.setDouble(Preferences.getDouble("odometer 2",0.0))
         odometer3Entry.setDouble(Preferences.getDouble("odometer 3",0.0))
+        initializeSteeringMotors()
         println("prefs at enable=${Preferences.getDouble("odometer 0",0.0)}")
     }
 
+    override fun postEnable() {
+        brakeMode()
+    }
+
     override fun onDisable() {
+        coastMode()
         if (odometer0Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(0.0))
         if (odometer1Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(0.0))
         if (odometer2Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(0.0))
@@ -274,7 +290,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun zeroGyro() {
-        heading = 0.0.degrees
+        if (isBlueAlliance) {
+            heading = 0.0.degrees
+        } else {
+            heading = 180.0.degrees
+        }
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
     }
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {
@@ -284,6 +304,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override suspend fun default() {
+
         periodic {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
@@ -298,15 +319,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 OI.driveTranslation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
-                false
-                )
-            }
+                true
+            )
         }
+    }
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees * parameters.invertSteerFactor)
-            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} id: ${module.driveMotor.motorID}")
+            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
+            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position}")
         }
     }
 
@@ -365,11 +386,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val absoluteAngle: Angle
             get() {
-                return (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
+                return (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
             }
 
         override val treadWear: Double
-            get() = linearMap(0.0, 10000.0, 1.0, 0.96, odometer).coerceIn(0.96, 1.0)
+            get() = linearMap(0.0, 10000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
 
         val driveCurrent: Double
             get() = driveMotor.current
@@ -419,16 +440,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             println("Drive.module.init")
             print(angle.asDegrees)
             driveMotor.config {
-//                brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI / (14.0/22.0 * 15.0/45.0 * 21.0/12.0)
-                currentLimit(70, 75, 1)
-//                openLoopRamp(0.2)
+                brakeMode()
+                //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (87.8 / 96.0)
+                currentLimit(60, 65, 1)
+                openLoopRamp(0.3)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
                 inverted(false)
-                coastMode()
+                brakeMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(12, 16, 1)
@@ -440,6 +461,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             GlobalScope.launch {
                 periodic {
 //                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
+
                 }
             }
         }
@@ -455,8 +477,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         fun setAngleOffset() {
-            val digitalAngle = digitalEncoder.absolutePosition
-            angleOffset = digitalAngle.degrees * 360.0
+            val digitalAngle = (digitalEncoder.absolutePosition * 360.0 * parameters.invertSteerFactor).degrees.wrap().asDegrees
+            angleOffset = digitalAngle.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
             println("Angle Offset $index = $digitalAngle")
         }
@@ -486,11 +508,11 @@ suspend fun Drive.currentTest() = use(this) {
         }
         if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
             upPressed = false
-            power += 0.001
+            power += 0.05
         }
         if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
             downPressed = false
-            power -= 0.001
+            power -= 0.05
         }
 
         var currModule = modules[0] as Drive.Module

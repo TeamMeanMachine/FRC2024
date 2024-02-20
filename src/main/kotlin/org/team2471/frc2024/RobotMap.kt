@@ -17,16 +17,18 @@ object Sparks {
 }
 
 object AnalogSensors {
-    const val PIVOT = 2
+    const val PIVOT = 0
+    const val BEAM_BREAK = 1
 }
 
 object DigitalSensors {
     const val BACK_LEFT = 3
-    const val BACK_RIGHT = 1
-    const val FRONT_RIGHT = 4
+    const val BACK_RIGHT = 4
+    const val FRONT_RIGHT = 0
     const val FRONT_LEFT = 2
+    const val BUTTON = 5
 
-    const val CLIMBER = 5
+    const val CLIMBER = 1
 }
 
 object Falcons {
