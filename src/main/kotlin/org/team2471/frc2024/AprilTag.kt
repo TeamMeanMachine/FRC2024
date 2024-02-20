@@ -73,7 +73,7 @@ object AprilTag {
         get() = AprilDetection(lastIBDetectionTime, lastIBPose)
 
     var robotToCamSL: Transform3d = Transform3d(
-        Translation3d(9.5.inches.asMeters, -7.0.inches.asMeters, 9.0.inches.asMeters),
+        Translation3d(-9.5.inches.asMeters, 7.0.inches.asMeters, 9.0.inches.asMeters),
         Rotation3d(0.0, 12.0.degrees.asRadians, -170.0.degrees.asRadians)
     )
 

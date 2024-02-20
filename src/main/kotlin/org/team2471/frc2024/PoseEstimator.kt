@@ -51,8 +51,7 @@ object PoseEstimator {
 //                startingPosEntry.setBoolean((FieldManager.startingPosition - Drive.combinedPosition).length < 0.25)
                 //untested ^
 
-                val combinedWPIField = Pose2d(currentPose.x, currentPose.y, Rotation2d(Drive.heading.asRadians))
-                advantagePoseEntry.setDoubleArray(doubleArrayOf(combinedWPIField.x,  combinedWPIField.y, combinedWPIField.rotation.degrees))
+                advantagePoseEntry.setDoubleArray(doubleArrayOf(currentPose.x,  currentPose.y, Drive.heading.asDegrees))
                 offsetEntry.setDoubleArray(doubleArrayOf(offset.x, offset.y))
                 //Todo: starting positions for autos
 //                if (DriverStation.isDisabled() && beforeFirstEnable && !preEnableHadTarget && !Drive.demoMode){
@@ -75,17 +74,16 @@ object PoseEstimator {
                 try {
                     val kAprilFinal = ((kApril ?: (kAprilValue * if (numTarget < 2) 0.7 else 1.0)))
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
-                    val latencyPose = Drive.lookupPose(detection.timestamp)
-                    if (DriverStation.isDisabled() && latencyPose == null && beforeFirstEnable) {
+//                    val latencyPose = Drive.lookupPose(detection.timestamp)
+                    if (DriverStation.isDisabled() && /*latencyPose == null && */beforeFirstEnable) {
                         val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
                         preEnableHadTarget = true
                         Drive.position = apriltagPoseF
                         Drive.heading = detection.pose.rotation.radians.radians
                     }
-                    if (latencyPose != null) {
-                        val odomDiff = robotPosM - latencyPose.position
-                        val headingDiff = Drive.heading - latencyPose.heading
-                        val apriltagPose = Vector2(detection.pose.x, detection.pose.y) + odomDiff
+//                    if (latencyPose != null) {
+//                        val odomDiff = robotPosM - latencyPose.position
+                        val apriltagPose = Vector2(detection.pose.x, detection.pose.y)// + odomDiff
                         //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
                         offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
                         //apriltagHeadingEntry.setDouble(apriltagHeading.asDegrees)
@@ -108,7 +106,7 @@ object PoseEstimator {
                         //println("Heading Offset: ${apriltagHeading.unWrap(Drive.heading)}")
 
                         //        println(offset)
-                    }
+//                    }
                 } catch (ex: Exception) {
                 }
         }
