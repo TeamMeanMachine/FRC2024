@@ -18,6 +18,7 @@ object Sparks {
 
 object AnalogSensors {
     const val PIVOT = 0
+    const val BEAM_BREAK = 1
 }
 
 object DigitalSensors {

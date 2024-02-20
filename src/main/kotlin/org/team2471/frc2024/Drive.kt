@@ -155,7 +155,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
     override val combinedPosition: Vector2
-        get() = Vector2(0.0, 0.0)
+        get() = PoseEstimator.currentPose
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 

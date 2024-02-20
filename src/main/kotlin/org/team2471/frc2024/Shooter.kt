@@ -28,6 +28,9 @@ object Shooter: Subsystem("Shooter") {
     val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
     val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
 
+    val motorRpmTop
+        get() = shooterMotorTop.velocity
+
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
@@ -45,9 +48,6 @@ object Shooter: Subsystem("Shooter") {
             }
             field = value
         }
-
-    val motorRpmTop
-        get() = shooterMotorTop.velocity
 
     val shootingRpmTop: Double
         get() = shootingRpmTopEntry.getDouble(20.0)
