@@ -69,17 +69,17 @@ object OI : Subsystem("OI") {
         driverController::rightBumper.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::a.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
-//        driverController::b.whenTrue { pickUpSeenNote() }
+        driverController::b.whenTrue { pickUpSeenNote() }
 
         ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
         ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
 
 
 
-        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
-        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
-        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees + 2.0.degrees }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE.degrees }
+////        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
+//        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
+//        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees + 2.0.degrees }
+//        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE.degrees }
 
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
 

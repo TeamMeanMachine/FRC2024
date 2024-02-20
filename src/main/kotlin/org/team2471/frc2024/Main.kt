@@ -53,12 +53,15 @@ object Robot : MeanlibRobot() {
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
         Intake
+        println("Intake ${Intake.intaking}")
         Shooter
         Climb
         Pivot
         AutoChooser
         AprilTag
         PoseEstimator
+        NoteDetector
+        println("NoteDetector ${NoteDetector.seesNotes}")
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
         // drop down menu for selecting tests

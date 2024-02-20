@@ -306,16 +306,21 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         periodic {
             var turn = 0.0
+            var translation = OI.driveTranslation
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
             }
-
+            if (OI.driveLeftTrigger > 0.1) {
+                turn = NoteDetector.closeNoteYaw.degrees.asRadians * 0.4
+                translation = Vector2(0.0, OI.driveLeftTrigger)
+                println("NoteDetectorTurn Equals: $turn")
+            }
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
             }
             val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
             drive(
-                OI.driveTranslation * maxTranslation,
+                 translation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
                 true
