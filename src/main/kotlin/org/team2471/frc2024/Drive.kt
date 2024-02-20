@@ -25,6 +25,7 @@ import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.units.Angle.Companion.atan2
 import kotlin.math.absoluteValue
 import kotlin.math.min
 
@@ -507,4 +508,10 @@ suspend fun Drive.currentTest() = use(this) {
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
+}
+
+fun Drive.aimAtPoint(point: Vector2) {
+    val angle = 180.degrees - atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
+
+    Drive.drive(Vector2(0.0, 0.0), angle.asDegrees)
 }
