@@ -73,17 +73,17 @@ object AprilTag {
         get() = AprilDetection(lastIBDetectionTime, lastIBPose)
 
     var robotToCamSL: Transform3d = Transform3d(
-        Translation3d(-8.0.inches.asMeters, -10.inches.asMeters, 9.inches.asMeters),
-        Rotation3d(0.0, 170.0.degrees.asRadians, 20.degrees.asRadians)
+        Translation3d(9.5.inches.asMeters, -7.0.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(0.0, 12.0.degrees.asRadians, -170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
-        Translation3d(-8.0.inches.asMeters, 10.inches.asMeters, 9.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, -170.degrees.asRadians, 20.degrees.asRadians)
+        Translation3d(-9.5.inches.asMeters, -7.0.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(0.0.degrees.asRadians, 12.degrees.asRadians, 170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
-        Translation3d(10.5.inches.asMeters, -2.inches.asMeters, 9.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, 0.0.degrees.asRadians, 20.0.degrees.asRadians)
+        Translation3d(12.25.inches.asMeters, 2.0.inches.asMeters, 9.inches.asMeters),
+        Rotation3d(0.0.degrees.asRadians, 12.0.degrees.asRadians, 0.0.degrees.asRadians)
     )
     init {
         resetCameras()
