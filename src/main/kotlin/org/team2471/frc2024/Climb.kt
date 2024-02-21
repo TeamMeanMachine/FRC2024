@@ -15,7 +15,6 @@ import org.team2471.frc.lib.units.inches
 object Climb: Subsystem("Climb") {
     private val table = NetworkTableInstance.getDefault().getTable("Climb")
 
-    private val climberPercentEntry = table.getEntry("Climb Percent")
     private val climberCurrentEntry = table.getEntry("Climb Current")
     private val climberEncoderEntry = table.getEntry("Climb Encoder Value")
     private val climberHeightEntry = table.getEntry("Motor Height")
@@ -87,7 +86,6 @@ object Climb: Subsystem("Climb") {
 
     override suspend fun default() {
         periodic {
-//            climbSetpoint = (-OI.operatorController.leftThumbstickY * (MAX_CLIMB_INCHES - MIN_CLIMB_INCHES) + MIN_CLIMB_INCHES).inches
         }
     }
     override fun preEnable() {
@@ -99,9 +97,6 @@ object Climb: Subsystem("Climb") {
 
     fun activateRelay() {
         relayOn = !relayOn
-        println("RELAY ON!!!")
-//        delay(0.5)
-//        relayOn = false
-//        println("waited 0.5 seconds RELAY OFF")
+        println("RELAY $relayOn!!!")
     }
 }

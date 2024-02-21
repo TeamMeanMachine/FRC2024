@@ -58,13 +58,7 @@ object Shooter: Subsystem("Shooter") {
 
     var kFeedForwardTop = 70.0 / 6380.0
     var kFeedForwardBottom = 70.0 / 6380.0
-/*    var rpm: Double = 0.0
-        set(value) {
-            println("setting rpm to $rpm")
-            shooterMotorTop.setVelocitySetpoint(value, value * kFeedForwardTop) //value, value * kFeedForward)
-            shooterMotorBottom.setVelocitySetpoint(value, value * kFeedForwardBottom) //value, value * kFeedForward)
-            field = value
-        }*/
+
     var rpmTop: Double = 0.0
         set(value) {
 //            println("setting top rpm $value")
@@ -81,12 +75,12 @@ object Shooter: Subsystem("Shooter") {
     init {
         shooterPercentEntry.setDouble(1.0)
         if (!shootingRpmTopEntry.exists()) {
-            shootingRpmTopEntry.setDouble(75.0)
+            shootingRpmTopEntry.setDouble(5000.0)
             shootingRpmTopEntry.setPersistent()
         }
 
         if (!shootingRpmBottomEntry.exists()) {
-            shootingRpmBottomEntry.setDouble(60.0)
+            shootingRpmBottomEntry.setDouble(5000.0)
             shootingRpmBottomEntry.setPersistent()
         }
 
@@ -133,22 +127,12 @@ object Shooter: Subsystem("Shooter") {
                 } else {
                     OI.driverController.rumble = 0.0
                 }
-
-//                if (topDEntry.getDouble(1.0) != shooterMotorTop.getD() || topPEntry.getDouble(1.0) != shooterMotorTop.getP() || bottomDEntry.getDouble(1.0) != shooterMotorBottom.getD() ||bottomPEntry.getDouble(1.0) != shooterMotorBottom.getP()) {
-//                    shooterMotorTop.setP(topPEntry.getDouble(1.0))
-//                    shooterMotorTop.setD(topDEntry.getDouble(1.0))
-//                    shooterMotorBottom.setD(bottomDEntry.getDouble(1.0))
-//                    shooterMotorBottom.setP(bottomPEntry.getDouble(1.0))
-//                    println("Top P: ${shooterMotorTop.getP()}  Top D: ${shooterMotorTop.getD()}  Bottom P: ${shooterMotorBottom.getP()}  Bottom D:  ${shooterMotorBottom.getD()}")
-//                }
-
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-            motorRpmTopEntry.setDouble(motorRpmTop)
         }
     }
 }

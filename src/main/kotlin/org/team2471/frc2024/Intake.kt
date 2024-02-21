@@ -19,42 +19,27 @@ object Intake: Subsystem("Intake") {
     private val intakingEntry = table.getEntry("Intaking")
     private val holdingNoteEntry = table.getEntry("Holding Note")
 
-    private val colorEntry = table.getEntry("ColorSensor Color")
-    private val proximityEntry = table.getEntry("ColorSensor Proximity")
-    private val proximityThresholdEntry = table.getEntry("ColorSensor Proximity Threshold")
     private val bottomBreakEntry = table.getEntry("Bottom Break")
     private val topBreakEntry = table.getEntry("Top Break")
-    private val beamVoltageEntry = table.getEntry("Beam Voltage")
 
-    private val intakePercentEntry = table.getEntry("Intake Percent")
     private val intakeCurrentEntry = table.getEntry("Intake Current")
 
-    private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
     val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP))
     val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM))
     val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
-//    private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
-//    private val colorSensor = ColorSensorV3(colorSensorI2CPort)
     private val bottomBreakSensor = DigitalInput(DigitalSensors.BOTTOM_BREAK)
     private val topBreakSensor = DigitalInput(DigitalSensors.TOP_BREAK)
 
     private val beamBreakSensor = AnalogInput(AnalogSensors.BEAM_BREAK)
 
-//    private var staged = false
-//    private var staging = false
     var intaking = false
         set(value) {
             println("intaking set to $value")
             holdingCargo = false
             field = value
-//            if (staging || staged) return
-//            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
-//            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
-//            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
-
         }
 
     val bottomBreak: Boolean
@@ -62,19 +47,12 @@ object Intake: Subsystem("Intake") {
     val topBreak: Boolean
         get() = !topBreakSensor.get()
 
-//    private val proximity: Int
-//        get() = colorSensor.proximity
-
     var holdingCargo = false
 
     init {
         intakingEntry.setBoolean(false)
         holdingNoteEntry.setBoolean(true)
 
-        proximityThresholdEntry.setDouble(500.0)
-
-        intakePercentEntry.setDouble(0.8)
-        feederPercentEntry.setDouble(if (isCompBot) 0.8 else 0.2)
         var x = feederCurrentEntry.getDouble(0.0)
 
         intakeMotorTop.config {
@@ -111,7 +89,6 @@ object Intake: Subsystem("Intake") {
 
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
-                colorEntry.setDouble(0.0)
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
                 bottomBreakEntry.setBoolean(bottomBreak)
@@ -136,13 +113,12 @@ object Intake: Subsystem("Intake") {
                     setIntakeMotorsPercent(0.5)
                     detectedCargo = true
                 }
-                val limit = if (isCompBot) 200 else 500
                 if (topBreak && !holdingCargo) {
                     setIntakeMotorsPercent(0.0)
                     println("stopping intake")
                     holdingCargo = true
                     detectedCargo = false
-                    Pivot.angleSetpoint = Pivot.TESTPOSE.degrees
+                    Pivot.angleSetpoint = Pivot.TESTPOSE
                 }
                 if (detectedCargo) {
                     if (t.get() > 2.0) {

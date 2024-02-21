@@ -76,23 +76,17 @@ object OI : Subsystem("OI") {
 
 
 
-        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP.degrees }
-        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE.degrees }
-        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.MINHARDSTOP.degrees + 2.0.degrees }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE.degrees }
+        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP }
+        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
+        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
+        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
 
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
 
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-
         ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.degrees }
         ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
-
-//        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpmTop -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
-//        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpmTop += 5.0; /*Climb.climberSetpoint += 5.0.inches*/ }
-//        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Shooter.rpmBottom -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
-//        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Shooter.rpmBottom += 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
 
         operatorController::start.whenTrue { resetCameras() }
 
