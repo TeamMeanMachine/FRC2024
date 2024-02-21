@@ -2,6 +2,7 @@ package org.team2471.frc2024
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
@@ -11,6 +12,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Robot.isCompBot
 
@@ -24,6 +26,7 @@ object Intake: Subsystem("Intake") {
     private val proximityEntry = table.getEntry("ColorSensor Proximity")
     private val proximityThresholdEntry = table.getEntry("ColorSensor Proximity Threshold")
     private val buttonEntry = table.getEntry("Button")
+    private val beamVoltageEntry = table.getEntry("Beam Voltage")
 
     private val intakePercentEntry = table.getEntry("Intake Percent")
     private val intakeCurrentEntry = table.getEntry("Intake Current")
@@ -38,6 +41,8 @@ object Intake: Subsystem("Intake") {
     private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(colorSensorI2CPort)
     private val buttonSensor = DigitalInput(DigitalSensors.BUTTON)
+
+    private val beamBreakSensor = AnalogInput(AnalogSensors.BEAM_BREAK)
 
 //    private var staged = false
 //    private var staging = false
@@ -121,11 +126,12 @@ object Intake: Subsystem("Intake") {
         periodic {
             if (intaking) {
                 if (!detectedCargo && !holdingCargo) {
-                    setIntakeMotorsPercent(0.1)
+                    Pivot.angleSetpoint = 18.0.degrees
+                    setIntakeMotorsPercent(0.7)
                 }
                 if (button && !detectedCargo) {
                     println("detected piece, slowing intake")
-                    setIntakeMotorsPercent(0.1)
+                    setIntakeMotorsPercent(0.15)
                     detectedCargo = true
                 }
                 val limit = if (isCompBot) 200 else 500
@@ -134,6 +140,7 @@ object Intake: Subsystem("Intake") {
                     println("stopping intake")
                     holdingCargo = true
                     detectedCargo = false
+                    Pivot.angleSetpoint = Pivot.TESTPOSE.degrees
                 }
                 if (detectedCargo) {
                     if (t.get() > 2.0) {

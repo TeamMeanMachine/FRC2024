@@ -25,6 +25,7 @@ import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.units.Angle.Companion.atan2
 import kotlin.math.absoluteValue
 import kotlin.math.min
 
@@ -155,7 +156,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
     override val combinedPosition: Vector2
-        get() = Vector2(0.0, 0.0)
+        get() = PoseEstimator.currentPose
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
@@ -529,4 +530,10 @@ suspend fun Drive.currentTest() = use(this) {
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
+}
+
+fun Drive.aimAtPoint(point: Vector2) {
+    val angle = 180.degrees - atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
+
+    Drive.drive(Vector2(0.0, 0.0), angle.asDegrees)
 }

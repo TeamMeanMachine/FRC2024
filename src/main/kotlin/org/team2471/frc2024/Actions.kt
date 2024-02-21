@@ -1,10 +1,12 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.math.kinematics.Odometry
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.lerp
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.units.Angle
@@ -13,6 +15,7 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
 import java.util.Vector
+import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -40,29 +43,30 @@ suspend fun spit() = use(Intake) {
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter, Intake){
 /*    Shooter.rpmTop = Shooter.shootingRpmTop
     Shooter.rpmBottom = Shooter.shootingRpmBottom*/
     val t = Timer()
-/*    t.start()
+    t.start()
     periodic {
         println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
-        if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 4.0) {
+        if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 500.0) {
             println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
             this.stop()
         }
 
         if (t.get() > 2.0) {
-            println("waited 1.0 seconds shooting at lower power")
+            println("waited 2.0 seconds shooting at lower power")
             this.stop()
         }
-    }*/
+    }
     Intake.intakeMotorTop.setPercentOutput(0.5)
     Intake.intakeMotorBottom.setPercentOutput(0.5)
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if (t.get() > 2.0) {
+        if (t.get() > 0.5) {
             println("exiting shooting")
             this.stop()
         }
@@ -70,8 +74,10 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.holdingCargo = false
     Intake.intaking = false
 //    Shooter.shooting = false
-    Shooter.rpmTop = 0.0
-    Shooter.rpmBottom = 0.0
+    if (!Robot.isAutonomous) {
+        Shooter.rpmTop = 0.0
+        Shooter.rpmBottom = 0.0
+    }
 }
 
 //suspend fun pickUpSeenNote() = use(Drive, Intake) {
