@@ -7,6 +7,7 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import kotlin.math.absoluteValue
 
 object Shooter: Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
@@ -126,6 +127,12 @@ object Shooter: Subsystem("Shooter") {
                 motorRpmTopEntry.setDouble(motorRpmTop)
                 rpmTopEntry.setDouble(rpmTop)
                 rpmBottomEntry.setDouble(rpmBottom)
+
+                if (Robot.isEnabled && (motorRpmTop - rpmTop).absoluteValue + (motorRpmBottom - rpmBottom).absoluteValue < 500.0 && rpmTop + rpmBottom > 20.0) {
+                    OI.driverController.rumble = 0.8
+                } else {
+                    OI.driverController.rumble = 0.0
+                }
 
 //                if (topDEntry.getDouble(1.0) != shooterMotorTop.getD() || topPEntry.getDouble(1.0) != shooterMotorTop.getP() || bottomDEntry.getDouble(1.0) != shooterMotorBottom.getD() ||bottomPEntry.getDouble(1.0) != shooterMotorBottom.getP()) {
 //                    shooterMotorTop.setP(topPEntry.getDouble(1.0))

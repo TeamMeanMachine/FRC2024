@@ -33,7 +33,7 @@ suspend fun spit() = use(Intake) {
     println("starting spit periodic")
     Intake.holdingCargo = false
     periodic {
-        if (OI.driverController.rightBumper) {
+        if (OI.driverController.leftTriggerFullPress) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
             Intake.intakeMotorBottom.setPercentOutput(-0.9)
             Intake.feederMotor.setPercentOutput(-0.9)
@@ -45,22 +45,27 @@ suspend fun spit() = use(Intake) {
 
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter, Intake){
-/*    Shooter.rpmTop = Shooter.shootingRpmTop
-    Shooter.rpmBottom = Shooter.shootingRpmBottom*/
+    if (!Robot.isAutonomous) {
+        Shooter.rpmTop = Shooter.shootingRpmTop
+        Shooter.rpmBottom = Shooter.shootingRpmBottom
+    }
     val t = Timer()
-    t.start()
-    periodic {
-        println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
-        if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 500.0) {
-            println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
-            this.stop()
-        }
+    if (Robot.isAutonomous) {
+        t.start()
+        periodic {
+            println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
+            if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 500.0) {
+                println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
+                this.stop()
+            }
 
-        if (t.get() > 2.0) {
-            println("waited 2.0 seconds shooting at lower power")
-            this.stop()
+            if (t.get() > 2.0) {
+                println("waited 2.0 seconds shooting at lower power")
+                this.stop()
+            }
         }
     }
+
     Intake.intakeMotorTop.setPercentOutput(0.5)
     Intake.intakeMotorBottom.setPercentOutput(0.5)
     Intake.feederMotor.setPercentOutput(1.0)
@@ -74,10 +79,10 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.holdingCargo = false
     Intake.intaking = false
 //    Shooter.shooting = false
-    if (!Robot.isAutonomous) {
-        Shooter.rpmTop = 0.0
-        Shooter.rpmBottom = 0.0
-    }
+//    if (!Robot.isAutonomous) {
+//        Shooter.rpmTop = 0.0
+//        Shooter.rpmBottom = 0.0
+//    }
 }
 
 //suspend fun pickUpSeenNote() = use(Drive, Intake) {

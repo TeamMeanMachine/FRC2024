@@ -1,15 +1,12 @@
 package org.team2471.frc2024
 
-import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
-import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.units.degrees
@@ -25,7 +22,8 @@ object Intake: Subsystem("Intake") {
     private val colorEntry = table.getEntry("ColorSensor Color")
     private val proximityEntry = table.getEntry("ColorSensor Proximity")
     private val proximityThresholdEntry = table.getEntry("ColorSensor Proximity Threshold")
-    private val buttonEntry = table.getEntry("Button")
+    private val bottomBreakEntry = table.getEntry("Bottom Break")
+    private val topBreakEntry = table.getEntry("Top Break")
     private val beamVoltageEntry = table.getEntry("Beam Voltage")
 
     private val intakePercentEntry = table.getEntry("Intake Percent")
@@ -38,9 +36,10 @@ object Intake: Subsystem("Intake") {
     val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM))
     val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
-    private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
-    private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-    private val buttonSensor = DigitalInput(DigitalSensors.BUTTON)
+//    private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
+//    private val colorSensor = ColorSensorV3(colorSensorI2CPort)
+    private val bottomBreakSensor = DigitalInput(DigitalSensors.BOTTOM_BREAK)
+    private val topBreakSensor = DigitalInput(DigitalSensors.TOP_BREAK)
 
     private val beamBreakSensor = AnalogInput(AnalogSensors.BEAM_BREAK)
 
@@ -58,11 +57,13 @@ object Intake: Subsystem("Intake") {
 
         }
 
-    val button: Boolean
-        get() = !buttonSensor.get()
+    val bottomBreak: Boolean
+        get() = !bottomBreakSensor.get()
+    val topBreak: Boolean
+        get() = !topBreakSensor.get()
 
-    private val proximity: Int
-        get() = colorSensor.proximity
+//    private val proximity: Int
+//        get() = colorSensor.proximity
 
     var holdingCargo = false
 
@@ -105,15 +106,16 @@ object Intake: Subsystem("Intake") {
             var stagedT= 0.0
 
             periodic {
-                colorEntry.setString(colorSensor.color.toHexString())
-                proximityEntry.setInteger(colorSensor.proximity.toLong())
+//                colorEntry.setString(colorSensor.color.toHexString())
+//                proximityEntry.setInteger(colorSensor.proximity.toLong())
 
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
                 colorEntry.setDouble(0.0)
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
-                buttonEntry.setBoolean(button)
+                bottomBreakEntry.setBoolean(bottomBreak)
+                topBreakEntry.setBoolean(topBreak)
 
             }
         }
@@ -129,13 +131,13 @@ object Intake: Subsystem("Intake") {
                     Pivot.angleSetpoint = 18.0.degrees
                     setIntakeMotorsPercent(0.7)
                 }
-                if (button && !detectedCargo) {
+                if (bottomBreak && !detectedCargo) {
                     println("detected piece, slowing intake")
-                    setIntakeMotorsPercent(0.15)
+                    setIntakeMotorsPercent(0.5)
                     detectedCargo = true
                 }
                 val limit = if (isCompBot) 200 else 500
-                if (proximity > limit && !holdingCargo) {
+                if (topBreak && !holdingCargo) {
                     setIntakeMotorsPercent(0.0)
                     println("stopping intake")
                     holdingCargo = true

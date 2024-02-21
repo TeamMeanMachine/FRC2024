@@ -98,7 +98,7 @@ object Climb: Subsystem("Climb") {
     }
 
     fun activateRelay() {
-        relayOn = true
+        relayOn = !relayOn
         println("RELAY ON!!!")
 //        delay(0.5)
 //        relayOn = false

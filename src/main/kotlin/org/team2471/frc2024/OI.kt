@@ -13,7 +13,7 @@ object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.05
+    private val deadBandDriver = 0.03
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
@@ -66,14 +66,13 @@ object OI : Subsystem("OI") {
         driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
-        driverController::rightBumper.whenTrue { spit() }
+        driverController::leftTriggerFullPress.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
-        driverController::a.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
+        driverController::rightBumper.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
 //        driverController::b.whenTrue { aimAtSpeaker() }
 //        driverController::b.whenTrue { pickUpSeenNote() }
 
-        ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
-        ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
+
 
 
 
@@ -86,10 +85,14 @@ object OI : Subsystem("OI") {
 
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpmTop -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpmTop += 5.0; /*Climb.climberSetpoint += 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Shooter.rpmBottom -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
-        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Shooter.rpmBottom += 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.degrees }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
+
+//        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.rpmTop -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+//        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.rpmTop += 5.0; /*Climb.climberSetpoint += 5.0.inches*/ }
+//        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { Shooter.rpmBottom -= 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
+//        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { Shooter.rpmBottom += 5.0; /*Climb.climberSetpoint -= 5.0.inches*/ }
 
         operatorController::start.whenTrue { resetCameras() }
 
