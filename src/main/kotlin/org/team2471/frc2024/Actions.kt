@@ -8,6 +8,7 @@ import org.team2471.frc.lib.math.lerp
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.asMeters
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
@@ -144,3 +145,17 @@ suspend fun fire() = use(Shooter, Intake){
 //    }
 //}
 //
+
+//suspend fun aimAtSpeaker() {
+//    periodic {
+//        if (!OI.driverController.b) {
+//            this.stop()
+//        }
+//        val speakerPos = if (isBlueAlliance) Vector2(642.73.inches.asMeters, 218.42.inches.asMeters) else Vector2(8.5.inches.asMeters, 218.42.inches.asMeters)
+//
+//        val angle = atan2()
+//
+//        Drive.drive()
+//
+//    }
+//}

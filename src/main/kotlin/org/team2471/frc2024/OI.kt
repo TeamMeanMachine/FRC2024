@@ -69,6 +69,7 @@ object OI : Subsystem("OI") {
         driverController::rightBumper.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::a.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
+//        driverController::b.whenTrue { aimAtSpeaker() }
 //        driverController::b.whenTrue { pickUpSeenNote() }
 
         ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
