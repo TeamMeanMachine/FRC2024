@@ -8,15 +8,16 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.cos
-import org.team2471.frc.lib.units.asRadians
-import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.absoluteValue
 import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -36,16 +37,11 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    const val TESTPOSE = 25 //18 //32
-
-    // All in degrees
-    val CLOSESPEAKERPOSE = 62
-//        get() = stageAngleEntry.getDouble(60.0)
-
-    const val MINHARDSTOP = 5.5
-    val DRIVEPOSE = Pivot.MINHARDSTOP.degrees + 2.0.degrees
-
-    const val MAXHARDSTOP = 110.2
+    val TESTPOSE = 30.0.degrees //18 //32
+    val CLOSESPEAKERPOSE = 62.0.degrees
+    val MINHARDSTOP = 5.5.degrees
+    val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
+    val MAXHARDSTOP = 110.2.degrees
 
     // Ticks
     private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
@@ -58,14 +54,14 @@ object Pivot: Subsystem("Pivot") {
         get() = pivotEncoder.voltage
 
     val pivotEncoderAngle: Angle
-        get() = linearMap(MINTICKS, MAXTICKS, MINHARDSTOP, MAXHARDSTOP, pivotEncoder.value.toDouble()).degrees
+        get() = linearMap(MINTICKS, MAXTICKS, MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees, pivotEncoder.value.toDouble()).degrees
 
     val pivotMotorAngle: Angle
         get() = pivotMotor.position.degrees
 
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
-            field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
+            field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
             println("set pivot angle to $field")
         }
 
@@ -124,6 +120,17 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
+    }
+
+    fun aimAtSpeaker() {
+        val speakerPos = Vector2(642.73.inches.asMeters, 218.42.inches.asMeters)
+
+        val dist = PoseEstimator.currentPose.distance(speakerPos)
+
+        // Calculated. May change a lot with more data
+        val angle = (92.5086 * (0.751492.pow(dist))).degrees
+
+        angleSetpoint = angle
     }
 
 }

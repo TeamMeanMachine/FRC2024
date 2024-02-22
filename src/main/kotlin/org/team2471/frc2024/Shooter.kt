@@ -7,6 +7,7 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import kotlin.math.absoluteValue
 
 object Shooter: Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
@@ -57,13 +58,7 @@ object Shooter: Subsystem("Shooter") {
 
     var kFeedForwardTop = 70.0 / 6380.0
     var kFeedForwardBottom = 70.0 / 6380.0
-/*    var rpm: Double = 0.0
-        set(value) {
-            println("setting rpm to $rpm")
-            shooterMotorTop.setVelocitySetpoint(value, value * kFeedForwardTop) //value, value * kFeedForward)
-            shooterMotorBottom.setVelocitySetpoint(value, value * kFeedForwardBottom) //value, value * kFeedForward)
-            field = value
-        }*/
+
     var rpmTop: Double = 0.0
         set(value) {
 //            println("setting top rpm $value")
@@ -80,12 +75,12 @@ object Shooter: Subsystem("Shooter") {
     init {
         shooterPercentEntry.setDouble(1.0)
         if (!shootingRpmTopEntry.exists()) {
-            shootingRpmTopEntry.setDouble(75.0)
+            shootingRpmTopEntry.setDouble(5000.0)
             shootingRpmTopEntry.setPersistent()
         }
 
         if (!shootingRpmBottomEntry.exists()) {
-            shootingRpmBottomEntry.setDouble(60.0)
+            shootingRpmBottomEntry.setDouble(5000.0)
             shootingRpmBottomEntry.setPersistent()
         }
 
@@ -127,21 +122,17 @@ object Shooter: Subsystem("Shooter") {
                 rpmTopEntry.setDouble(rpmTop)
                 rpmBottomEntry.setDouble(rpmBottom)
 
-//                if (topDEntry.getDouble(1.0) != shooterMotorTop.getD() || topPEntry.getDouble(1.0) != shooterMotorTop.getP() || bottomDEntry.getDouble(1.0) != shooterMotorBottom.getD() ||bottomPEntry.getDouble(1.0) != shooterMotorBottom.getP()) {
-//                    shooterMotorTop.setP(topPEntry.getDouble(1.0))
-//                    shooterMotorTop.setD(topDEntry.getDouble(1.0))
-//                    shooterMotorBottom.setD(bottomDEntry.getDouble(1.0))
-//                    shooterMotorBottom.setP(bottomPEntry.getDouble(1.0))
-//                    println("Top P: ${shooterMotorTop.getP()}  Top D: ${shooterMotorTop.getD()}  Bottom P: ${shooterMotorBottom.getP()}  Bottom D:  ${shooterMotorBottom.getD()}")
-//                }
-
+                if (Robot.isEnabled && (motorRpmTop - rpmTop).absoluteValue + (motorRpmBottom - rpmBottom).absoluteValue < 500.0 && rpmTop + rpmBottom > 20.0) {
+                    OI.driverController.rumble = 0.8
+                } else {
+                    OI.driverController.rumble = 0.0
+                }
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-            motorRpmTopEntry.setDouble(motorRpmTop)
         }
     }
 }
