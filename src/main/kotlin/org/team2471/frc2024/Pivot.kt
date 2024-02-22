@@ -13,6 +13,7 @@ import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.cos
+import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.absoluteValue
 import kotlin.math.cos
@@ -46,6 +47,9 @@ object Pivot: Subsystem("Pivot") {
     // Ticks
     private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
     private val MAXTICKS = if (isCompBot) 1393.0 else 940.0
+
+
+    var autoAim = false
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -109,6 +113,15 @@ object Pivot: Subsystem("Pivot") {
                     pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians).squareWithSign()) /*+ 0.000001*/)
 //                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
                 }
+
+                if (autoAim) {
+                    val dist = PoseEstimator.currentPose.distance(speakerPos)
+
+                    // Calculated. May change a lot with more data
+                    val angle = (90.0 * (0.751492.pow(dist))).degrees
+
+                    angleSetpoint = angle
+                }
             }
         }
 
@@ -120,17 +133,6 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
-    }
-
-    fun aimAtSpeaker() {
-        val speakerPos = Vector2(642.73.inches.asMeters, 218.42.inches.asMeters)
-
-        val dist = PoseEstimator.currentPose.distance(speakerPos)
-
-        // Calculated. May change a lot with more data
-        val angle = (92.5086 * (0.751492.pow(dist))).degrees
-
-        angleSetpoint = angle
     }
 
 }

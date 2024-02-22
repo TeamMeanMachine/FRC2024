@@ -3,6 +3,7 @@ package org.team2471.frc2024
 import edu.wpi.first.math.kinematics.Odometry
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.lerp
@@ -45,10 +46,10 @@ suspend fun spit() = use(Intake) {
 
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter, Intake){
-    if (!Robot.isAutonomous) {
-        Shooter.rpmTop = Shooter.shootingRpmTop
-        Shooter.rpmBottom = Shooter.shootingRpmBottom
-    }
+//    if (Robot.isAutonomous) {
+//        Shooter.rpmTop = Shooter.shootingRpmTop
+//        Shooter.rpmBottom = Shooter.shootingRpmBottom
+//    }
     val t = Timer()
     if (Robot.isAutonomous) {
         t.start()
@@ -157,16 +158,13 @@ suspend fun fire() = use(Shooter, Intake){
 //}
 //
 
-//suspend fun aimAtSpeaker() {
-//    periodic {
-//        if (!OI.driverController.b) {
-//            this.stop()
-//        }
-//        val speakerPos = if (isBlueAlliance) Vector2(642.73.inches.asMeters, 218.42.inches.asMeters) else Vector2(8.5.inches.asMeters, 218.42.inches.asMeters)
-//
-//        val angle = atan2()
-//
-//        Drive.drive()
-//
-//    }
-//}
+suspend fun aimAtSpeaker() {
+    Drive.aimTarget = true
+    Pivot.autoAim = true
+
+    suspendUntil(20) { !OI.driverController.y }
+
+    Drive.aimTarget = false
+    Pivot.autoAim = false
+
+}

@@ -26,6 +26,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.atan2
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
 
@@ -168,9 +169,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
-    val autoPDController = PDConstantFController(0.015, 0.04, 0.05)
-    val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05)
+    val autoPDController = PDConstantFController(0.015, 0.04, 0.02)
+    val teleopPDController =  PDConstantFController(0.02, 0.09, 0.02)
     var aimPDController = teleopPDController
+
+    var aimTarget = false
+    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asMeters, 218.42.inches.asMeters) else Vector2(8.5.inches.asMeters, 218.42.inches.asMeters)
+    val ampPos = Vector2(0.0, 0.0) //TODO
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -309,6 +314,21 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
+            }
+
+            if (aimTarget) {
+                val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+                val angle = 180.degrees + atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
+
+                val angleError = angle - heading
+
+                if (abs(180 - angleError.asDegrees) > 2.0) {
+
+                    turn = aimPDController.update(angleError.wrap().asRadians) /// 180
+
+//                    turn = angleError.wrap().asDegrees / 180 / 5
+                    println("Goal: ${angle.asDegrees.round(1)}   turn: ${turn.round(3)}   angleError: ${angleError.asDegrees.round(2)}")
+                }
             }
 
             if (!useGyroEntry.exists()) {
@@ -535,5 +555,7 @@ suspend fun Drive.currentTest() = use(this) {
 fun Drive.aimAtPoint(point: Vector2) {
     val angle = 180.degrees - atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
 
-    Drive.drive(Vector2(0.0, 0.0), angle.asDegrees)
+    println("Goal: $angle")
+
+    val angleError = angle - heading
 }

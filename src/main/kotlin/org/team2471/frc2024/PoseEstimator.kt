@@ -29,7 +29,7 @@ object PoseEstimator {
     private val startingHeadingEntry = poseTable.getEntry("Starting Heading Check")
     private val apriltagHeadingEntry = poseTable.getEntry("Apriltag Heading")
     private var offset = Vector2(0.0, 0.0)
-    private var kAprilValue: Double = 0.3
+    private var kAprilScalar: Double = 0.1
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
     val currentPose
@@ -64,7 +64,7 @@ object PoseEstimator {
             }
         }
     }
-    fun addVision(detection: AprilDetection, numTarget: Int, kApril: Double? = null) {
+    fun addVision(detection: AprilDetection, numTarget: Int) {
         //Ignoring Vision data if timestamp is before the last zero
 
             if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || robotPosM == Vector2(0.0,0.0)) {
@@ -72,7 +72,8 @@ object PoseEstimator {
                 return
             } else {
                 try {
-                    val kAprilFinal = ((kApril ?: (kAprilValue * if (numTarget < 2) 0.7 else 1.0)))
+                    val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (numTarget / 2)).coerceIn(0.0, 1.0)
+//                    println(detection.ambiguity)
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
 //                    val latencyPose = Drive.lookupPose(detection.timestamp)
                     if (DriverStation.isDisabled() && /*latencyPose == null && */beforeFirstEnable) {

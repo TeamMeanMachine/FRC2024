@@ -146,31 +146,27 @@ object AutoChooser {
     }
 
     suspend fun close4Red() = use(Drive, Shooter, Intake) {
-        Pivot.angleSetpoint = 60.0.degrees
         Shooter.rpmTop = 4000.0
         Shooter.rpmBottom = 4000.0
-        var path: Path2D? = null
+        Pivot.angleSetpoint = 52.0.degrees
         val auto = autonomi["Close4Red"]
-        path = auto?.get("1-Start")
+        var path: Path2D? = auto?.get("1-Start")
 
         parallel({
             if (path != null) {
                 Drive.driveAlongPath(path!!,  true)
             }
         }, {
-            fire()
-            Pivot.angleSetpoint = 40.0.degrees
+            suspendUntil { (Shooter.motorRpmTop + Shooter.motorRpmBottom) / 2.0 > 3500.0 }
+            Intake.setIntakeMotorsPercent(0.8)
+            delay(0.3)
+            Pivot.angleSetpoint = 33.0.degrees
             path = auto?.get("2-SecondNote")
         })
-        Intake.setIntakeMotorsPercent(0.7)
         if (path != null) {
             Drive.driveAlongPath(path!!, false)
         }
-
-
-
-
-
+        delay(3.0)
     }
 
 
