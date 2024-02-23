@@ -66,7 +66,7 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
-            println("set pivot angle to $field")
+//            println("set pivot angle to $field")
         }
 
     val pivotError: Double
@@ -118,8 +118,9 @@ object Pivot: Subsystem("Pivot") {
                     val dist = PoseEstimator.currentPose.distance(speakerPos)
 
                     // Calculated. May change a lot with more data
-                    val angle = (90.0 * (0.751492.pow(dist))).degrees
+//                    val angle = (90.0 * (0.751492.pow(dist))).degrees
 
+                    val angle = Shooter.pitchCurve.getValue(dist).degrees
                     angleSetpoint = angle
                 }
             }

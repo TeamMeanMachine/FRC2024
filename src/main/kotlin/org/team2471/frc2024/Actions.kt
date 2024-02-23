@@ -32,13 +32,16 @@ suspend fun climbWithTrigger() = use(Climb) {
 
 suspend fun spit() = use(Intake) {
     println("starting spit periodic")
-    Intake.holdingCargo = false
+    Intake.intakeState = Intake.IntakeState.SPITTING
+    Pivot.autoAim = false
+    Pivot.angleSetpoint = 45.0.degrees
     periodic {
         if (OI.driverController.leftTriggerFullPress) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
             Intake.intakeMotorBottom.setPercentOutput(-0.9)
             Intake.feederMotor.setPercentOutput(-0.9)
         } else {
+            Intake.intakeState = Intake.IntakeState.EMPTY
             this.stop()
         }
     }
@@ -77,8 +80,7 @@ suspend fun fire() = use(Shooter, Intake){
             this.stop()
         }
     }
-    Intake.holdingCargo = false
-    Intake.intaking = false
+    Intake.intakeState = Intake.IntakeState.EMPTY
 //    Shooter.shooting = false
 //    if (!Robot.isAutonomous) {
 //        Shooter.rpmTop = 0.0

@@ -7,6 +7,7 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import kotlin.math.absoluteValue
 
 object Shooter: Subsystem("Shooter") {
@@ -25,6 +26,16 @@ object Shooter: Subsystem("Shooter") {
     private val topDEntry = table.getEntry("top D")
     private val bottomDEntry = table.getEntry("bottom D")
     private val bottomPEntry = table.getEntry("bottom P")
+    val Pitch3Entry = table.getEntry("Pitch3Entry")
+    val Pitch6Entry = table.getEntry("Pitch6Entry")
+    val Pitch9Entry = table.getEntry("Pitch9Entry")
+    val Pitch15Entry = table.getEntry("Pitch15Entry")
+    val Pitch21Entry = table.getEntry("Pitch21Entry")
+    val RPM3Entry = table.getEntry("fRPM3Entry")
+    val RPM6Entry = table.getEntry("RPM10Entry")
+    val RPM9Entry = table.getEntry("RPM15Entry")
+    val RPM15Entry = table.getEntry("RPM20Entry")
+    val RPM21Entry = table.getEntry("RPM20Entry")
 
     val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
     val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
@@ -59,6 +70,9 @@ object Shooter: Subsystem("Shooter") {
     var kFeedForwardTop = 70.0 / 6380.0
     var kFeedForwardBottom = 70.0 / 6380.0
 
+    val pitchCurve = MotionCurve()
+    val RPMCurve = MotionCurve()
+
     var rpmTop: Double = 0.0
         set(value) {
 //            println("setting top rpm $value")
@@ -73,6 +87,31 @@ object Shooter: Subsystem("Shooter") {
         }
 
     init {
+
+        if (!Pitch3Entry.exists()) {
+            Pitch3Entry.setDouble(-8.0)
+            Pitch6Entry.setDouble(-19.0)
+            Pitch9Entry.setDouble(-27.0)
+            Pitch15Entry.setDouble(-30.0)
+            Pitch21Entry.setDouble(24.8)
+            RPM3Entry.setDouble(2800.0)
+            RPM6Entry.setDouble(3300.0)
+            RPM9Entry.setDouble(3950.0)
+            RPM15Entry.setDouble(5200.0)
+            RPM21Entry.setDouble(3200.0)
+
+            Pitch3Entry.setPersistent()
+            Pitch6Entry.setPersistent()
+            Pitch9Entry.setPersistent()
+            Pitch15Entry.setPersistent()
+            Pitch21Entry.setPersistent()
+            RPM3Entry.setPersistent()
+            RPM6Entry.setPersistent()
+            RPM9Entry.setPersistent()
+            RPM15Entry.setPersistent()
+            RPM21Entry.setPersistent()
+        }
+
         shooterPercentEntry.setDouble(1.0)
         if (!shootingRpmTopEntry.exists()) {
             shootingRpmTopEntry.setDouble(5000.0)
@@ -127,6 +166,17 @@ object Shooter: Subsystem("Shooter") {
                 } else {
                     OI.driverController.rumble = 0.0
                 }
+
+                if (Pitch3Entry.getDouble(0.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
+                if (Pitch6Entry.getDouble(0.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
+                if (Pitch9Entry.getDouble(0.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
+                if (Pitch15Entry.getDouble(0.0)!=pitchCurve.getValue(15.0)) { rebuildCurves() }
+                if (Pitch21Entry.getDouble(0.0)!=pitchCurve.getValue(21.0)) { rebuildCurves() }
+                if (RPM3Entry.getDouble(0.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
+                if (RPM6Entry.getDouble(0.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
+                if (RPM9Entry.getDouble(0.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
+                if (RPM15Entry.getDouble(0.0)!=pitchCurve.getValue(15.0)) { rebuildCurves() }
+                if (RPM21Entry.getDouble(0.0)!=pitchCurve.getValue(21.0)) { rebuildCurves() }
             }
         }
     }
@@ -135,4 +185,26 @@ object Shooter: Subsystem("Shooter") {
         periodic {
         }
     }
+
+    fun rebuildCurves() {
+        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+        pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(-8.0))
+        pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(-19.0))
+        pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(-27.0))
+        pitchCurve.storeValue(15.0, Pitch15Entry.getDouble(-30.0))
+        pitchCurve.storeValue(21.0,Pitch21Entry.getDouble(-32.0))
+
+        RPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        RPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+        RPMCurve.storeValue(3.0, RPM3Entry.getDouble(2800.0))
+        RPMCurve.storeValue(6.0, RPM6Entry.getDouble(3300.0))
+        RPMCurve.storeValue(9.0, RPM9Entry.getDouble(3950.0))
+        RPMCurve.storeValue(15.0, RPM15Entry.getDouble(5200.0))
+        RPMCurve.storeValue(21.0, RPM21Entry.getDouble(5650.0))
+
+    }
+
 }

@@ -65,7 +65,15 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
-        driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
+        driverController::leftBumper.whenTrue {
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                println("Stopping intake")
+                Intake.intakeState = Intake.IntakeState.EMPTY
+            } else {
+                println("Starting intaking")
+                Intake.intakeState = Intake.IntakeState.INTAKING
+            }
+        }
         driverController::leftTriggerFullPress.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::rightBumper.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
