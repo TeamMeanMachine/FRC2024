@@ -18,6 +18,7 @@ object Sparks {
 
 object AnalogSensors {
     const val PIVOT = 0
+    const val BEAM_BREAK = 1
 }
 
 object DigitalSensors {
@@ -25,8 +26,9 @@ object DigitalSensors {
     const val BACK_RIGHT = 4
     const val FRONT_RIGHT = 0
     const val FRONT_LEFT = 2
-    const val BUTTON = 5
 
+    const val BOTTOM_BREAK = 5
+    const val TOP_BREAK = 7
     const val CLIMBER = 1
 }
 

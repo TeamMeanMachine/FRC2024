@@ -1,16 +1,15 @@
 package org.team2471.frc2024
 
-import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.I2C
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
-import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Robot.isCompBot
 
@@ -20,44 +19,33 @@ object Intake: Subsystem("Intake") {
     private val intakingEntry = table.getEntry("Intaking")
     private val holdingNoteEntry = table.getEntry("Holding Note")
 
-    private val colorEntry = table.getEntry("ColorSensor Color")
-    private val proximityEntry = table.getEntry("ColorSensor Proximity")
-    private val proximityThresholdEntry = table.getEntry("ColorSensor Proximity Threshold")
-    private val buttonEntry = table.getEntry("Button")
+    private val bottomBreakEntry = table.getEntry("Bottom Break")
+    private val topBreakEntry = table.getEntry("Top Break")
 
-    private val intakePercentEntry = table.getEntry("Intake Percent")
     private val intakeCurrentEntry = table.getEntry("Intake Current")
 
-    private val feederPercentEntry = table.getEntry("Feeder Percent")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
     val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP))
     val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM))
     val feederMotor = MotorController(FalconID(Falcons.FEEDER))
 
-    private val colorSensorI2CPort: I2C.Port = I2C.Port.kMXP
-    private val colorSensor = ColorSensorV3(colorSensorI2CPort)
-    private val buttonSensor = DigitalInput(DigitalSensors.BUTTON)
+    private val bottomBreakSensor = DigitalInput(DigitalSensors.BOTTOM_BREAK)
+    private val topBreakSensor = DigitalInput(DigitalSensors.TOP_BREAK)
 
-//    private var staged = false
-//    private var staging = false
+    private val beamBreakSensor = AnalogInput(AnalogSensors.BEAM_BREAK)
+
     var intaking = false
         set(value) {
             println("intaking set to $value")
             holdingCargo = false
             field = value
-//            if (staging || staged) return
-//            intakeMotorTop.setPercentOutput(if (value) 0.7 else 0.0)
-//            intakeMotorBottom.setPercentOutput(if (value) 0.7 else 0.0)
-//            feederMotor.setPercentOutput(if (value) 0.6 else 0.0)
-
         }
 
-    val button: Boolean
-        get() = !buttonSensor.get()
-
-    private val proximity: Int
-        get() = colorSensor.proximity
+    val bottomBreak: Boolean
+        get() = !bottomBreakSensor.get()
+    val topBreak: Boolean
+        get() = !topBreakSensor.get()
 
     var holdingCargo = false
 
@@ -65,10 +53,6 @@ object Intake: Subsystem("Intake") {
         intakingEntry.setBoolean(false)
         holdingNoteEntry.setBoolean(true)
 
-        proximityThresholdEntry.setDouble(500.0)
-
-        intakePercentEntry.setDouble(0.8)
-        feederPercentEntry.setDouble(if (isCompBot) 0.8 else 0.2)
         var x = feederCurrentEntry.getDouble(0.0)
 
         intakeMotorTop.config {
@@ -100,15 +84,15 @@ object Intake: Subsystem("Intake") {
             var stagedT= 0.0
 
             periodic {
-                colorEntry.setString(colorSensor.color.toHexString())
-                proximityEntry.setInteger(colorSensor.proximity.toLong())
+//                colorEntry.setString(colorSensor.color.toHexString())
+//                proximityEntry.setInteger(colorSensor.proximity.toLong())
 
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
-                colorEntry.setDouble(0.0)
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
-                buttonEntry.setBoolean(button)
+                bottomBreakEntry.setBoolean(bottomBreak)
+                topBreakEntry.setBoolean(topBreak)
 
             }
         }
@@ -121,19 +105,20 @@ object Intake: Subsystem("Intake") {
         periodic {
             if (intaking) {
                 if (!detectedCargo && !holdingCargo) {
-                    setIntakeMotorsPercent(0.1)
+                    Pivot.angleSetpoint = 18.0.degrees
+                    setIntakeMotorsPercent(0.7)
                 }
-                if (button && !detectedCargo) {
+                if (bottomBreak && !detectedCargo) {
                     println("detected piece, slowing intake")
-                    setIntakeMotorsPercent(0.1)
+                    setIntakeMotorsPercent(0.5)
                     detectedCargo = true
                 }
-                val limit = if (isCompBot) 200 else 500
-                if (proximity > limit && !holdingCargo) {
+                if (topBreak && !holdingCargo) {
                     setIntakeMotorsPercent(0.0)
                     println("stopping intake")
                     holdingCargo = true
                     detectedCargo = false
+                    Pivot.angleSetpoint = Pivot.TESTPOSE
                 }
                 if (detectedCargo) {
                     if (t.get() > 2.0) {

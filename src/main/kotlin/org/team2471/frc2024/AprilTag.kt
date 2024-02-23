@@ -19,8 +19,11 @@ import org.team2471.frc2024.AprilTag.camIB
 import org.team2471.frc2024.AprilTag.camSL
 import org.team2471.frc2024.AprilTag.camSR
 import org.team2471.frc2024.AprilTag.iBPoseEstimator
+import org.team2471.frc2024.AprilTag.lastIBAmbiguity
 import org.team2471.frc2024.AprilTag.lastIBDetectionTime
+import org.team2471.frc2024.AprilTag.lastSLAmbiguity
 import org.team2471.frc2024.AprilTag.lastSLDetectionTime
+import org.team2471.frc2024.AprilTag.lastSRAmbiguity
 import org.team2471.frc2024.AprilTag.lastSRDetectionTime
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.AprilTag.robotToCamIB
@@ -60,30 +63,35 @@ object AprilTag {
     var lastSRDetectionTime = 0.0
     var lastIBDetectionTime = 0.0
 
+    var lastSLAmbiguity = 0.0
+    var lastSRAmbiguity = 0.0
+    var lastIBAmbiguity = 0.0
+
+
 // TODO: Test Single Tags at different distances to find the min Dist.
     private var singleTagMinDist: Double = 17.35
 
 
     val lastSLDetection: AprilDetection
-        get() = AprilDetection(lastSLDetectionTime, lastSLPose)
+        get() = AprilDetection(lastSLDetectionTime, lastSLPose, lastSLAmbiguity)
 
     val lastSRDetection: AprilDetection
-        get() = AprilDetection(lastSRDetectionTime, lastSRPose)
+        get() = AprilDetection(lastSRDetectionTime, lastSRPose, lastSRAmbiguity)
     val lastIBDetection: AprilDetection
-        get() = AprilDetection(lastIBDetectionTime, lastIBPose)
+        get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBAmbiguity)
 
     var robotToCamSL: Transform3d = Transform3d(
-        Translation3d(9.5.inches.asMeters, -7.0.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(0.0, 12.0.degrees.asRadians, -170.0.degrees.asRadians)
+        Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(0.0, -50.degrees.asRadians, -170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
-        Translation3d(-9.5.inches.asMeters, -7.0.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, 12.degrees.asRadians, 170.0.degrees.asRadians)
+        Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(7.0.degrees.asRadians, -50.degrees.asRadians, 170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
-        Translation3d(12.25.inches.asMeters, 2.0.inches.asMeters, 9.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, 12.0.degrees.asRadians, 0.0.degrees.asRadians)
+        Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
+        Rotation3d(0.0.degrees.asRadians, -58.0.degrees.asRadians, 0.0.degrees.asRadians)
     )
     init {
         resetCameras()
@@ -139,6 +147,7 @@ object AprilTag {
                             )
                             lastIBPose = maybePoseIB
 
+
                             PoseEstimator.addVision(lastIBDetection, numTargetIB)
                         }
                     } catch (ex:Exception) {
@@ -188,16 +197,16 @@ object AprilTag {
             if (newPose?.isPresent == true) {
                 val result = newPose.get()
                 //TODO: filter single tags by distance
-//                if (validTargets.count() < 2 && result.estimatedPose.toPose2d().y.absoluteValue < singleTagMinY) {
-//
-////                println("AprilTag: Single target too far away ${result.estimatedPose.toPose2d().toTMMField().y.absoluteValue} vs ${(FieldManager.chargeFromCenterY + FieldManager.chargingStationDepth).asFeet}")
+//                if (validTargets.count() < 2 && result.s) {
+
+//                println("AprilTag: Single target too far away ${result.estimatedPose.toPose2d().toTMMField().y.absoluteValue} vs ${(FieldManager.chargeFromCenterY + FieldManager.chargingStationDepth).asFeet}")
 //                    return null
 //                }
 //            println("Valid target found ${validTargets.count()}")
                 when (camera.name) {
-                    "CamSL" -> lastSLDetectionTime = result.timestampSeconds
-                    "CamSR" -> lastSRDetectionTime = result.timestampSeconds
-                    "CamIB" -> lastIBDetectionTime = result.timestampSeconds
+                    "CamSL" -> {lastSLDetectionTime = result.timestampSeconds; lastSLAmbiguity = cameraResult.estimatedPose.ambiguity}
+                    "CamSR" -> {lastSRDetectionTime = result.timestampSeconds; lastSRAmbiguity = cameraResult.estimatedPose.ambiguity}
+                    "CamIB" -> {lastIBDetectionTime = result.timestampSeconds; lastIBAmbiguity = cameraResult.estimatedPose.ambiguity}
                 }
 
 
@@ -270,5 +279,6 @@ object AprilTag {
 
 data class AprilDetection (
     val timestamp: Double,
-    val pose: Pose2d
+    val pose: Pose2d,
+    val ambiguity: Double
 )

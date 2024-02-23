@@ -6,9 +6,15 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
+import org.team2471.frc.lib.coroutines.delay
+import org.team2471.frc.lib.coroutines.parallel
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Autonomous
+import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
@@ -71,11 +77,7 @@ object AutoChooser {
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
-        addOption("Outer Three Auto", "outerThreeAuto")
-        addOption("Outer Two Auto", "outerTwoAuto")
-        addOption("Inner Three Auto", "innerThreeAuto")
-        addOption("NodeDeck", "nodeDeck")
-        addOption("HIII", "HIII")
+        addOption("Close4Red", "close4Red")
 
     }
 
@@ -136,10 +138,35 @@ object AutoChooser {
         when (selAuto) {
             "HIII" -> hiii()
             "Tests" -> testAuto()
+            "Close4Red" -> close4Red()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
         println("finished autonomous  ${Robot.recentTimeTaken()}")
+    }
+
+    suspend fun close4Red() = use(Drive, Shooter, Intake) {
+        Shooter.rpmTop = 4000.0
+        Shooter.rpmBottom = 4000.0
+        Pivot.angleSetpoint = 52.0.degrees
+        val auto = autonomi["Close4Red"]
+        var path: Path2D? = auto?.get("1-Start")
+
+        parallel({
+            if (path != null) {
+                Drive.driveAlongPath(path!!,  true)
+            }
+        }, {
+            suspendUntil { (Shooter.motorRpmTop + Shooter.motorRpmBottom) / 2.0 > 3500.0 }
+            Intake.setIntakeMotorsPercent(0.8)
+            delay(0.3)
+            Pivot.angleSetpoint = 33.0.degrees
+            path = auto?.get("2-SecondNote")
+        })
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false)
+        }
+        delay(3.0)
     }
 
 

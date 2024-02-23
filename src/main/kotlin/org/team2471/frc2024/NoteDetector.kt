@@ -31,7 +31,6 @@ object NoteDetector: Subsystem("NoteDetector") {
         get() = notes.size > 0
 
     init {
-
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
 

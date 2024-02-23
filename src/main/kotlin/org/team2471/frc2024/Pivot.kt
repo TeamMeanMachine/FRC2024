@@ -8,15 +8,17 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.cos
-import org.team2471.frc.lib.units.asRadians
-import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.absoluteValue
 import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -36,19 +38,18 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    const val TESTPOSE = 25 //32
-
-    // All in degrees
-    val CLOSESPEAKERPOSE = 62
-//        get() = stageAngleEntry.getDouble(60.0)
-
-    const val MINHARDSTOP = 5.5
-
-    const val MAXHARDSTOP = 110.2
+    val TESTPOSE = 30.0.degrees //18 //32
+    val CLOSESPEAKERPOSE = 62.0.degrees
+    val MINHARDSTOP = 5.5.degrees
+    val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
+    val MAXHARDSTOP = 110.2.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 2540.0 else 2124.0
-    private val MAXTICKS = if (isCompBot) 1410.0 else 940.0
+    private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
+    private val MAXTICKS = if (isCompBot) 1393.0 else 940.0
+
+
+    var autoAim = false
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -57,14 +58,14 @@ object Pivot: Subsystem("Pivot") {
         get() = pivotEncoder.voltage
 
     val pivotEncoderAngle: Angle
-        get() = linearMap(MINTICKS, MAXTICKS, MINHARDSTOP, MAXHARDSTOP, pivotEncoder.value.toDouble()).degrees
+        get() = linearMap(MINTICKS, MAXTICKS, MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees, pivotEncoder.value.toDouble()).degrees
 
     val pivotMotorAngle: Angle
         get() = pivotMotor.position.degrees
 
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
-            field = value.asDegrees.coerceIn(MINHARDSTOP, MAXHARDSTOP).degrees
+            field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
             println("set pivot angle to $field")
         }
 
@@ -111,6 +112,15 @@ object Pivot: Subsystem("Pivot") {
                 if (pivotError > 0.25) {
                     pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians).squareWithSign()) /*+ 0.000001*/)
 //                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
+                }
+
+                if (autoAim) {
+                    val dist = PoseEstimator.currentPose.distance(speakerPos)
+
+                    // Calculated. May change a lot with more data
+                    val angle = (90.0 * (0.751492.pow(dist))).degrees
+
+                    angleSetpoint = angle
                 }
             }
         }
