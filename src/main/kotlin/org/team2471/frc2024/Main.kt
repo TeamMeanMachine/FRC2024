@@ -56,6 +56,7 @@ object Robot : MeanlibRobot() {
         AutoChooser
         AprilTag
         PoseEstimator
+        NoteDetector
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 
         // drop down menu for selecting tests
