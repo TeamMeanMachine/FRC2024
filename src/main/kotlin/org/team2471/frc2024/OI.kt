@@ -76,7 +76,7 @@ object OI : Subsystem("OI") {
         }
         driverController::leftTriggerFullPress.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
-        driverController::rightBumper.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
+        driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
 //        driverController::b.whenTrue { pickUpSeenNote() }
 

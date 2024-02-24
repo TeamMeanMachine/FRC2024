@@ -169,4 +169,8 @@ suspend fun aimAtSpeaker() {
     Drive.aimTarget = false
     Pivot.autoAim = false
 
+    Pivot.angleSetpoint = Pivot.MINHARDSTOP
+    Shooter.rpmTop = 0.0
+    Shooter.rpmBottom = 0.0
+
 }

@@ -77,6 +77,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
+    val distanceEntry = table.getEntry("Distance")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
@@ -156,8 +157,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
-    override val combinedPosition: Vector2
+    override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
+        set(value) {
+            //position is in feet but PoseEstimator.combined pose is in meters
+            position = value
+            PoseEstimator.zeroOffset()
+        }
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
@@ -174,8 +180,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var aimPDController = teleopPDController
 
     var aimTarget = false
-    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asMeters, 218.42.inches.asMeters) else Vector2(8.5.inches.asMeters, 218.42.inches.asMeters)
+    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
     val ampPos = Vector2(0.0, 0.0) //TODO
+    val distance: Double
+        get() = (combinedPosition - speakerPos).length
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -254,6 +262,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
+                distanceEntry.setDouble(distance)
 
                 var totalDriveCurrent = 0.0
                 for (i in modules) {

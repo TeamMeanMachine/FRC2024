@@ -32,8 +32,8 @@ object PoseEstimator {
     private var kAprilScalar: Double = 0.1
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
-    val currentPose
-        get() = robotPosM - offset
+    val currentPose //in feet
+        get() = (robotPosM - offset).times(3.280839895) //this number is meters to feet conversion
     var preEnableHadTarget = false
 
     val robotPosM
@@ -51,7 +51,7 @@ object PoseEstimator {
 //                startingPosEntry.setBoolean((FieldManager.startingPosition - Drive.combinedPosition).length < 0.25)
                 //untested ^
 
-                advantagePoseEntry.setDoubleArray(doubleArrayOf(currentPose.x,  currentPose.y, Drive.heading.asDegrees))
+                advantagePoseEntry.setDoubleArray(doubleArrayOf(currentPose.x.feet.asMeters,  currentPose.y.feet.asMeters, Drive.heading.asDegrees))
                 offsetEntry.setDoubleArray(doubleArrayOf(offset.x, offset.y))
                 //Todo: starting positions for autos
 //                if (DriverStation.isDisabled() && beforeFirstEnable && !preEnableHadTarget && !Drive.demoMode){
