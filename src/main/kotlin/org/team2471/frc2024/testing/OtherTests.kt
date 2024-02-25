@@ -5,7 +5,6 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.input.whenTrue
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.*
 
@@ -77,7 +76,7 @@ suspend fun Shooter.rpmTest() = use(Shooter) {
 //    var switch = 0
 //    var intakeP = 0.0
 //    var feedP = 0.6
-    var shootP = 5000.0 //0.2
+    var shootP = 4000.0 //0.2
     var upPressed = false
     var downPressed = false
 //    var shoot2 = 0.15
@@ -95,10 +94,10 @@ suspend fun Shooter.rpmTest() = use(Shooter) {
             downPressed = false
             shootP -= 100.0
         }
-        rpmTop = shootP
-        rpmBottom = shootP
+        rpmTopSetpoint = shootP
+        rpmBottomSetpoint = shootP
 
 //        Shooter.shooterMotorTop.setPercentOutput(shootP)
-        println("rpmBottom: ${shooterMotorBottom.velocity.round(1)}, rpmTop: ${shooterMotorTop.velocity.round(1)}, Set Point ${shootP.round(1)}")
+//        println("rpmBottom: ${shooterMotorBottom.velocity.round(1)}, rpmTop: ${shooterMotorTop.velocity.round(1)}, Set Point ${shootP.round(1)}")
     }
 }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
+import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion_profiling.MotionCurve
@@ -52,11 +53,11 @@ object Shooter: Subsystem("Shooter") {
             if (value) {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                rpmTop = shootingRpmTopEntry.getDouble(1000.0)
-                rpmBottom = shootingRpmBottomEntry.getDouble(1000.0)
+                rpmTopSetpoint = shootingRpmTopEntry.getDouble(1000.0)
+                rpmBottomSetpoint = shootingRpmBottomEntry.getDouble(1000.0)
             } else {
-                rpmTop = 0.0
-                rpmBottom = 0.0
+                rpmTopSetpoint = 0.0
+                rpmBottomSetpoint = 0.0
             }
             field = value
         }
@@ -67,23 +68,34 @@ object Shooter: Subsystem("Shooter") {
     val shootingRpmBottom: Double
         get() = shootingRpmBottomEntry.getDouble(21.0)
 
-    var kFeedForwardTop = 76.0 / 6380.0
-    var kFeedForwardBottom = 76.0 / 6380.0
+    var kFeedForwardTop = 1.0/5000.0//76.0 / 6380.0
+    var kFeedForwardBottom = 1.0/5000.0//76.0 / 6380.0
 
     val pitchCurve = MotionCurve()
     val RPMCurve = MotionCurve()
 
+    private val topPDController = PDController(0.00015, 0.0006)
+    private val bottomPDController = PDController(0.00015, 0.0006)
+
+    private var ffTopPower: Double = 0.0
+    private var ffBottomPower: Double = 0.0
+
+    private var pdPowerTop = 0.0
+    private var pdPowerBottom = 0.0
+
     const val MAXRPM = 5300.0;
-    var rpmTop: Double = 0.0
+    var rpmTopSetpoint: Double = 0.0
         set(value) {
+            ffTopPower = value * kFeedForwardTop
 //            println("setting top rpm $value")
-            shooterMotorTop.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardTop)
+//            shooterMotorTop.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardTop)
             field = value
         }
-    var rpmBottom: Double = 0.0
+    var rpmBottomSetpoint: Double = 0.0
         set(value) {
+            ffBottomPower = value * kFeedForwardBottom
 //            println("setting bottom rpm $value  feedForward ${(value * kFeedForwardBottom).round(4)}")
-            shooterMotorBottom.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardBottom)
+//            shooterMotorBottom.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardBottom)
             field = value
         }
 
@@ -160,15 +172,15 @@ object Shooter: Subsystem("Shooter") {
                 motorRpmBottomEntry.setDouble(motorRpmBottom)
                 motorRpmTopEntry.setDouble(motorRpmTop)
 
-                if (Robot.isEnabled && (motorRpmTop - rpmTop).absoluteValue + (motorRpmBottom - rpmBottom).absoluteValue < 500.0 && rpmTop + rpmBottom > 20.0) {
+                if (Robot.isEnabled && (motorRpmTop - rpmTopSetpoint).absoluteValue + (motorRpmBottom - rpmBottomSetpoint).absoluteValue < 500.0 && rpmTopSetpoint + rpmBottomSetpoint > 20.0) {
                     OI.driverController.rumble = 0.8
                 } else {
                     OI.driverController.rumble = 0.0
                 }
 
                 if (Pivot.autoAim) {
-                    rpmTop = RPMCurve.getValue(Drive.distance)
-                    rpmBottom = RPMCurve.getValue(Drive.distance)
+                    rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
+                    rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
                 }
 
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
@@ -182,14 +194,32 @@ object Shooter: Subsystem("Shooter") {
                 if (RPM9Entry.getDouble(9.0)!=RPMCurve.getValue(9.0)) { rebuildCurves() }
                 if (RPM15Entry.getDouble(15.0)!=RPMCurve.getValue(15.0)) { rebuildCurves() }
                 if (RPM21Entry.getDouble(21.0)!=RPMCurve.getValue(21.0)) { rebuildCurves() }
+
+
+                if (Robot.isEnabled) {
+                    pdPowerTop += topPDController.update(rpmTopSetpoint - motorRpmTop)
+                    pdPowerBottom += bottomPDController.update(rpmBottomSetpoint - motorRpmBottom)
+
+                    if (pdPowerTop + ffTopPower > 1.0) {
+                        pdPowerTop = 1.0 - ffTopPower
+                    }
+                    if (pdPowerBottom + ffBottomPower > 1.0) {
+                        pdPowerBottom = 1.0 - ffBottomPower
+                    }
+
+                    shooterMotorTop.setPercentOutput(pdPowerTop + ffTopPower)
+                    shooterMotorBottom.setPercentOutput(pdPowerBottom + ffBottomPower)
+
+                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
+                }
             }
         }
     }
 
     override suspend fun default() {
         periodic {
-            rpmTopEntry.setDouble(rpmTop)
-            rpmBottomEntry.setDouble(rpmBottom)
+            rpmTopEntry.setDouble(rpmTopSetpoint)
+            rpmBottomEntry.setDouble(rpmBottomSetpoint)
         }
     }
 
