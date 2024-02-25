@@ -152,12 +152,12 @@ suspend fun fire() = use(Shooter, Intake){
 //
 
 suspend fun aimAtSpeaker() {
-    Drive.aimTarget = true
+//    Drive.aimTarget = true
     Pivot.autoAim = true
 
     suspendUntil(20) { !OI.driverController.y }
 
-    Drive.aimTarget = false
+//    Drive.aimTarget = false
     Pivot.autoAim = false
 
     Pivot.angleSetpoint = Pivot.MINHARDSTOP

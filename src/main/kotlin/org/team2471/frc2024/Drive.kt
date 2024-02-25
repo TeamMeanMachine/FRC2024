@@ -107,7 +107,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-35.95).degrees,
+            Preferences.getDouble("Angle Offset 0",-140.8).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -116,7 +116,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-41.13).degrees,
+            Preferences.getDouble("Angle Offset 1",-21.4).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -125,7 +125,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",151.56).degrees,
+            Preferences.getDouble("Angle Offset 2",39.06).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -134,7 +134,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",15.71).degrees,
+            Preferences.getDouble("Angle Offset 3",43.65).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3

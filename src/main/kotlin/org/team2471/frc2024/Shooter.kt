@@ -103,14 +103,14 @@ object Shooter: Subsystem("Shooter") {
 
         if (!Pitch3Entry.exists()) {
             Pitch3Entry.setDouble(59.0)
-            Pitch6Entry.setDouble(43.5)
-            Pitch9Entry.setDouble(34.0)
-            Pitch15Entry.setDouble(30.0)
-            Pitch21Entry.setDouble(27.8)
+            Pitch6Entry.setDouble(50.0)
+            Pitch9Entry.setDouble(37.5)
+            Pitch15Entry.setDouble(30.5)
+            Pitch21Entry.setDouble(27.6)
             RPM3Entry.setDouble(3500.0)
-            RPM6Entry.setDouble(4500.0)
-            RPM9Entry.setDouble(5500.0)
-            RPM15Entry.setDouble(4500.0)
+            RPM6Entry.setDouble(3750.0)
+            RPM9Entry.setDouble(5000.0)
+            RPM15Entry.setDouble(5000.0)
             RPM21Entry.setDouble(5000.0)
 
             Pitch3Entry.setPersistent()
@@ -187,12 +187,12 @@ object Shooter: Subsystem("Shooter") {
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
                 if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
                 if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
-                if (Pitch15Entry.getDouble(15.0)!=pitchCurve.getValue(15.0)) { rebuildCurves() }
+                if (Pitch15Entry.getDouble(13.7)!=pitchCurve.getValue(13.7)) { rebuildCurves() }
                 if (Pitch21Entry.getDouble(21.0)!=pitchCurve.getValue(21.0)) { rebuildCurves() }
                 if (RPM3Entry.getDouble(5.0)!=RPMCurve.getValue(3.0)) { rebuildCurves() }
                 if (RPM6Entry.getDouble(6.0)!=RPMCurve.getValue(6.0)) { rebuildCurves() }
                 if (RPM9Entry.getDouble(9.0)!=RPMCurve.getValue(9.0)) { rebuildCurves() }
-                if (RPM15Entry.getDouble(15.0)!=RPMCurve.getValue(15.0)) { rebuildCurves() }
+                if (RPM15Entry.getDouble(13.7)!=RPMCurve.getValue(13.7)) { rebuildCurves() }
                 if (RPM21Entry.getDouble(21.0)!=RPMCurve.getValue(21.0)) { rebuildCurves() }
 
 
@@ -231,7 +231,7 @@ object Shooter: Subsystem("Shooter") {
         pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(61.0))
         pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(50.0))
         pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(42.0))
-        pitchCurve.storeValue(15.0, Pitch15Entry.getDouble(30.0))
+        pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(30.0))
         pitchCurve.storeValue(21.0, Pitch21Entry.getDouble(27.0))
 
         RPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
@@ -240,7 +240,7 @@ object Shooter: Subsystem("Shooter") {
         RPMCurve.storeValue(3.0, RPM3Entry.getDouble(3500.0))
         RPMCurve.storeValue(6.0, RPM6Entry.getDouble(3750.0))
         RPMCurve.storeValue(9.0, RPM9Entry.getDouble(4000.0))
-        RPMCurve.storeValue(15.0, RPM15Entry.getDouble(4500.0))
+        RPMCurve.storeValue(13.7, RPM15Entry.getDouble(4500.0))
         RPMCurve.storeValue(21.0, RPM21Entry.getDouble(5000.0))
 
     }
