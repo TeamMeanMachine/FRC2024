@@ -78,6 +78,9 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
+        driverController::b.whenTrue { Pivot.angleSetpoint = 30.0.degrees }
+        driverController::a.whenTrue { Pivot.angleSetpoint = 60.0.degrees }
+
 //        driverController::b.whenTrue { pickUpSeenNote() }
 
 
@@ -93,8 +96,8 @@ object OI : Subsystem("OI") {
 
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.degrees }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
+//        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.degrees }
+//        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
 
         operatorController::start.whenTrue { resetCameras() }
 
