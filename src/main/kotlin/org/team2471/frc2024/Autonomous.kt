@@ -8,11 +8,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
-import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.measureTimeFPGA
@@ -146,8 +144,8 @@ object AutoChooser {
     }
 
     suspend fun close4Red() = use(Drive, Shooter, Intake) {
-        Shooter.rpmTop = 4000.0
-        Shooter.rpmBottom = 4000.0
+        Shooter.rpmTopSetpoint = 500.0
+        Shooter.rpmBottomSetpoint = 500.0
         Pivot.angleSetpoint = 52.0.degrees
         val auto = autonomi["Close4Red"]
         var path: Path2D? = auto?.get("1-Start")
@@ -157,10 +155,10 @@ object AutoChooser {
                 Drive.driveAlongPath(path!!,  true)
             }
         }, {
-            suspendUntil { (Shooter.motorRpmTop + Shooter.motorRpmBottom) / 2.0 > 3500.0 }
+//            suspendUntil { (Shooter.motorRpmTop + Shooter.motorRpmBottom) / 2.0 > 3500.0 }
             Intake.setIntakeMotorsPercent(0.8)
             delay(0.3)
-            Pivot.angleSetpoint = 33.0.degrees
+//            Pivot.angleSetpoint = 33.0.degrees
             path = auto?.get("2-SecondNote")
         })
         if (path != null) {

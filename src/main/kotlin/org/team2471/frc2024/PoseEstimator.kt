@@ -32,8 +32,8 @@ object PoseEstimator {
     private var kAprilScalar: Double = 0.1
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
-    val currentPose
-        get() = robotPosM - offset
+    val currentPose //in feet
+        get() = (robotPosM - offset).times(3.280839895) //this number is meters to feet conversion
     var preEnableHadTarget = false
 
     val robotPosM
@@ -51,7 +51,7 @@ object PoseEstimator {
 //                startingPosEntry.setBoolean((FieldManager.startingPosition - Drive.combinedPosition).length < 0.25)
                 //untested ^
 
-                advantagePoseEntry.setDoubleArray(doubleArrayOf(currentPose.x,  currentPose.y, Drive.heading.asDegrees))
+                advantagePoseEntry.setDoubleArray(doubleArrayOf(currentPose.x.feet.asMeters,  currentPose.y.feet.asMeters, Drive.heading.asDegrees))
                 offsetEntry.setDoubleArray(doubleArrayOf(offset.x, offset.y))
                 //Todo: starting positions for autos
 //                if (DriverStation.isDisabled() && beforeFirstEnable && !preEnableHadTarget && !Drive.demoMode){
@@ -67,29 +67,29 @@ object PoseEstimator {
     fun addVision(detection: AprilDetection, numTarget: Int) {
         //Ignoring Vision data if timestamp is before the last zero
 
-            if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || robotPosM == Vector2(0.0,0.0)) {
-                println("Ignoring update during reset") // and initialization ...")
-                return
-            } else {
-                try {
-                    val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (numTarget / 2)).coerceIn(0.0, 1.0)
+        if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || robotPosM == Vector2(0.0,0.0)) {
+            println("Ignoring update during reset") // and initialization ...")
+            return
+        } else {
+            try {
+                val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (numTarget / 2)).coerceIn(0.0, 1.0)
 //                    println(detection.ambiguity)
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
 //                    val latencyPose = Drive.lookupPose(detection.timestamp)
-                    if (DriverStation.isDisabled() && /*latencyPose == null && */beforeFirstEnable) {
-                        val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
-                        preEnableHadTarget = true
-                        Drive.position = apriltagPoseF
-                        Drive.heading = detection.pose.rotation.radians.radians
-                    }
+                if (DriverStation.isDisabled() && /*latencyPose == null && */beforeFirstEnable) {
+                    val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
+                    preEnableHadTarget = true
+                    Drive.position = apriltagPoseF
+                    Drive.heading = detection.pose.rotation.radians.radians
+                }
 //                    if (latencyPose != null) {
 //                        val odomDiff = robotPosM - latencyPose.position
-                        val apriltagPose = Vector2(detection.pose.x, detection.pose.y)// + odomDiff
-                        //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
-                        offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
-                        //apriltagHeadingEntry.setDouble(apriltagHeading.asDegrees)
-                        //headingOffset = headingOffset * (1.0 - kHeading) + apriltagHeading.unWrap180(Drive.heading) * kHeading
-                        //TODO: figure out coercing
+                val apriltagPose = Vector2(detection.pose.x, detection.pose.y)// + odomDiff
+                //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
+                offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
+                //apriltagHeadingEntry.setDouble(apriltagHeading.asDegrees)
+                //headingOffset = headingOffset * (1.0 - kHeading) + apriltagHeading.unWrap180(Drive.heading) * kHeading
+                //TODO: figure out coercing
 //                        val coercedOffsetX = offset.x.coerceIn(
 //                            -FieldManager.fieldHalfInFeet.x + robotPosM.x,
 //                            FieldManager.fieldHalfInFeet.x + robotPosM.x
@@ -104,12 +104,12 @@ object PoseEstimator {
 //                            DriverStation.reportWarning("PoseEstimator: Offset coerced onto field", false)
 //                            println("PoseEstimator: Offset coerced onto field")
 //                        }
-                        //println("Heading Offset: ${apriltagHeading.unWrap(Drive.heading)}")
+                //println("Heading Offset: ${apriltagHeading.unWrap(Drive.heading)}")
 
-                        //        println(offset)
+                //        println(offset)
 //                    }
-                } catch (ex: Exception) {
-                }
+            } catch (ex: Exception) {
+            }
         }
     }
     fun zeroOffset() {

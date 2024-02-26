@@ -44,11 +44,11 @@ object AprilTag {
 
     val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
 
-//     Camera Shooter Left
+    //     Camera Shooter Left
     var camSL: PhotonCamera? = null
-//     Camera Shooter Right
+    //     Camera Shooter Right
     var camSR: PhotonCamera? = null
-//     Camera Intake B/W
+    //     Camera Intake B/W
     var camIB: PhotonCamera? = null
 
     var sLPoseEstimator : PhotonPoseEstimator? = null
@@ -68,7 +68,7 @@ object AprilTag {
     var lastIBAmbiguity = 0.0
 
 
-// TODO: Test Single Tags at different distances to find the min Dist.
+    // TODO: Test Single Tags at different distances to find the min Dist.
     private var singleTagMinDist: Double = 17.35
 
 
@@ -81,13 +81,13 @@ object AprilTag {
         get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBAmbiguity)
 
     var robotToCamSL: Transform3d = Transform3d(
-        Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(0.0, -50.degrees.asRadians, -170.0.degrees.asRadians)
+        Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(0.0, -50.degrees.asRadians, 170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
-        Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(7.0.degrees.asRadians, -50.degrees.asRadians, 170.0.degrees.asRadians)
+        Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 9.0.inches.asMeters),
+        Rotation3d(3.0.degrees.asRadians, -50.degrees.asRadians, -170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
@@ -97,188 +97,185 @@ object AprilTag {
         resetCameras()
         GlobalScope.launch {
             periodic {
-                    try {
-                        //val frontCamSelected = useFrontCam()
-                        var maybePoseSL: Pose2d? =
-                            sLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                        var numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
+                try {
+                    //val frontCamSelected = useFrontCam()
+                    var maybePoseSL: Pose2d? =
+                        sLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
+                    var numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
 
-                        var maybePoseSR: Pose2d? =
-                            sRPoseEstimator?.let { camSR?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                        var numTargetSR: Int = camSR?.latestResult?.targets?.count() ?: 0
+                    var maybePoseSR: Pose2d? =
+                        sRPoseEstimator?.let { camSR?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
+                    var numTargetSR: Int = camSR?.latestResult?.targets?.count() ?: 0
 
-                        var maybePoseIB: Pose2d? =
-                            iBPoseEstimator?.let { camIB?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                        var numTargetIB: Int = camIB?.latestResult?.targets?.count() ?: 0
+                    var maybePoseIB: Pose2d? =
+                        iBPoseEstimator?.let { camIB?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
+                    var numTargetIB: Int = camIB?.latestResult?.targets?.count() ?: 0
 
-                        if (maybePoseSL != null) {
-                                seesAprilTagEntry.setBoolean(numTargetSL > 0)
-                                advantagePoseSLEntry.setDoubleArray(
-                                    doubleArrayOf(
-                                        maybePoseSL.x,
-                                        maybePoseSL.y,
-                                        maybePoseSL.rotation.degrees
-                                    )
-                                )
-                            lastSLPose = maybePoseSL
-                            PoseEstimator.addVision(lastSLDetection, numTargetSL)
-                        }
-                        if (maybePoseSR != null) {
-                                seesAprilTagEntry.setBoolean(numTargetSR > 0)
-                                advantagePoseSREntry.setDoubleArray(
-                                    doubleArrayOf(
-                                        maybePoseSR.x,
-                                        maybePoseSR.y,
-                                        maybePoseSR.rotation.degrees
-                                    )
-                                )
-                            lastSRPose = maybePoseSR
-
-                            PoseEstimator.addVision(lastSRDetection, numTargetSR)
-                        }
-                        if (maybePoseIB != null) {
-                            seesAprilTagEntry.setBoolean(numTargetIB > 0)
-                            advantagePoseIBEntry.setDoubleArray(
-                                doubleArrayOf(
-                                    maybePoseIB.x,
-                                    maybePoseIB.y,
-                                    maybePoseIB.rotation.degrees
-                                )
+                    if (maybePoseSL != null) {
+                        seesAprilTagEntry.setBoolean(numTargetSL > 0)
+                        advantagePoseSLEntry.setDoubleArray(
+                            doubleArrayOf(
+                                maybePoseSL.x,
+                                maybePoseSL.y,
+                                maybePoseSL.rotation.degrees
                             )
-                            lastIBPose = maybePoseIB
-
-
-                            PoseEstimator.addVision(lastIBDetection, numTargetIB)
-                        }
-                    } catch (ex:Exception) {
-                        println("Error in apriltag $ex")
+                        )
+                        lastSLPose = maybePoseSL
+                        PoseEstimator.addVision(lastSLDetection, numTargetSL)
                     }
+                    if (maybePoseSR != null) {
+                        seesAprilTagEntry.setBoolean(numTargetSR > 0)
+                        advantagePoseSREntry.setDoubleArray(
+                            doubleArrayOf(
+                                maybePoseSR.x,
+                                maybePoseSR.y,
+                                maybePoseSR.rotation.degrees
+                            )
+                        )
+                        lastSRPose = maybePoseSR
+
+                        PoseEstimator.addVision(lastSRDetection, numTargetSR)
+                    }
+                    if (maybePoseIB != null) {
+                        seesAprilTagEntry.setBoolean(numTargetIB > 0)
+                        advantagePoseIBEntry.setDoubleArray(
+                            doubleArrayOf(
+                                maybePoseIB.x,
+                                maybePoseIB.y,
+                                maybePoseIB.rotation.degrees
+                            )
+                        )
+                        lastIBPose = maybePoseIB
+
+
+                        PoseEstimator.addVision(lastIBDetection, numTargetIB)
+                    }
+                } catch (ex:Exception) {
+                    println("Error in apriltag $ex")
                 }
             }
         }
     }
+}
 
-    private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEstimator): Pose2d? {
+private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEstimator): Pose2d? {
 
-        try {
-            if (!camera.isConnected) {
+    try {
+        if (!camera.isConnected) {
+            return null
+        }
+        val cameraResult: MultiTargetPNPResult? = camera.latestResult.multiTagResult
+        val validTargets = cameraResult?.fiducialIDsUsed//.filter{ validTags.contains(it.fiducialId) && it.poseAmbiguity < maxAmbiguity }
+        if (validTargets != null) {
+            if (validTargets.isEmpty()) {
+                // println("AprilTag: Empty Tags")
                 return null
             }
-            val cameraResult: MultiTargetPNPResult? = camera.latestResult.multiTagResult
-            val validTargets = cameraResult?.fiducialIDsUsed//.filter{ validTags.contains(it.fiducialId) && it.poseAmbiguity < maxAmbiguity }
-            if (validTargets != null) {
-                if (validTargets.isEmpty()) {
-                    // println("AprilTag: Empty Tags")
-                    return null
-                }
-            } else {
+        } else {
+            return null
+        }
+        for (target in validTargets) {
+            if (target > 16) {
+                println("AprilTag: Invalid Tag")
                 return null
             }
-            for (target in validTargets) {
-                if (target > 16) {
-                    println("AprilTag: Invalid Tag")
-                    return null
-                }
-            }
-            if ((validTargets.count() == 1 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15){
-//                print("one target")
-            }
-            if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
-                return null
-            }
-            //println("at least 2 valid targets found ${poseList}")
-            estimator.setReferencePose(
-                Pose2d(
-                    cameraResult.estimatedPose.best.translation.toTranslation2d(),
-                    cameraResult.estimatedPose.best.rotation.toRotation2d()
-                )
+        }
+        if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
+            return null
+        }
+        //println("at least 2 valid targets found ${poseList}")
+        estimator.setReferencePose(
+            Pose2d(
+                cameraResult.estimatedPose.best.translation.toTranslation2d(),
+                cameraResult.estimatedPose.best.rotation.toRotation2d()
             )
+        )
 
-            val newPose = estimator.update()
+        val newPose = estimator.update()
 
 //                println("newPose: $newPose")
-            if (newPose?.isPresent == true) {
-                val result = newPose.get()
-                //TODO: filter single tags by distance
+        if (newPose?.isPresent == true) {
+            val result = newPose.get()
+            //TODO: filter single tags by distance
 //                if (validTargets.count() < 2 && result.s) {
 
 //                println("AprilTag: Single target too far away ${result.estimatedPose.toPose2d().toTMMField().y.absoluteValue} vs ${(FieldManager.chargeFromCenterY + FieldManager.chargingStationDepth).asFeet}")
 //                    return null
 //                }
 //            println("Valid target found ${validTargets.count()}")
-                when (camera.name) {
-                    "CamSL" -> {lastSLDetectionTime = result.timestampSeconds; lastSLAmbiguity = cameraResult.estimatedPose.ambiguity}
-                    "CamSR" -> {lastSRDetectionTime = result.timestampSeconds; lastSRAmbiguity = cameraResult.estimatedPose.ambiguity}
-                    "CamIB" -> {lastIBDetectionTime = result.timestampSeconds; lastIBAmbiguity = cameraResult.estimatedPose.ambiguity}
-                }
-
-
-                return result.estimatedPose.toPose2d()
-            } else {
-
-                return null
+            when (camera.name) {
+                "CamSL" -> {lastSLDetectionTime = result.timestampSeconds; lastSLAmbiguity = cameraResult.estimatedPose.ambiguity}
+                "CamSR" -> {lastSRDetectionTime = result.timestampSeconds; lastSRAmbiguity = cameraResult.estimatedPose.ambiguity}
+                "CamIB" -> {lastIBDetectionTime = result.timestampSeconds; lastIBAmbiguity = cameraResult.estimatedPose.ambiguity}
             }
-        } catch (ex: Exception) {
-            println("***********************************************************AprilTag Failed. Try Operator down*****************************************************")
+
+
+            return result.estimatedPose.toPose2d()
+        } else {
+
             return null
         }
+    } catch (ex: Exception) {
+        println("***********************************************************AprilTag Failed. Try Operator down*****************************************************")
+        return null
     }
+}
 
-    fun resetCameras() {
-        if (camSL == null || sLPoseEstimator == null) {
-            try {
-                if (pvTable.containsSubTable("CamSL")) {
-                    camSL = PhotonCamera("CamSL")
-                    sLPoseEstimator = PhotonPoseEstimator(
-                        aprilTagFieldLayout,
-                        PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                        camSL,
-                        robotToCamSL
-                    )
-                }
-            } catch (ex: Exception) {
-                println("sL pose failed")
+fun resetCameras() {
+    if (camSL == null || sLPoseEstimator == null) {
+        try {
+            if (pvTable.containsSubTable("CamSL")) {
+                camSL = PhotonCamera("CamSL")
+                sLPoseEstimator = PhotonPoseEstimator(
+                    aprilTagFieldLayout,
+                    PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    camSL,
+                    robotToCamSL
+                )
             }
-        } else {
-            println("CamSL already found, skipping reset")
+        } catch (ex: Exception) {
+            println("sL pose failed")
         }
-        if (camSR == null || sRPoseEstimator == null) {
-            try {
-                if (pvTable.containsSubTable("CamSR")) {
-                    camSR = PhotonCamera("CamSR")
-                    sRPoseEstimator = PhotonPoseEstimator(
-                        aprilTagFieldLayout,
-                        PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                        camSR,
-                        robotToCamSR
-                    )
-                }
-            } catch (ex: Exception) {
-                println("SR pose failed")
-            }
-        } else {
-            println("CamSR already found, skipping reset")
-        }
-        println("Finished cams reset")
-
-        if (camIB == null || iBPoseEstimator == null) {
-            try {
-                if (pvTable.containsSubTable("CamIB")) {
-                    camIB = PhotonCamera("CamIB")
-                    iBPoseEstimator = PhotonPoseEstimator(
-                        aprilTagFieldLayout,
-                        PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                        camIB,
-                        robotToCamIB
-                    )
-                }
-            } catch (ex: Exception) {
-                println("IB pose failed")
-            }
-        } else {
-            println("CamIB already found, skipping reset")
-        }
+    } else {
+        println("CamSL already found, skipping reset")
     }
+    if (camSR == null || sRPoseEstimator == null) {
+        try {
+            if (pvTable.containsSubTable("CamSR")) {
+                camSR = PhotonCamera("CamSR")
+                sRPoseEstimator = PhotonPoseEstimator(
+                    aprilTagFieldLayout,
+                    PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    camSR,
+                    robotToCamSR
+                )
+            }
+        } catch (ex: Exception) {
+            println("SR pose failed")
+        }
+    } else {
+        println("CamSR already found, skipping reset")
+    }
+    println("Finished cams reset")
+
+    if (camIB == null || iBPoseEstimator == null) {
+        try {
+            if (pvTable.containsSubTable("CamIB")) {
+                camIB = PhotonCamera("CamIB")
+                iBPoseEstimator = PhotonPoseEstimator(
+                    aprilTagFieldLayout,
+                    PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    camIB,
+                    robotToCamIB
+                )
+            }
+        } catch (ex: Exception) {
+            println("IB pose failed")
+        }
+    } else {
+        println("CamIB already found, skipping reset")
+    }
+}
 
 data class AprilDetection (
     val timestamp: Double,

@@ -66,7 +66,9 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
-            println("set pivot angle to $field")
+            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
+
+//            println("set pivot angle to $field")
         }
 
     val pivotError: Double
@@ -81,7 +83,7 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.config {
             pid {
-                p(0.00008)
+                p(0.00016)
                 d(0.000004)
             }
 
@@ -109,17 +111,19 @@ object Pivot: Subsystem("Pivot") {
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
-                if (pivotError > 0.25) {
-                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians).squareWithSign()) /*+ 0.000001*/)
-//                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
-                }
+//                if (pivotError > 0.25) {
+//                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
+////                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
+//                }
 
                 if (autoAim) {
                     val dist = PoseEstimator.currentPose.distance(speakerPos)
 
                     // Calculated. May change a lot with more data
-                    val angle = (90.0 * (0.751492.pow(dist))).degrees
+//                    val angle = (90.0 * (0.751492.pow(dist))).degrees
 
+                    val angle = Shooter.pitchCurve.getValue(dist).degrees
+                    println("Angle: ${angle}")
                     angleSetpoint = angle
                 }
             }

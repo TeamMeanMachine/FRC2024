@@ -2,6 +2,7 @@ package org.team2471.frc2024.testing
 
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.input.whenTrue
 import org.team2471.frc.lib.units.degrees
@@ -69,5 +70,34 @@ suspend fun Pivot.feedForwardTest() {
             this.stop()
         }
         power += 0.0001
+    }
+}
+suspend fun Shooter.rpmTest() = use(Shooter) {
+//    var switch = 0
+//    var intakeP = 0.0
+//    var feedP = 0.6
+    var shootP = 4000.0 //0.2
+    var upPressed = false
+    var downPressed = false
+//    var shoot2 = 0.15
+    periodic {
+        if (OI.operatorController.dPad == Controller.Direction.UP) {
+            upPressed = true
+        } else if (OI.operatorController.dPad == Controller.Direction.DOWN) {
+            downPressed = true
+        }
+        if (OI.operatorController.dPad != Controller.Direction.UP && upPressed) {
+            upPressed = false
+            shootP += 100.0
+        }
+        if (OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
+            downPressed = false
+            shootP -= 100.0
+        }
+        rpmTopSetpoint = shootP
+        rpmBottomSetpoint = shootP
+
+//        Shooter.shooterMotorTop.setPercentOutput(shootP)
+//        println("rpmBottom: ${shooterMotorBottom.velocity.round(1)}, rpmTop: ${shooterMotorTop.velocity.round(1)}, Set Point ${shootP.round(1)}")
     }
 }
