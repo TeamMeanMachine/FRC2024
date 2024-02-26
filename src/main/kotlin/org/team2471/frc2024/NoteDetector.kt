@@ -9,10 +9,13 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.Angle.Companion.sin
 import org.team2471.frc.lib.units.Angle.Companion.tan
+import org.team2471.frc.lib.units.asMeters
+import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.inches
 
 object NoteDetector: Subsystem("NoteDetector") {
 
@@ -51,20 +54,23 @@ object NoteDetector: Subsystem("NoteDetector") {
 
                 notePosAdv = mutableListOf()
 
-                for (target : PhotonTrackedTarget in camera.latestResult.targets) {
-                    val notePos = getTargetRobotCoords(target)
+                if (camera.latestResult.targets.isNotEmpty()) {
+                    for (target : PhotonTrackedTarget in camera.latestResult.targets) {
+                        val notePos = getTargetRobotCoords(target)
 
-                    tempNotes.add(Note(
-                        notePos,
-                        target.yaw.degrees
-                    ))
+                        tempNotes.add(Note(
+                            notePos,
+                            target.yaw.degrees
+                        ))
 //                    println("notePose: $notePos  combinedPose: ${Drive.combinedPosition}")
 //                    println("distance curve: ${distanceCurve.getValue(target.pitch)}")
 
-                    val noteRotPos = notePos.rotateDegrees(Drive.heading.asDegrees)
+                        val noteRotPos = notePos.rotateDegrees(Drive.heading.asDegrees)
 
-                    notePosAdv.add(arrayOf(Drive.combinedPosition.x + noteRotPos.x, Drive.combinedPosition.y + noteRotPos.y, 0.0))
+                        notePosAdv.add(arrayOf(Drive.combinedPosition.x + noteRotPos.x, Drive.combinedPosition.y + noteRotPos.y, 0.0))
+                    }
                 }
+
 
 //                println("Hi: ${notePosAdv[0]}")
                 if (notePosAdv.isNotEmpty()) {
@@ -75,7 +81,6 @@ object NoteDetector: Subsystem("NoteDetector") {
 
 
                 notes = tempNotes.toList()
-
             }
         }
     }

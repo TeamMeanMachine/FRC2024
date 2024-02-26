@@ -1,23 +1,14 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.math.kinematics.Odometry
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.lerp
 import org.team2471.frc.lib.math.round
-import org.team2471.frc.lib.motion.following.drive
-import org.team2471.frc.lib.motion.following.driveAlongPath
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.asMeters
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
-import java.util.Vector
 import kotlin.math.absoluteValue
-import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
     println("inside climbWIthTrigger!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -57,8 +48,8 @@ suspend fun fire() = use(Shooter, Intake){
     if (Robot.isAutonomous) {
         t.start()
         periodic {
-            println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue}")
-            if ((Shooter.motorRpmTop - Shooter.rpmTop).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottom).absoluteValue < 500.0) {
+            println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue}")
+            if ((Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0) {
                 println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
                 this.stop()
             }
@@ -161,12 +152,16 @@ suspend fun fire() = use(Shooter, Intake){
 //
 
 suspend fun aimAtSpeaker() {
-    Drive.aimTarget = true
+//    Drive.aimTarget = true
     Pivot.autoAim = true
 
     suspendUntil(20) { !OI.driverController.y }
 
-    Drive.aimTarget = false
+//    Drive.aimTarget = false
     Pivot.autoAim = false
+
+    Pivot.angleSetpoint = Pivot.MINHARDSTOP
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
 
 }

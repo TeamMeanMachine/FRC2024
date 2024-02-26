@@ -79,6 +79,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
+    val distanceEntry = table.getEntry("Distance")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
@@ -108,7 +109,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-35.95).degrees,
+            Preferences.getDouble("Angle Offset 0",-140.8).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -117,7 +118,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-41.13).degrees,
+            Preferences.getDouble("Angle Offset 1",-21.4).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -126,7 +127,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",151.56).degrees,
+            Preferences.getDouble("Angle Offset 2",39.06).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -135,7 +136,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",15.71).degrees,
+            Preferences.getDouble("Angle Offset 3",43.65).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -158,13 +159,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
-    override val combinedPosition: Vector2
+    override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
+        set(value) {
+            //position is in feet but PoseEstimator.combined pose is in meters
+            position = value
+            PoseEstimator.zeroOffset()
+        }
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(-1.0, 0.0)  // blue start
-//    override val carpetFlow = Vector2(1.0, 0.0)  // red start
+    //    override val carpetFlow = Vector2(1.0, 0.0)  // red start
 //    override val carpetFlow = Vector2(0.0, 1.0)  // sideways
     override val kCarpet = 0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
@@ -176,8 +182,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var aimPDController = teleopPDController
 
     var aimTarget = false
-    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asMeters, 218.42.inches.asMeters) else Vector2(8.5.inches.asMeters, 218.42.inches.asMeters)
+    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
     val ampPos = Vector2(0.0, 0.0) //TODO
+    val distance: Double
+        get() = (combinedPosition - speakerPos).length
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -258,6 +266,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
+                distanceEntry.setDouble(distance)
 
                 var totalDriveCurrent = 0.0
                 for (i in modules) {
