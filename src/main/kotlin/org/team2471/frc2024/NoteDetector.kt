@@ -9,10 +9,13 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.Angle.Companion.sin
 import org.team2471.frc.lib.units.Angle.Companion.tan
+import org.team2471.frc.lib.units.asMeters
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.inches
 
 object NoteDetector: Subsystem("NoteDetector") {
 
