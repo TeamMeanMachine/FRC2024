@@ -54,22 +54,26 @@ object NoteDetector: Subsystem("NoteDetector") {
 
                 notePosAdv = mutableListOf()
 
-                if (camera.latestResult.targets.isNotEmpty()) {
-                    for (target : PhotonTrackedTarget in camera.latestResult.targets) {
-                        val notePos = getTargetRobotCoords(target)
+                try {
+                    if (camera.latestResult.targets.isNotEmpty()) {
+                        for (target : PhotonTrackedTarget in camera.latestResult.targets) {
+                            val notePos = getTargetRobotCoords(target)
 
-                        tempNotes.add(Note(
-                            notePos,
-                            target.yaw.degrees
-                        ))
+                            tempNotes.add(Note(
+                                notePos,
+                                target.yaw.degrees
+                            ))
 //                    println("notePose: $notePos  combinedPose: ${Drive.combinedPosition}")
 //                    println("distance curve: ${distanceCurve.getValue(target.pitch)}")
 
-                        val noteRotPos = notePos.rotateDegrees(Drive.heading.asDegrees)
+                            val noteRotPos = notePos.rotateDegrees(Drive.heading.asDegrees)
 
-                        notePosAdv.add(arrayOf(Drive.combinedPosition.x + noteRotPos.x, Drive.combinedPosition.y + noteRotPos.y, 0.0))
+                            notePosAdv.add(arrayOf(Drive.combinedPosition.x + noteRotPos.x, Drive.combinedPosition.y + noteRotPos.y, 0.0))
+                        }
                     }
                 }
+                catch (_: Exception) { }
+
 
 
 //                println("Hi: ${notePosAdv[0]}")
