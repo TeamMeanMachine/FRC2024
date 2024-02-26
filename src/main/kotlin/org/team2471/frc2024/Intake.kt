@@ -33,14 +33,9 @@ object Intake: Subsystem("Intake") {
     private val bottomBreakSensor = DigitalInput(DigitalSensors.BOTTOM_BREAK)
     private val topBreakSensor = DigitalInput(DigitalSensors.TOP_BREAK)
 
-    private val beamBreakSensor = AnalogInput(AnalogSensors.BEAM_BREAK)
 
-    var intaking = false
-        set(value) {
-            println("intaking set to $value")
-            holdingCargo = false
-            field = value
-        }
+    var intakeState = IntakeState.EMPTY
+
 
     val bottomBreak: Boolean
         get() = !bottomBreakSensor.get()
@@ -56,23 +51,20 @@ object Intake: Subsystem("Intake") {
         var x = feederCurrentEntry.getDouble(0.0)
 
         intakeMotorTop.config {
-            // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+            currentLimit(35, 60, 1)
             coastMode()
             inverted(isCompBot)
             followersInverted(isCompBot)
         }
 
         intakeMotorBottom.config {
-            // Copied from bunny. Prolly way off
-            currentLimit(35, 40, 1)
+            currentLimit(35, 60, 1)
             coastMode()
             inverted(isCompBot)
             followersInverted(isCompBot)
         }
 
         feederMotor.config {
-            // Also copied from bunny. Still prolly way off
             currentLimit(35, 40, 1)
             coastMode()
             inverted(false)
@@ -101,42 +93,87 @@ object Intake: Subsystem("Intake") {
 
     override suspend fun default() {
         val t = Timer()
-        var detectedCargo = false
         periodic {
-            if (intaking) {
-                if (!detectedCargo && !holdingCargo) {
-                    Pivot.angleSetpoint = 18.0.degrees
-                    setIntakeMotorsPercent(0.7)
-                }
-                if (bottomBreak && !detectedCargo) {
-                    println("detected piece, slowing intake")
-                    setIntakeMotorsPercent(0.5)
-                    detectedCargo = true
-                }
-                if (topBreak && !holdingCargo) {
+            when(intakeState) {
+                IntakeState.EMPTY -> {
                     setIntakeMotorsPercent(0.0)
-                    println("stopping intake")
-                    holdingCargo = true
-                    detectedCargo = false
-                    Pivot.angleSetpoint = Pivot.TESTPOSE
                 }
-                if (detectedCargo) {
-                    if (t.get() > 2.0) {
-                        detectedCargo = false
+                IntakeState.SPITTING -> {}
+                IntakeState.INTAKING -> {
+                    Pivot.angleSetpoint = 18.0.degrees
+                    setIntakeMotorsPercent(0.9)
+                    if (bottomBreak) {
+                        intakeState = IntakeState.SLOWING
+                        t.start()
                     }
-                } else {
-                    t.start()
                 }
-            } else {
-                setIntakeMotorsPercent(0.0)
-                t.start()
+                IntakeState.SLOWING -> {
+                    setIntakeMotorsPercent(0.2)
+                    if (topBreak) {
+                        intakeState = IntakeState.REVERSING
+                    }
+                    if (t.get() > 2.0) {
+                        intakeState = IntakeState.INTAKING
+                    }
+                }
+                IntakeState.REVERSING -> {
+                    setIntakeMotorsPercent(-0.1)
+                    if (!topBreak) {
+                        intakeState = IntakeState.HOLDING
+                    }
+                }
+                IntakeState.HOLDING -> {
+                    setIntakeMotorsPercent(0.0)
+                }
             }
+//            if (intaking) {
+//                if (!detectedCargo && !holdingCargo) {
+//                    Pivot.angleSetpoint = 18.0.degrees
+//                    setIntakeMotorsPercent(0.9)
+//                }
+//                if (bottomBreak && !detectedCargo) {
+//                    println("detected piece, slowing intake")
+//                    setIntakeMotorsPercent(0.2)
+//                    detectedCargo = true
+//                }
+//                if (topBreak && !holdingCargo) {
+//                    setIntakeMotorsPercent(0.0)
+//                    println("stopping intake")
+//                    holdingCargo = true
+//                    detectedCargo = false
+//
+//
+////                    Pivot.angleSetpoint = Pivot.TESTPOSE
+//                }
+//                if (holdingCargo && !detectedCargo) {
+//
+//                }
+//                if (detectedCargo) {
+//                    if (t.get() > 2.0) {
+//                        detectedCargo = false
+//                    }
+//                } else {
+//                    t.start()
+//                }
+//            } else {
+//                setIntakeMotorsPercent(0.0)
+//                t.start()
+//            }
         }
     }
 
     fun setIntakeMotorsPercent(value: Double) {
         intakeMotorTop.setPercentOutput(value)
         intakeMotorBottom.setPercentOutput(value)
-        feederMotor.setPercentOutput(value / 5.0)
+        feederMotor.setPercentOutput(value)
+    }
+
+    enum class IntakeState() {
+        EMPTY,
+        INTAKING,
+        SLOWING,
+        REVERSING,
+        HOLDING,
+        SPITTING,
     }
 }
