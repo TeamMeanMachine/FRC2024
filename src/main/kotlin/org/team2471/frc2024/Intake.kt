@@ -95,7 +95,9 @@ object Intake: Subsystem("Intake") {
         val t = Timer()
         periodic {
             when(intakeState) {
-                IntakeState.EMPTY -> {}
+                IntakeState.EMPTY -> {
+                    setIntakeMotorsPercent(0.0)
+                }
                 IntakeState.SPITTING -> {}
                 IntakeState.INTAKING -> {
                     Pivot.angleSetpoint = 18.0.degrees

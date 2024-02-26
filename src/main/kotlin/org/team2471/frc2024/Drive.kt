@@ -66,6 +66,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val driveMotor2CurrentEntry = table.getEntry("Drive Current 2")
     val driveMotor3CurrentEntry = table.getEntry("Drive Current 3")
 
+    val drivePowerEntry = table.getEntry("Drive Percent Out")
+
     val totalDriveCurretEntry = table.getEntry("Total Drive Current")
     val totalTurnCurrentEntry = table.getEntry("Total Turn Current")
 
@@ -179,7 +181,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
-    var maxRotation = 0.8
+    var maxRotation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
 
     val isHumanDriving
@@ -251,6 +253,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
                 driveMotor2CurrentEntry.setDouble((modules[2] as Module).driveCurrent)
                 driveMotor3CurrentEntry.setDouble((modules[3] as Module).driveCurrent)
+
+                drivePowerEntry.setDouble((modules[0] as Module).power)
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
@@ -449,6 +453,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
         override fun setDrivePower(power: Double) {
+//            println("Drive power: ${power.round(6)}")
             driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
         }
 
@@ -464,7 +469,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
                 feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (87.8 / 96.0)
                 currentLimit(60, 65, 1)
-                openLoopRamp(0.3)
+                openLoopRamp(0.1)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)

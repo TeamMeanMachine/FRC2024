@@ -26,6 +26,7 @@ object Shooter: Subsystem("Shooter") {
     private val topDEntry = table.getEntry("top D")
     private val bottomDEntry = table.getEntry("bottom D")
     private val bottomPEntry = table.getEntry("bottom P")
+    private val shootingEntry = table.getEntry("shooting")
     val Pitch3Entry = table.getEntry("Pitch3Entry")
     val Pitch6Entry = table.getEntry("Pitch6Entry")
     val Pitch9Entry = table.getEntry("Pitch9Entry")
@@ -46,7 +47,7 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
-    var shootingRPM = false
+    var shooting = false
         set(value) {
             println("Shooter $value")
             if (value) {
@@ -158,12 +159,21 @@ object Shooter: Subsystem("Shooter") {
                 shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
                 motorRpmBottomEntry.setDouble(motorRpmBottom)
                 motorRpmTopEntry.setDouble(motorRpmTop)
+                shootingEntry.setBoolean(shooting)
 
                 if (Robot.isEnabled && (motorRpmTop - rpmTop).absoluteValue + (motorRpmBottom - rpmBottom).absoluteValue < 500.0 && rpmTop + rpmBottom > 20.0) {
-                    OI.driverController.rumble = 0.8
+                    OI.driverController.rumble = 1.0
+                    OI.operatorController.rumble = 0.6
                 } else {
-                    OI.driverController.rumble = 0.0
+                    if (Robot.isEnabled && Intake.intakeState != Intake.IntakeState.EMPTY) {
+                        OI.driverController.rumble = 1.0
+                        OI.operatorController.rumble = 0.0
+                    } else {
+                        OI.driverController.rumble = 0.0
+                        OI.operatorController.rumble = 0.0
+                    }
                 }
+
 
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
