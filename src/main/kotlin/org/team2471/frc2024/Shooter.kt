@@ -27,6 +27,7 @@ object Shooter: Subsystem("Shooter") {
     private val topDEntry = table.getEntry("top D")
     private val bottomDEntry = table.getEntry("bottom D")
     private val bottomPEntry = table.getEntry("bottom P")
+    private val shootingEntry = table.getEntry("shooting")
     val Pitch3Entry = table.getEntry("Pitch3Entry")
     val Pitch6Entry = table.getEntry("Pitch6Entry")
     val Pitch9Entry = table.getEntry("Pitch9Entry")
@@ -175,12 +176,21 @@ object Shooter: Subsystem("Shooter") {
                 shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
                 motorRpmBottomEntry.setDouble(motorRpmBottom)
                 motorRpmTopEntry.setDouble(motorRpmTop)
+                shootingEntry.setBoolean(manualShootState)
 
                 if (Robot.isEnabled && (motorRpmTop - rpmTopSetpoint).absoluteValue + (motorRpmBottom - rpmBottomSetpoint).absoluteValue < 500.0 && rpmTopSetpoint + rpmBottomSetpoint > 20.0) {
-                    OI.driverController.rumble = 0.8
+                    OI.driverController.rumble = 1.0
+                    OI.operatorController.rumble = 0.6
                 } else {
-                    OI.driverController.rumble = 0.0
+                    if (Robot.isEnabled && Intake.intakeState != Intake.IntakeState.EMPTY) {
+                        OI.driverController.rumble = 1.0
+                        OI.operatorController.rumble = 0.0
+                    } else {
+                        OI.driverController.rumble = 0.0
+                        OI.operatorController.rumble = 0.0
+                    }
                 }
+
 
                 if (Pivot.autoAim) {
                     rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
