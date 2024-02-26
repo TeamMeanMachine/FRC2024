@@ -13,7 +13,7 @@ object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.05
+    private val deadBandDriver = 0.03
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
@@ -65,14 +65,21 @@ object OI : Subsystem("OI") {
         }
         driverController::x.whenTrue { Drive.xPose() }
 
-        driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
+        driverController::leftBumper.whenTrue {
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                println("Stopping intake")
+                Intake.intakeState = Intake.IntakeState.EMPTY
+            } else {
+                println("Starting intaking")
+                Intake.intakeState = Intake.IntakeState.INTAKING
+            }
+        }
         driverController::leftTriggerFullPress.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
+//        driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
 //        driverController::b.whenTrue { pickUpSeenNote() }
 
-        ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue { Pivot.angleSetpoint += 1.degrees }
-        ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue { Pivot.angleSetpoint -= 1.degrees }
 
 
 
@@ -82,7 +89,7 @@ object OI : Subsystem("OI") {
 //        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
 //        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
 
-        operatorController::leftTriggerFullPress.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
+        operatorController::leftTriggerFullPress.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
