@@ -68,8 +68,8 @@ object Shooter: Subsystem("Shooter") {
     val shootingRpmBottom: Double
         get() = shootingRpmBottomEntry.getDouble(21.0)
 
-    var kFeedForwardTop = 1.0/5000.0//76.0 / 6380.0
-    var kFeedForwardBottom = 1.0/5000.0//76.0 / 6380.0
+    var kFeedForwardTop = 1.0/5300.0
+    var kFeedForwardBottom = 1.0/5300.0
 
     val pitchCurve = MotionCurve()
     val RPMCurve = MotionCurve()
@@ -87,6 +87,9 @@ object Shooter: Subsystem("Shooter") {
     var rpmTopSetpoint: Double = 0.0
         set(value) {
             ffTopPower = value * kFeedForwardTop
+            if (value == 0.0){
+                pdPowerTop = 0.0
+            }
 //            println("setting top rpm $value")
 //            shooterMotorTop.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardTop)
             field = value
@@ -94,6 +97,9 @@ object Shooter: Subsystem("Shooter") {
     var rpmBottomSetpoint: Double = 0.0
         set(value) {
             ffBottomPower = value * kFeedForwardBottom
+            if (value == 0.0){
+                pdPowerBottom = 0.0
+            }
 //            println("setting bottom rpm $value  feedForward ${(value * kFeedForwardBottom).round(4)}")
 //            shooterMotorBottom.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardBottom)
             field = value
