@@ -68,7 +68,6 @@ object OI : Subsystem("OI") {
         driverController::leftBumper.whenTrue { Intake.intaking = !Intake.intaking }
         driverController::leftTriggerFullPress.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
-        driverController::rightBumper.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
         driverController::y.whenTrue { aimAtSpeaker() }
 //        driverController::b.whenTrue { pickUpSeenNote() }
 
@@ -78,13 +77,13 @@ object OI : Subsystem("OI") {
 
 
 
-        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP }
-        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
-        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
+//        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP }
+//        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
+//        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
+//        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
 
+        operatorController::leftTriggerFullPress.whenTrue { Shooter.shootingRPM = !Shooter.shootingRPM }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
-
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
         ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.degrees }

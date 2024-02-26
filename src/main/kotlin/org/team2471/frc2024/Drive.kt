@@ -300,6 +300,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         } else {
             heading = 180.0.degrees
         }
+        position = combinedPosition
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
     }
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {

@@ -180,6 +180,9 @@ object AprilTag {
                     return null
                 }
             }
+            if ((validTargets.count() == 1 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15){
+//                print("one target")
+            }
             if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
                 return null
             }
