@@ -62,11 +62,7 @@ object Shooter: Subsystem("Shooter") {
             field = value
         }
 
-    val shootingRpmTop: Double
-        get() = shootingRpmTopEntry.getDouble(20.0)
 
-    val shootingRpmBottom: Double
-        get() = shootingRpmBottomEntry.getDouble(21.0)
 
     var kFeedForwardTop = 1.0/5300.0
     var kFeedForwardBottom = 1.0/5300.0
@@ -83,11 +79,12 @@ object Shooter: Subsystem("Shooter") {
     private var pdPowerTop = 0.0
     private var pdPowerBottom = 0.0
 
-    const val MAXRPM = 5300.0;
+    const val MAXRPM = 5000.0
     var rpmTopSetpoint: Double = 0.0
         set(value) {
-            ffTopPower = value * kFeedForwardTop
-            if (value == 0.0){
+            val capped = value.coerceIn(0.0, MAXRPM)
+            ffTopPower = capped * kFeedForwardTop
+            if (capped == 0.0){
                 pdPowerTop = 0.0
             }
 //            println("setting top rpm $value")
@@ -96,8 +93,9 @@ object Shooter: Subsystem("Shooter") {
         }
     var rpmBottomSetpoint: Double = 0.0
         set(value) {
-            ffBottomPower = value * kFeedForwardBottom
-            if (value == 0.0){
+            val capped = value.coerceIn(0.0, MAXRPM)
+            ffBottomPower = capped * kFeedForwardBottom
+            if (capped == 0.0){
                 pdPowerBottom = 0.0
             }
 //            println("setting bottom rpm $value  feedForward ${(value * kFeedForwardBottom).round(4)}")
