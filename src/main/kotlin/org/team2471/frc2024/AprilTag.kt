@@ -99,17 +99,17 @@ object AprilTag {
             periodic {
                 try {
                     //val frontCamSelected = useFrontCam()
-                    var maybePoseSL: Pose2d? =
+                    val maybePoseSL: Pose2d? =
                         sLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                    var numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
+                    val numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
 
-                    var maybePoseSR: Pose2d? =
+                    val maybePoseSR: Pose2d? =
                         sRPoseEstimator?.let { camSR?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                    var numTargetSR: Int = camSR?.latestResult?.targets?.count() ?: 0
+                    val numTargetSR: Int = camSR?.latestResult?.targets?.count() ?: 0
 
-                    var maybePoseIB: Pose2d? =
+                    val maybePoseIB: Pose2d? =
                         iBPoseEstimator?.let { camIB?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
-                    var numTargetIB: Int = camIB?.latestResult?.targets?.count() ?: 0
+                    val numTargetIB: Int = camIB?.latestResult?.targets?.count() ?: 0
 
                     if (maybePoseSL != null) {
                         seesAprilTagEntry.setBoolean(numTargetSL > 0)

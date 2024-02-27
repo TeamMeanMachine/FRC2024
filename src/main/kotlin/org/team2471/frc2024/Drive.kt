@@ -354,7 +354,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 OI.driveTranslation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
-                true
+                !aimTarget  // true for teleop, false when aiming
             )
         }
     }
