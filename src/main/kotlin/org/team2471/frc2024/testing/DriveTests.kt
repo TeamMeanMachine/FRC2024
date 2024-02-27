@@ -92,11 +92,11 @@ suspend fun Drive.aimFTest() = use(Drive) {
         }
         if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
             upPressed = false
-            turn += 0.01
+            turn += 0.005
         }
         if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
             downPressed = false
-            turn -= 0.01
+            turn -= 0.005
         }
         println("turn $turn")
         drive(

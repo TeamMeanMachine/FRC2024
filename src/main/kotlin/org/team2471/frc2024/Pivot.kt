@@ -123,7 +123,7 @@ object Pivot: Subsystem("Pivot") {
 //                    val angle = (90.0 * (0.751492.pow(dist))).degrees
 
                     val angle = Shooter.pitchCurve.getValue(dist).degrees
-                    println("Angle: ${angle}")
+//                    println("Angle: ${angle}")
                     angleSetpoint = angle
                 }
             }

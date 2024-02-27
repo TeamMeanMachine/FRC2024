@@ -88,9 +88,7 @@ object Shooter: Subsystem("Shooter") {
             if (capped == 0.0){
                 pdPowerTop = 0.0
             }
-//            println("setting top rpm $value")
-//            shooterMotorTop.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardTop)
-            field = value
+            field = capped
         }
     var rpmBottomSetpoint: Double = 0.0
         set(value) {
@@ -99,9 +97,7 @@ object Shooter: Subsystem("Shooter") {
             if (capped == 0.0){
                 pdPowerBottom = 0.0
             }
-//            println("setting bottom rpm $value  feedForward ${(value * kFeedForwardBottom).round(4)}")
-//            shooterMotorBottom.setVelocitySetpoint(value.coerceIn(0.0, MAXRPM), value * kFeedForwardBottom)
-            field = value
+            field = capped
         }
 
     init {
@@ -143,10 +139,6 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorBottom.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            //add pid later, right now, p makes it go
-            pid {
-                p(0.00015)
-            }
             currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
@@ -155,9 +147,6 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorTop.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            pid {
-                p(0.00015)
-            }
             currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
@@ -182,7 +171,7 @@ object Shooter: Subsystem("Shooter") {
                     OI.driverController.rumble = 1.0
                     OI.operatorController.rumble = 0.6
                 } else {
-                    if (Robot.isEnabled && Intake.intakeState != Intake.IntakeState.EMPTY) {
+                    if (Robot.isEnabled && (Intake.intakeState != Intake.IntakeState.EMPTY || Intake.intakeState == Intake.IntakeState.HOLDING)) {
                         OI.driverController.rumble = 1.0
                         OI.operatorController.rumble = 0.0
                     } else {
@@ -190,7 +179,6 @@ object Shooter: Subsystem("Shooter") {
                         OI.operatorController.rumble = 0.0
                     }
                 }
-
 
                 if (Pivot.autoAim) {
                     rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
@@ -211,20 +199,27 @@ object Shooter: Subsystem("Shooter") {
 
 
                 if (Robot.isEnabled) {
-                    pdPowerTop += topPDController.update(rpmTopSetpoint - motorRpmTop)
-                    pdPowerBottom += bottomPDController.update(rpmBottomSetpoint - motorRpmBottom)
-
-                    if (pdPowerTop + ffTopPower > 1.0) {
-                        pdPowerTop = 1.0 - ffTopPower
+                    if (rpmTopSetpoint == 0.0) {
+                        shooterMotorTop.setPercentOutput(0.0)
+                    } else {
+                        pdPowerTop += topPDController.update(rpmTopSetpoint - motorRpmTop)
+                        if (pdPowerTop + ffTopPower > 1.0) {
+                            pdPowerTop = 1.0 - ffTopPower
+                        }
+                        shooterMotorTop.setPercentOutput(pdPowerTop + ffTopPower)
                     }
-                    if (pdPowerBottom + ffBottomPower > 1.0) {
-                        pdPowerBottom = 1.0 - ffBottomPower
+
+                    if (rpmBottomSetpoint == 0.0) {
+                        shooterMotorBottom.setPercentOutput(0.0)
+                    } else {
+                        pdPowerBottom += bottomPDController.update(rpmBottomSetpoint - motorRpmBottom)
+                        if (pdPowerBottom + ffBottomPower > 1.0) {
+                            pdPowerBottom = 1.0 - ffBottomPower
+                        }
+                        shooterMotorBottom.setPercentOutput(pdPowerBottom + ffBottomPower)
                     }
 
-                    shooterMotorTop.setPercentOutput(pdPowerTop + ffTopPower)
-                    shooterMotorBottom.setPercentOutput(pdPowerBottom + ffBottomPower)
-
-                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
+//                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
                 }
             }
         }

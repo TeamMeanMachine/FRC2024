@@ -178,7 +178,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
     val autoPDController = PDConstantFController(0.015, 0.04, 0.02)
-    val teleopPDController =  PDConstantFController(0.02, 0.09, 0.02)
+    val teleopPDController =  PDConstantFController( 0.01,0.075, 0.025)
+//    val teleopPDController =  PDConstantFController(parameters.kpHeading, parameters.kdHeading, parameters.kHeadingFeedForward)
+
     var aimPDController = teleopPDController
 
     var aimTarget = false
@@ -331,16 +333,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             if (aimTarget) {
                 val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-                val angle = 180.degrees + atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
+                val dVector = combinedPosition - point
 
-                val angleError = angle - heading
+                val headingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
 
-                if (abs(180 - angleError.asDegrees) > 2.0) {
+                val angleError = (heading - headingSetpoint).wrap()
 
-                    turn = aimPDController.update(angleError.wrap().asRadians) /// 180
+                if (abs(angleError.asDegrees) > 2.0) {
+                    turn = aimPDController.update(angleError.asDegrees)
 
-//                    turn = angleError.wrap().asDegrees / 180 / 5
-                    println("Goal: ${angle.asDegrees.round(1)}   turn: ${turn.round(3)}   angleError: ${angleError.asDegrees.round(2)}")
+                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                 }
             }
 
@@ -488,7 +490,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(12, 16, 1)
                 pid {
-                    p(0.01)
+                    p(0.006)
 //                    d(0.0000025)
                 }
             }

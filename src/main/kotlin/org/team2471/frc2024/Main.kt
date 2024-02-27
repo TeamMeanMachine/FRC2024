@@ -108,8 +108,8 @@ object Robot : MeanlibRobot() {
 //        Drive.steeringTests()
 //        Drive.driveTests()
 //        Pivot.feedForwardTest()
-//        Drive.aimFTest()
-        Shooter.rpmTest()
+        Drive.aimFTest()
+//        Shooter.rpmTest()
 
 
 
