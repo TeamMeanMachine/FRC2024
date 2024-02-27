@@ -104,11 +104,11 @@ object Robot : MeanlibRobot() {
 
 //        Climber.motorTest()
 //            Drive.currentTest()
-//        Drive.setAngleOffsets()
+        Drive.setAngleOffsets()
 //        Drive.steeringTests()
 //        Drive.driveTests()
 //        Pivot.feedForwardTest()
-        Drive.aimFTest()
+//        Drive.aimFTest()
 //        Shooter.rpmTest()
 
 
