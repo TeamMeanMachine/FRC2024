@@ -82,12 +82,12 @@ object AprilTag {
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(0.0, -50.degrees.asRadians, 170.0.degrees.asRadians)
+        Rotation3d(0.0, if (Robot.isCompBot) -60.degrees.asRadians else -50.0.degrees.asRadians, 170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
         Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 9.0.inches.asMeters),
-        Rotation3d(3.0.degrees.asRadians, -50.degrees.asRadians, -170.0.degrees.asRadians)
+        Rotation3d(3.0.degrees.asRadians, if (Robot.isCompBot) -60.degrees.asRadians else -50.0.degrees.asRadians, -170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
