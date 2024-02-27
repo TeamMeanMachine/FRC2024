@@ -10,34 +10,52 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.Angle.Companion.sin
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
-import org.team2471.frc.lib.units.asMeters
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.units.inches
 
 object NoteDetector: Subsystem("NoteDetector") {
 
-    val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
-
+    private val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
     private val camera : PhotonCamera = PhotonCamera("notecam")
     private val noteAdvantagePosEntry = pvtable.getEntry("Advantage Note Pos")
 
     private val noteHalfHeight = 1.0.inches
     private val camHeight = 9.796.inches
-    private val camRobotCoords = Vector2(0.0.inches.asMeters, 11.96.inches.asMeters)
-
-    val distanceCurve = MotionCurve()
-
+    private val camRobotCoords = Vector2(0.0.inches.asFeet, 11.96.inches.asFeet)
     private val cameraAngle = 0.0.degrees
 
+    val seesNote: Boolean
+        get() {
+            return if (camera.isConnected) {
+                camera.latestResult.hasTargets()
+            } else {
+                false
+            }
+        }
+
+    private val distanceCurve = MotionCurve()
     var notes : List<Note> = listOf()
 
-    var notePosAdv: MutableList<Array<Double>> = mutableListOf()
+    val closestNote: Note?
+        get() {
+            if (notes.isNotEmpty()) {
+                var closest: Note? = null
+                for (n in notes) {
+                    if (closest != null) {
+                        if (n.fieldCords.distance(Drive.combinedPosition) > closest.fieldCords.distance(Drive.combinedPosition)) {
+                            closest = n
+                        }
+                    } else {
+                        closest = n
+                    }
+                }
+                return closest
+            } else {
+                return null
+            }
+        }
 
-    val seesNotes
-        get() = notes.size > 0
+    var notePosAdv: MutableList<Array<Double>> = mutableListOf()
 
     init {
         distanceCurve.storeValue(-1.6, 109.0)
@@ -45,67 +63,54 @@ object NoteDetector: Subsystem("NoteDetector") {
         distanceCurve.storeValue(-6.48, 46.0)
         distanceCurve.storeValue(-3.5, 73.0)
 
-
-
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
-
                 val tempNotes : ArrayList<Note> = arrayListOf()
-
                 notePosAdv = mutableListOf()
 
                 if (camera.isConnected) {
-                    if (camera.latestResult.targets.isNotEmpty()) {
-                        for (target: PhotonTrackedTarget in camera.latestResult.targets) {
-                            val notePos = getTargetRobotCoords(target)
+                    for (target in camera.latestResult.targets) {
+                        val robotCords = getTargetRobotCords(target)
+                        val fieldCords = robotCordsToFieldCords(robotCords)
+                        tempNotes.add(
+                            Note(
+                                robotCords,
+                                fieldCords,
+                                camera.latestResult.timestampSeconds
+                            )
+                        )
 
-                            tempNotes.add(
-                                Note(
-                                    notePos,
-                                    target.yaw.degrees
-                                )
+                        //advantage scope list
+                        notePosAdv.add(
+                            arrayOf(
+                                fieldCords.x.feet.asMeters, //x
+                                fieldCords.y.feet.asMeters, //y
+                                0.0 //z
                             )
-                            val noteRotPos = notePos.rotateDegrees(Drive.heading.asDegrees)
-                            notePosAdv.add(
-                                arrayOf(
-                                    Drive.combinedPosition.x + noteRotPos.x,
-                                    Drive.combinedPosition.y + noteRotPos.y,
-                                    0.0
-                                )
-                            )
-                        }
+                        )
                     }
                 }
                 if (notePosAdv.isNotEmpty()) {
                     noteAdvantagePosEntry.setDoubleArray(notePosAdv.first())
-                } else {
-                    noteAdvantagePosEntry.setDoubleArray(doubleArrayOf(0.0))
                 }
-
-
                 notes = tempNotes.toList()
             }
         }
     }
 
-    fun getTargetRobotCoords(target : PhotonTrackedTarget): Vector2 {
-//        println("pitch: ${ target.pitch.degrees }")
-        val distance = distanceCurve.getValue(target.pitch).inches//((camHeight - noteHalfHeight).asInches / -tan(target.pitch.degrees + cameraAngle)).inches
-//        println("distance: ${distance.asFeet.round(4)}   pitch: ${target.pitch.round(4)}")
+    fun getTargetRobotCords(target : PhotonTrackedTarget): Vector2 {
+        val distance = distanceCurve.getValue(target.pitch).inches
         val xOffset = (distance.asInches * -tan(target.yaw.degrees)).inches
-    return Vector2(distance.asMeters, xOffset.asMeters) + camRobotCoords
+        return Vector2(distance.asFeet, xOffset.asFeet) + camRobotCoords
     }
 
-//    fun getNoteCoords(): Vector2 {
-//        val angleFromBottom = boundingBoxLowerY/ limelightScreenHeight * NoteLimelight.limelightVerticalFOV
-//        val tangentAngle = (NoteLimelight.limelightVerticalFOV /2 - angleFromBottom) * Math.PI/180.0
-//        val distance = NoteLimelight.noteDistFromCenter + 1/12 * (sin(tangentAngle) + ((NoteLimelight.limelightHeight - (1- cos(tangentAngle)))/ tan(tangentAngle)))
-//        return NoteLimelight.limelightToRobotCoords(Vector2(distance / tan(xDegreeOffset), distance))
-//    }
-
+    fun robotCordsToFieldCords(robotCords : Vector2): Vector2 {
+        return robotCords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
+    }
 }
 
 data class Note(
-    val robotCoords : Vector2,
-    val degOffset : Angle
+    val robotCords: Vector2,
+    val fieldCords: Vector2,
+    val timestampSeconds: Double
 )
