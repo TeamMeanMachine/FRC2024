@@ -43,6 +43,7 @@ object Pivot: Subsystem("Pivot") {
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
+    val AMPPOSE = 107.5.degrees
 
     // Ticks
     private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
@@ -66,6 +67,10 @@ object Pivot: Subsystem("Pivot") {
     var angleSetpoint: Angle = pivotEncoderAngle
         set(value) {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
+
+            // For amp shot edge case
+            Shooter.manualShootState = Shooter.manualShootState
+
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")

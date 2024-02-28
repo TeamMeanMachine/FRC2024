@@ -54,8 +54,13 @@ object Shooter: Subsystem("Shooter") {
             if (value) {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                rpmTopSetpoint = shootingRpmTopEntry.getDouble(1000.0)
-                rpmBottomSetpoint = shootingRpmBottomEntry.getDouble(1000.0)
+                if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
+                    rpmTopSetpoint = 1200.0 * 0.75
+                    rpmBottomSetpoint = 1400.0 * 0.75
+                } else {
+                    rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
+                    rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
+                }
             } else {
                 rpmTopSetpoint = 0.0
                 rpmBottomSetpoint = 0.0
@@ -169,15 +174,9 @@ object Shooter: Subsystem("Shooter") {
 
                 if (Robot.isEnabled && (motorRpmTop - rpmTopSetpoint).absoluteValue + (motorRpmBottom - rpmBottomSetpoint).absoluteValue < 500.0 && rpmTopSetpoint + rpmBottomSetpoint > 20.0) {
                     OI.driverController.rumble = 1.0
-                    OI.operatorController.rumble = 0.6
-                } else {
-                    if (Robot.isEnabled && (Intake.intakeState != Intake.IntakeState.EMPTY || Intake.intakeState == Intake.IntakeState.HOLDING)) {
-                        OI.driverController.rumble = 1.0
-                        OI.operatorController.rumble = 0.0
-                    } else {
-                        OI.driverController.rumble = 0.0
-                        OI.operatorController.rumble = 0.0
-                    }
+                }
+                if (motorRpmTop > 0.0 && motorRpmBottom > 0.0) {
+                    OI.operatorController.rumble = 0.0
                 }
 
                 if (Pivot.autoAim) {

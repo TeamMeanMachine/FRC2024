@@ -66,12 +66,11 @@ object OI : Subsystem("OI") {
         driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue {
-            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
-                println("Stopping intake")
-                Intake.intakeState = Intake.IntakeState.EMPTY
-            } else {
-                println("Starting intaking")
+            driverController.rumble = 0.0
+            if (Intake.intakeState == Intake.IntakeState.EMPTY) {
                 Intake.intakeState = Intake.IntakeState.INTAKING
+            } else {
+                Intake.intakeState = Intake.IntakeState.EMPTY
             }
         }
         driverController::leftTriggerFullPress.whenTrue { spit() }
@@ -84,10 +83,10 @@ object OI : Subsystem("OI") {
 
 
 
-//        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.MAXHARDSTOP }
-//        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
-//        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-//        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
+        operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
+        operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
+        operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
+        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
 
         operatorController::leftTriggerFullPress.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }

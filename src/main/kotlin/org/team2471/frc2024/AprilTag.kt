@@ -180,9 +180,9 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEs
                 return null
             }
         }
-        if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
-            return null
-        }
+//        if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
+//            return null
+//        }
         //println("at least 2 valid targets found ${poseList}")
         estimator.setReferencePose(
             Pose2d(
@@ -264,7 +264,7 @@ fun resetCameras() {
                 camIB = PhotonCamera("CamIB")
                 iBPoseEstimator = PhotonPoseEstimator(
                     aprilTagFieldLayout,
-                    PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    PhotonPoseEstimator.PoseStrategy.AVERAGE_BEST_TARGETS,
                     camIB,
                     robotToCamIB
                 )

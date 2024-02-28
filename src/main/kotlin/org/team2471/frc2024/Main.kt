@@ -113,13 +113,15 @@ object Robot : MeanlibRobot() {
 
 
     override suspend fun disable() {
-        OI.driverController.rumble = 0.0
-        OI.operatorController.rumble = 0.0
+        Shooter.manualShootState = false
+        Intake.intakeState = Intake.IntakeState.EMPTY
         Drive.disable()
         Climb.disable()
         Intake.disable()
         Pivot.disable()
         Shooter.disable()
+        OI.driverController.rumble = 0.0
+        OI.operatorController.rumble = 0.0
     }
 
     private fun initTimeMeasurement() {

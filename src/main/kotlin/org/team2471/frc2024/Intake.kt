@@ -36,6 +36,9 @@ object Intake: Subsystem("Intake") {
 
     var intakeState = IntakeState.EMPTY
 
+    // brendon wants this
+    val intaking = true
+
 
     val bottomBreak: Boolean
         get() = !bottomBreakSensor.get()
@@ -53,15 +56,15 @@ object Intake: Subsystem("Intake") {
         intakeMotorTop.config {
             currentLimit(35, 60, 1)
             coastMode()
-            inverted(isCompBot)
-            followersInverted(isCompBot)
+            inverted(true)
+            followersInverted(true)
         }
 
         intakeMotorBottom.config {
             currentLimit(35, 60, 1)
             coastMode()
-            inverted(isCompBot)
-            followersInverted(isCompBot)
+            inverted(true)
+            followersInverted(true)
         }
 
         feederMotor.config {
@@ -102,13 +105,14 @@ object Intake: Subsystem("Intake") {
                 IntakeState.INTAKING -> {
                     Pivot.angleSetpoint = 18.0.degrees
                     setIntakeMotorsPercent(0.9)
+                    OI.driverController.rumble = 0.7
                     if (bottomBreak) {
                         intakeState = IntakeState.SLOWING
                         t.start()
                     }
                 }
                 IntakeState.SLOWING -> {
-                    setIntakeMotorsPercent(0.2)
+                    feederMotor.setPercentOutput(0.2)
                     if (topBreak) {
                         intakeState = IntakeState.REVERSING
                     }
@@ -117,13 +121,13 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.REVERSING -> {
-                    setIntakeMotorsPercent(-0.1)
+                    feederMotor.setPercentOutput(-0.1)
                     if (!topBreak) {
                         intakeState = IntakeState.HOLDING
                     }
                 }
                 IntakeState.HOLDING -> {
-                    setIntakeMotorsPercent(0.0)
+                    feederMotor.setPercentOutput(0.0)
                 }
             }
 //            if (intaking) {
