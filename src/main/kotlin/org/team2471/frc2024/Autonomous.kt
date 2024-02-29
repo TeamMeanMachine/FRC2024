@@ -75,7 +75,7 @@ object AutoChooser {
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
-        addOption("Close4Red", "close4Red")
+        addOption("2Far2CloseAmp", "2Far2CloseAmp")
 
     }
 
@@ -136,18 +136,18 @@ object AutoChooser {
         when (selAuto) {
             "HIII" -> hiii()
             "Tests" -> testAuto()
-            "Close4Red" -> close4Red()
+            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
         println("finished autonomous  ${Robot.recentTimeTaken()}")
     }
 
-    suspend fun close4Red() = use(Drive, Shooter, Intake) {
-        Shooter.rpmTopSetpoint = 500.0
-        Shooter.rpmBottomSetpoint = 500.0
+    suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter, Intake) {
+        Shooter.rpmTopSetpoint = 3000.0
+        Shooter.rpmBottomSetpoint = 3000.0
         Pivot.angleSetpoint = 52.0.degrees
-        val auto = autonomi["Close4Red"]
+        val auto = autonomi["2Far2CloseAmp"]
         var path: Path2D? = auto?.get("1-Start")
 
         parallel({
@@ -155,12 +155,21 @@ object AutoChooser {
                 Drive.driveAlongPath(path!!,  true)
             }
         }, {
-//            suspendUntil { (Shooter.motorRpmTop + Shooter.motorRpmBottom) / 2.0 > 3500.0 }
+            delay(0.5)
+            path = auto?.get("2-ShootThird")
             Intake.setIntakeMotorsPercent(0.8)
-            delay(0.3)
-//            Pivot.angleSetpoint = 33.0.degrees
-            path = auto?.get("2-SecondNote")
         })
+        Intake.setIntakeMotorsPercent(0.8)
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false)
+        }
+        Intake.setIntakeMotorsPercent(0.8)
+        path = auto?.get("3-GrabFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false)
+        }
+        Intake.setIntakeMotorsPercent(0.8)
+        path = auto?.get("4-ShootFourth")
         if (path != null) {
             Drive.driveAlongPath(path!!, false)
         }

@@ -142,39 +142,6 @@ object Intake: Subsystem("Intake") {
                     }
                 }
             }
-//            if (intaking) {
-//                if (!detectedCargo && !holdingCargo) {
-//                    Pivot.angleSetpoint = 18.0.degrees
-//                    setIntakeMotorsPercent(0.9)
-//                }
-//                if (bottomBreak && !detectedCargo) {
-//                    println("detected piece, slowing intake")
-//                    setIntakeMotorsPercent(0.2)
-//                    detectedCargo = true
-//                }
-//                if (topBreak && !holdingCargo) {
-//                    setIntakeMotorsPercent(0.0)
-//                    println("stopping intake")
-//                    holdingCargo = true
-//                    detectedCargo = false
-//
-//
-////                    Pivot.angleSetpoint = Pivot.TESTPOSE
-//                }
-//                if (holdingCargo && !detectedCargo) {
-//
-//                }
-//                if (detectedCargo) {
-//                    if (t.get() > 2.0) {
-//                        detectedCargo = false
-//                    }
-//                } else {
-//                    t.start()
-//                }
-//            } else {
-//                setIntakeMotorsPercent(0.0)
-//                t.start()
-//            }
         }
     }
 

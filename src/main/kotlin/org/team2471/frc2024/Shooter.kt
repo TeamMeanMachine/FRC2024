@@ -51,7 +51,7 @@ object Shooter: Subsystem("Shooter") {
     var manualShootState = false
         set(value) {
             field = value
-            if (!value) {
+            if (!value && !Robot.isAutonomous) {
                 rpmTopSetpoint = 0.0
                 rpmBottomSetpoint = 0.0
             }
@@ -179,7 +179,7 @@ object Shooter: Subsystem("Shooter") {
                 if (RPM21Entry.getDouble(21.0)!=RPMCurve.getValue(21.0)) { rebuildCurves() }
 
 
-                if (Robot.isEnabled) {
+                if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
                         shooterMotorTop.setPercentOutput(0.0)
                     } else {
