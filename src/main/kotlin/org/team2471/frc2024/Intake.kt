@@ -19,6 +19,8 @@ object Intake: Subsystem("Intake") {
     private val intakingEntry = table.getEntry("Intaking")
     private val holdingNoteEntry = table.getEntry("Holding Note")
 
+    private val manualIntake = table.getEntry("Manual Intake")
+
     private val bottomBreakEntry = table.getEntry("Bottom Break")
     private val topBreakEntry = table.getEntry("Top Break")
 
@@ -36,9 +38,6 @@ object Intake: Subsystem("Intake") {
 
     var intakeState = IntakeState.EMPTY
 
-    // brendon wants this
-    val intaking = true
-
 
     val bottomBreak: Boolean
         get() = !bottomBreakSensor.get()
@@ -50,6 +49,7 @@ object Intake: Subsystem("Intake") {
     init {
         intakingEntry.setBoolean(false)
         holdingNoteEntry.setBoolean(true)
+        manualIntake.setBoolean(false)
 
         var x = feederCurrentEntry.getDouble(0.0)
 
@@ -112,7 +112,11 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.SLOWING -> {
-                    feederMotor.setPercentOutput(0.2)
+                    if (manualIntake.setBoolean(false)) {
+                        feederMotor.setPercentOutput(0.2)
+                    } else {
+                        setIntakeMotorsPercent(0.2)
+                    }
                     if (topBreak) {
                         intakeState = IntakeState.REVERSING
                     }
@@ -121,13 +125,21 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.REVERSING -> {
-                    feederMotor.setPercentOutput(-0.1)
+                    if (manualIntake.setBoolean(false)) {
+                        feederMotor.setPercentOutput(-0.1)
+                    } else {
+                        setIntakeMotorsPercent(-0.1)
+                    }
                     if (!topBreak) {
                         intakeState = IntakeState.HOLDING
                     }
                 }
                 IntakeState.HOLDING -> {
-                    feederMotor.setPercentOutput(0.0)
+                    if (manualIntake.setBoolean(false)) {
+                        feederMotor.setPercentOutput(0.0)
+                    } else {
+                        setIntakeMotorsPercent(0.0)
+                    }
                 }
             }
 //            if (intaking) {

@@ -113,7 +113,7 @@ object OI : Subsystem("OI") {
 
 
                 // Operator Rumble
-                if (Shooter.motorRpmTop > 0.0 && Shooter.motorRpmBottom > 0.0) {
+                if (Shooter.manualShootState) {
                     operatorController.rumble = 0.7
                 } else {
                     operatorController.rumble = 0.0

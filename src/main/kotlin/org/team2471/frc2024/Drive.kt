@@ -184,7 +184,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var aimPDController = teleopPDController
 
     var aimTarget = false
-    val speakerPos = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
+    val speakerPos
+        get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
+
     val ampPos = Vector2(0.0, 0.0) //TODO
     val distance: Double
         get() = (combinedPosition - speakerPos).length
@@ -479,7 +481,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
                 feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (87.8 / 96.0)
-                currentLimit(60, 65, 1)
+                currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
             turnMotor.config {
@@ -488,7 +490,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 brakeMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
-                currentLimit(12, 16, 1)
+                currentLimit(15, 20, 1)
                 pid {
                     p(0.006)
 //                    d(0.0000025)

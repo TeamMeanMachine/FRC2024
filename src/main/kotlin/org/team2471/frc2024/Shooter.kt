@@ -50,25 +50,11 @@ object Shooter: Subsystem("Shooter") {
 
     var manualShootState = false
         set(value) {
-            println("Shooter $value")
-            if (value) {
-                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
-                // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
-                    rpmTopSetpoint = 900.0
-                    rpmBottomSetpoint = 1050.0
-                } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
-                        rpmTopSetpoint = 3500.0
-                        rpmBottomSetpoint = 3500.0
-                } else {
-                    rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
-                    rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
-                }
-            } else {
+            field = value
+            if (!value) {
                 rpmTopSetpoint = 0.0
                 rpmBottomSetpoint = 0.0
             }
-            field = value
         }
 
 
@@ -224,6 +210,21 @@ object Shooter: Subsystem("Shooter") {
         periodic {
             rpmTopEntry.setDouble(rpmTopSetpoint)
             rpmBottomEntry.setDouble(rpmBottomSetpoint)
+
+            if (manualShootState) {
+                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
+                // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
+                if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
+                    rpmTopSetpoint = 1000.0
+                    rpmBottomSetpoint = 1150.0
+                } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
+                    rpmTopSetpoint = 3500.0
+                    rpmBottomSetpoint = 3500.0
+                } else {
+                    rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
+                    rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
+                }
+            }
         }
     }
 
