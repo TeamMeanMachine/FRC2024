@@ -1,5 +1,8 @@
 package org.team2471.frc2024
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.*
 import org.team2471.frc.lib.math.Vector2
@@ -8,6 +11,7 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
+import kotlin.math.absoluteValue
 
 object OI : Subsystem("OI") {
     val driverController = XboxController(0)
@@ -66,7 +70,6 @@ object OI : Subsystem("OI") {
         driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue {
-            driverController.rumble = 0.0
             if (Intake.intakeState == Intake.IntakeState.EMPTY) {
                 Intake.intakeState = Intake.IntakeState.INTAKING
             } else {
@@ -97,7 +100,25 @@ object OI : Subsystem("OI") {
 
         operatorController::start.whenTrue { resetCameras() }
 
+        GlobalScope.launch {
+            periodic {
+                // Driver Rumble
+                if (Robot.isEnabled && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
+                    driverController.rumble = 1.0
+                } else if (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0) {
+                    driverController.rumble = 0.7
+                } else {
+                    driverController.rumble = 0.0
+                }
 
 
+                // Operator Rumble
+                if (Shooter.motorRpmTop > 0.0 && Shooter.motorRpmBottom > 0.0) {
+                    operatorController.rumble = 0.7
+                } else {
+                    operatorController.rumble = 0.0
+                }
+            }
+        }
     }
 }

@@ -55,8 +55,11 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
-                    rpmTopSetpoint = 1200.0 * 0.75
-                    rpmBottomSetpoint = 1400.0 * 0.75
+                    rpmTopSetpoint = 900.0
+                    rpmBottomSetpoint = 1050.0
+                } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
+                        rpmTopSetpoint = 3500.0
+                        rpmBottomSetpoint = 3500.0
                 } else {
                     rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
                     rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
@@ -113,6 +116,7 @@ object Shooter: Subsystem("Shooter") {
             Pitch9Entry.setDouble(37.5)
             Pitch15Entry.setDouble(30.5)
             Pitch21Entry.setDouble(27.6)
+
             RPM3Entry.setDouble(3500.0)
             RPM6Entry.setDouble(3750.0)
             RPM9Entry.setDouble(5000.0)
@@ -172,18 +176,10 @@ object Shooter: Subsystem("Shooter") {
                 motorRpmTopEntry.setDouble(motorRpmTop)
                 shootingEntry.setBoolean(manualShootState)
 
-                if (Robot.isEnabled && (motorRpmTop - rpmTopSetpoint).absoluteValue + (motorRpmBottom - rpmBottomSetpoint).absoluteValue < 500.0 && rpmTopSetpoint + rpmBottomSetpoint > 20.0) {
-                    OI.driverController.rumble = 1.0
-                }
-                if (motorRpmTop > 0.0 && motorRpmBottom > 0.0) {
-                    OI.operatorController.rumble = 0.0
-                }
-
-                if (Pivot.autoAim) {
+                if (Robot.isEnabled && Pivot.autoAim) {
                     rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
                     rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
                 }
-
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
                 if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }

@@ -38,8 +38,8 @@ object Pivot: Subsystem("Pivot") {
 
     private val gearRatio = 1 / 61.71
 
-    val TESTPOSE = 30.0.degrees //18 //32
-    val CLOSESPEAKERPOSE = 62.0.degrees
+    val TESTPOSE = 30.5.degrees //18 //32
+    val CLOSESPEAKERPOSE = 59.0.degrees
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
