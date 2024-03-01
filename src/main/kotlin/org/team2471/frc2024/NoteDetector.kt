@@ -12,6 +12,7 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
+import kotlin.math.absoluteValue
 
 object NoteDetector: Subsystem("NoteDetector") {
 
@@ -22,9 +23,9 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val noteHalfHeight = 1.0.inches
     private val camHeight = 9.796.inches
     private val camRobotCoords = Vector2(0.0.inches.asFeet, 11.96.inches.asFeet)
-    private val cameraAngle = 0.0.degrees
+    private val cameraAngle = -15.0.degrees
 
-    val noteList: HashMap<Int, Vector2> = hashMapOf()
+    val noteList: HashMap<Int, SchrodingerNote> = hashMapOf()
 
     val seesNote: Boolean
         get() {
@@ -86,7 +87,7 @@ object NoteDetector: Subsystem("NoteDetector") {
             }
             val noteCord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
             println("creating note with ID: $n  Vector: $noteCord  Offset: $offset  Offset Vector: ${noteCord + offset}")
-            noteList[n] = noteCord + offset
+            noteList[n] = SchrodingerNote(noteCord + offset)
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
@@ -120,6 +121,20 @@ object NoteDetector: Subsystem("NoteDetector") {
                     noteAdvantagePosEntry.setDoubleArray(notePosAdv.first())
                 }
                 notes = tempNotes.toList()
+
+
+
+                if (Robot.isAutonomous) {
+                    for (n in notes) {
+                        for (s in noteList) {
+                            if ((n.fieldCords.x - s.value.position.x).absoluteValue > 1.5 && (n.fieldCords.y - s.value.position.y).absoluteValue > 1.5) {
+                                s.value.isPresent = true
+                            } else {
+                                s.value.isPresent = false
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -139,4 +154,8 @@ data class Note(
     val robotCords: Vector2,
     val fieldCords: Vector2,
     val timestampSeconds: Double
+)
+data class SchrodingerNote (
+    val position: Vector2,
+    var isPresent: Boolean = false
 )
