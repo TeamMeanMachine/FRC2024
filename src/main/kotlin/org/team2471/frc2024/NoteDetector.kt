@@ -17,8 +17,16 @@ import kotlin.math.absoluteValue
 object NoteDetector: Subsystem("NoteDetector") {
 
     private val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
+    private val table = NetworkTableInstance.getDefault().getTable("NoteDetector")
     private val camera : PhotonCamera = PhotonCamera("notecam")
     private val noteAdvantagePosEntry = pvtable.getEntry("Advantage Note Pos")
+
+
+    private val noteZeroPresentEntry = table.getEntry("NoteZeroPresent")
+    private val noteOnePresentEntry = table.getEntry("NoteOnePresent")
+    private val noteTwoPresentEntry = table.getEntry("NoteTwoPresent")
+    private val noteThreePresentEntry = table.getEntry("NoteThreePresent")
+    private val noteFourPresentEntry = table.getEntry("NoteFourPresent")
 
     private val noteHalfHeight = 1.0.inches
     private val camHeight = 9.796.inches
@@ -135,6 +143,11 @@ object NoteDetector: Subsystem("NoteDetector") {
                         }
                     }
                 }
+                noteList[0]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
+                noteList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
+                noteList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
             }
         }
     }
