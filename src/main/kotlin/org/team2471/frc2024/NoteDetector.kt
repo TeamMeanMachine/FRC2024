@@ -24,6 +24,8 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val camRobotCoords = Vector2(0.0.inches.asFeet, 11.96.inches.asFeet)
     private val cameraAngle = 0.0.degrees
 
+    val noteList: HashMap<Int, Vector2> = hashMapOf()
+
     val seesNote: Boolean
         get() {
             return if (camera.isConnected) {
@@ -62,6 +64,30 @@ object NoteDetector: Subsystem("NoteDetector") {
         distanceCurve.storeValue(-17.5, 12.0)
         distanceCurve.storeValue(-6.48, 46.0)
         distanceCurve.storeValue(-3.5, 73.0)
+
+        for (n in 0 until 5 ) { //create five notes for the center of the field
+            /*          -x
+                 -- blue side --
+                |               } blue amp
+                |               |
+            -y  | 0  1  2  3  4 |  +y
+                |               |
+                |               } red amp
+                 --  red side --
+                        +x
+             */
+            val offset: Vector2 = when (n) {
+                0 -> Vector2(0.0, 0.0)
+                1 -> Vector2(0.0, 0.0)
+                2 -> Vector2(0.0, 0.0)
+                3 -> Vector2(0.0, 0.0)
+                4 -> Vector2(0.0, 0.0)
+                else -> Vector2(0.0, 0.0)
+            }
+            val noteCord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
+            println("creating note with ID: $n  Vector: $noteCord  Offset: $offset  Offset Vector: ${noteCord + offset}")
+            noteList[n] = noteCord + offset
+        }
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
