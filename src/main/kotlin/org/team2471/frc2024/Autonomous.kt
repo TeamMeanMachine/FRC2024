@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
@@ -144,33 +145,39 @@ object AutoChooser {
     }
 
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter, Intake) {
-        Shooter.rpmTopSetpoint = 3000.0
-        Shooter.rpmBottomSetpoint = 3000.0
+        Shooter.rpmTopSetpoint = 5000.0
+        Shooter.rpmBottomSetpoint = 5000.0
         Pivot.angleSetpoint = 52.0.degrees
         val auto = autonomi["2Far2CloseAmp"]
         var path: Path2D? = auto?.get("1-Start")
 
         parallel({
+            delay(0.5)
             if (path != null) {
                 Drive.driveAlongPath(path!!,  true)
             }
         }, {
             delay(0.5)
-            path = auto?.get("2-ShootThird")
             Intake.setIntakeMotorsPercent(0.8)
+            suspendUntil { Pivot.distFromSpeaker > 10.0 }
+            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
+            path = auto?.get("2-ShootThird")
         })
         Intake.setIntakeMotorsPercent(0.8)
         if (path != null) {
+            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(path!!.xyCurve.tailPoint.position.distance(Drive.speakerPos)).degrees
             Drive.driveAlongPath(path!!, false)
         }
         Intake.setIntakeMotorsPercent(0.8)
         path = auto?.get("3-GrabFourth")
         if (path != null) {
+            Pivot.angleSetpoint = Pivot.DRIVEPOSE
             Drive.driveAlongPath(path!!, false)
         }
         Intake.setIntakeMotorsPercent(0.8)
         path = auto?.get("4-ShootFourth")
         if (path != null) {
+            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(path!!.xyCurve.tailPoint.position.distance(Drive.speakerPos)).degrees
             Drive.driveAlongPath(path!!, false)
         }
         delay(3.0)

@@ -124,7 +124,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 camera.latestResult.timestampSeconds
                             )
                         )
-                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
+//                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
 
                         //advantage scope list
                         notePosAdv.add(
@@ -145,7 +145,7 @@ object NoteDetector: Subsystem("NoteDetector") {
 //                if (Robot.isAutonomous) {
                     for (n in notes) {
                         for (s in noteList) {
-                            if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 2.0 && (n.fieldCoords.y - s.value.position.y).absoluteValue < 2.0) {
+                            if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
                                 s.value.isPresent = true
                             } else {
                                 s.value.isPresent = false
