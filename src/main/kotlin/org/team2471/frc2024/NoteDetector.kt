@@ -30,8 +30,8 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     private val noteHalfHeight = 1.0.inches
     private val camHeight = 9.796.inches
-    private val camRobotCoords = Vector2(0.0.inches.asFeet, 11.96.inches.asFeet)
-    private val cameraAngle = -15.0.degrees
+    private val camRobotCoords = Vector2(11.96.inches.asFeet, 0.0.inches.asFeet)
+    private val cameraAngle = 15.0.degrees
 
     val noteList: HashMap<Int, SchrodingerNote> = hashMapOf()
 
@@ -53,7 +53,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                 var closest: Note? = null
                 for (n in notes) {
                     if (closest != null) {
-                        if (n.fieldCords.distance(Drive.combinedPosition) > closest.fieldCords.distance(Drive.combinedPosition)) {
+                        if (n.fieldCoords.distance(Drive.combinedPosition) > closest.fieldCoords.distance(Drive.combinedPosition)) {
                             closest = n
                         }
                     } else {
@@ -69,10 +69,16 @@ object NoteDetector: Subsystem("NoteDetector") {
     var notePosAdv: MutableList<Array<Double>> = mutableListOf()
 
     init {
-        distanceCurve.storeValue(-1.6, 109.0)
-        distanceCurve.storeValue(-17.5, 12.0)
-        distanceCurve.storeValue(-6.48, 46.0)
-        distanceCurve.storeValue(-3.5, 73.0)
+        distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        distanceCurve.storeValue(-8.3, 2.0)
+        distanceCurve.storeValue(2.4, 4.0)
+        distanceCurve.storeValue(7.25, 8.0)
+        distanceCurve.storeValue(5.5, 6.0)
+        distanceCurve.storeValue(-0.6, 3.0)
+        distanceCurve.storeValue(8.35, 10.0)
+        distanceCurve.storeValue(9.0, 12.0)
+
+
 
         for (n in 0 until 5 ) { //create five notes for the center of the field
             /*          -x
@@ -93,10 +99,12 @@ object NoteDetector: Subsystem("NoteDetector") {
                 4 -> Vector2(0.0, 0.0)
                 else -> Vector2(0.0, 0.0)
             }
-            val noteCord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
-            println("creating note with ID: $n  Vector: $noteCord  Offset: $offset  Offset Vector: ${noteCord + offset}")
-            noteList[n] = SchrodingerNote(noteCord + offset)
+            val noteCoord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
+            println("creating note with ID: $n  Vector: $noteCoord  Offset: $offset  Offset Vector: ${noteCoord + offset}")
+            noteList[n] = SchrodingerNote(noteCoord + offset, true)
         }
+
+        println("init note detector")
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -104,22 +112,25 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notePosAdv = mutableListOf()
 
                 if (camera.isConnected) {
+                    //println("connected")
                     for (target in camera.latestResult.targets) {
-                        val robotCords = getTargetRobotCords(target)
-                        val fieldCords = robotCordsToFieldCords(robotCords)
+                        val robotCoords = getTargetRobotCoords(target)
+                        val fieldCoords = robotCoordsToFieldCoords(robotCoords)
                         tempNotes.add(
                             Note(
-                                robotCords,
-                                fieldCords,
+                                robotCoords,
+                                fieldCoords,
+                                target.yaw,
                                 camera.latestResult.timestampSeconds
                             )
                         )
+                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
 
                         //advantage scope list
                         notePosAdv.add(
                             arrayOf(
-                                fieldCords.x.feet.asMeters, //x
-                                fieldCords.y.feet.asMeters, //y
+                                fieldCoords.x.feet.asMeters, //x
+                                fieldCoords.y.feet.asMeters, //y
                                 0.0 //z
                             )
                         )
@@ -131,18 +142,17 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notes = tempNotes.toList()
 
 
-
-                if (Robot.isAutonomous) {
+//                if (Robot.isAutonomous) {
                     for (n in notes) {
                         for (s in noteList) {
-                            if ((n.fieldCords.x - s.value.position.x).absoluteValue > 1.5 && (n.fieldCords.y - s.value.position.y).absoluteValue > 1.5) {
+                            if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 2.0 && (n.fieldCoords.y - s.value.position.y).absoluteValue < 2.0) {
                                 s.value.isPresent = true
                             } else {
                                 s.value.isPresent = false
                             }
                         }
                     }
-                }
+//                }
                 noteList[0]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
                 noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
                 noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
@@ -152,20 +162,21 @@ object NoteDetector: Subsystem("NoteDetector") {
         }
     }
 
-    fun getTargetRobotCords(target : PhotonTrackedTarget): Vector2 {
-        val distance = distanceCurve.getValue(target.pitch).inches
-        val xOffset = (distance.asInches * -tan(target.yaw.degrees)).inches
+    fun getTargetRobotCoords(target : PhotonTrackedTarget): Vector2 {
+        val distance = distanceCurve.getValue(target.pitch).feet
+        val xOffset = distance * -tan(target.yaw.degrees)
         return Vector2(distance.asFeet, xOffset.asFeet) + camRobotCoords
     }
 
-    fun robotCordsToFieldCords(robotCords : Vector2): Vector2 {
-        return robotCords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
+    fun robotCoordsToFieldCoords(robotCoords : Vector2): Vector2 {
+        return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
     }
 }
 
 data class Note(
-    val robotCords: Vector2,
-    val fieldCords: Vector2,
+    val robotCoords: Vector2,
+    val fieldCoords: Vector2,
+    val yawOffset : Double,
     val timestampSeconds: Double
 )
 data class SchrodingerNote (
