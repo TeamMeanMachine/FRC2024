@@ -145,9 +145,9 @@ object AutoChooser {
     }
 
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter, Intake) {
-        Shooter.rpmTopSetpoint = 5000.0
-        Shooter.rpmBottomSetpoint = 5000.0
-        Pivot.angleSetpoint = 52.0.degrees
+//        Shooter.rpmTopSetpoint = 5000.0
+//        Shooter.rpmBottomSetpoint = 5000.0
+//        Pivot.angleSetpoint = 52.0.degrees
         val auto = autonomi["2Far2CloseAmp"]
         var path: Path2D? = auto?.get("1-Start")
 
@@ -158,16 +158,18 @@ object AutoChooser {
             }
         }, {
             delay(0.5)
-            Intake.setIntakeMotorsPercent(0.8)
+//            Intake.setIntakeMotorsPercent(0.8)
             suspendUntil { Pivot.distFromSpeaker > 10.0 }
-            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
+//            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
             path = auto?.get("2-ShootThird")
         })
-        Intake.setIntakeMotorsPercent(0.8)
+//        Intake.setIntakeMotorsPercent(0.8)
+        Intake.setIntakeMotorsPercent(0.0)
         if (path != null) {
             Pivot.angleSetpoint = Shooter.pitchCurve.getValue(path!!.xyCurve.tailPoint.position.distance(Drive.speakerPos)).degrees
             Drive.driveAlongPath(path!!, false)
         }
+        /*
         Intake.setIntakeMotorsPercent(0.8)
         path = auto?.get("3-GrabFourth")
         if (path != null) {
@@ -181,6 +183,7 @@ object AutoChooser {
             Drive.driveAlongPath(path!!, false)
         }
         delay(3.0)
+*/
     }
 
 

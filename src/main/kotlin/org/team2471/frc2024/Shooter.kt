@@ -166,7 +166,6 @@ object Shooter: Subsystem("Shooter") {
                     rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
                     rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
                 }
-//                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
                 if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
                 if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
@@ -177,7 +176,6 @@ object Shooter: Subsystem("Shooter") {
                 if (RPM9Entry.getDouble(9.0)!=RPMCurve.getValue(9.0)) { rebuildCurves() }
                 if (RPM15Entry.getDouble(13.7)!=RPMCurve.getValue(13.7)) { rebuildCurves() }
                 if (RPM21Entry.getDouble(21.0)!=RPMCurve.getValue(21.0)) { rebuildCurves() }
-
 
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
@@ -226,6 +224,11 @@ object Shooter: Subsystem("Shooter") {
                 }
             }
         }
+    }
+
+    override fun preEnable() {
+        rpmTopSetpoint  = 0.0
+        rpmBottomSetpoint = 0.0
     }
 
     fun rebuildCurves() {
