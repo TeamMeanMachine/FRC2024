@@ -22,7 +22,7 @@
               "_title": "Field",
               "_glyph": 148,
               "_showGlyph": false,
-              "Game/Game": "A2023_Charged_Up",
+              "Game/Game": "k2024Crescendo",
               "Visuals/Robot Icon Size": 50.0,
               "Visuals/Show Outside Circles": false
             }
@@ -77,7 +77,7 @@
               "_title": "Radar",
               "_glyph": 148,
               "_showGlyph": false,
-              "Game/Game": "A2023_Charged_Up",
+              "Game/Game": "k2024Crescendo",
               "Visuals/Robot Icon Size": 50.0,
               "Visuals/Show Outside Circles": false
             }
@@ -585,6 +585,32 @@
               "Y-axis/Lower bound": -1.0,
               "Y-axis/Unit": "ul",
               "Visible data/Intake/Feeder Current": true
+            }
+          },
+          "0,4": {
+            "size": [
+              4,
+              3
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///Shooter/Shooter Two Current",
+              "_title": "Shooter/Shooter Two Current",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "0,0": {
+            "size": [
+              4,
+              3
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///Shooter/Shooter Current",
+              "_title": "Shooter/Shooter Current",
+              "_glyph": 148,
+              "_showGlyph": false
             }
           }
         }

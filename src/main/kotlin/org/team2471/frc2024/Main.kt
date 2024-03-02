@@ -39,9 +39,9 @@ object Robot : MeanlibRobot() {
         }
 
         // i heard the first string + double concatenations were expensive...
-        repeat(25) {
-            println("RANDOM NUMBER: ${Math.random()}")
-        }
+//        repeat(25) {
+//            println("RANDOM NUMBER: ${Math.random()}")
+//        }
         println("NEVER GONNA GIVE YOU UP")
 
         OI
