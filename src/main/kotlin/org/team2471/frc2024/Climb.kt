@@ -82,7 +82,7 @@ object Climb: Subsystem("Climb") {
                     relay.set(Relay.Value.kOff)
                 }
 
-                if (DriverStation.getMatchTime() < 0.25) {
+                if (DriverStation.getMatchTime() < 0.25 && DriverStation.getMatchTime() > 0.0) {
                     println("locking climber!!!!!!!!!!!!!! Match Time ${DriverStation.getMatchTime()}")
                     relayOn = true
                 }

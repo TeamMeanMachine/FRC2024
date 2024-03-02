@@ -169,9 +169,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(-1.0, 0.0)  // blue start
-    //    override val carpetFlow = Vector2(1.0, 0.0)  // red start
-//    override val carpetFlow = Vector2(0.0, 1.0)  // sideways
+    override val carpetFlow = Vector2(-1.0, 0.0)
+    //    override val carpetFlow = Vector2(1.0, 0.0)
+//    override val carpetFlow = Vector2(0.0, 1.0)
     override val kCarpet = 0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
