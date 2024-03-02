@@ -8,17 +8,12 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.units.Angle.Companion.cos
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.absoluteValue
 import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -31,6 +26,7 @@ object Pivot: Subsystem("Pivot") {
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
+    private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
@@ -79,6 +75,10 @@ object Pivot: Subsystem("Pivot") {
     val pivotError: Double
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
+    val distFromSpeaker: Double
+        get() = PoseEstimator.currentPose.distance(speakerPos)
+
+
 
 
 
@@ -121,13 +121,14 @@ object Pivot: Subsystem("Pivot") {
 ////                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
 //                }
 
+                distanceFromSpeakerEntry.setDouble(distFromSpeaker)
+
                 if (autoAim) {
-                    val dist = PoseEstimator.currentPose.distance(speakerPos)
 
                     // Calculated. May change a lot with more data
 //                    val angle = (90.0 * (0.751492.pow(dist))).degrees
 
-                    val angle = Shooter.pitchCurve.getValue(dist).degrees
+                    val angle = Shooter.pitchCurve.getValue(distFromSpeaker).degrees
 //                    println("Angle: ${angle}")
                     angleSetpoint = angle
                 }

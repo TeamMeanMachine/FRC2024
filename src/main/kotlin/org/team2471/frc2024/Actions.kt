@@ -4,12 +4,14 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
     println("inside climbWIthTrigger!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -99,7 +101,7 @@ suspend fun driveToClosestNote() = use(Drive) {
         if (NoteDetector.seesNote) {
             NoteDetector.closestNote?.let {
                 Drive.drive(
-                    it.robotCords.normalize(),
+                    it.robotCoords.normalize(),
                     0.0,
                     false
                 )
@@ -110,3 +112,82 @@ suspend fun driveToClosestNote() = use(Drive) {
         }
     }
 }
+
+
+suspend fun pickUpSeenNote() = use(Drive, Intake) {
+    var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
+    var notePosCount : Int = 0
+    val notePosMaxError = 4
+
+    if (NoteDetector.seesNote) {
+        var prevHeadingError = 0.0
+        val timer = Timer()
+        timer.start()
+        var prevTime = 0.0
+        periodic {
+            val t = timer.get()
+            val dt = t - prevTime
+
+            var headingError = 0.0
+            var notePos = Vector2(0.0, 0.0)
+
+            var useEstimation = false
+
+            if (!NoteDetector.seesNote) {
+                useEstimation = true
+            }
+            if (!useEstimation) {
+                val note = NoteDetector.notes[0]
+                notePos = note.robotCoords
+                headingError = note.yawOffset
+                val fieldPosition = note.fieldCoords
+
+                if ((noteEstimatedPosition/notePosCount.toDouble()-fieldPosition).length > notePosMaxError) { // is it a different note
+                    useEstimation = true
+                } else {
+                    noteEstimatedPosition += fieldPosition
+                    notePosCount++
+                }
+            }
+            if (useEstimation && notePosCount > 0) {
+                val noteFieldPose : Vector2 = noteEstimatedPosition/notePosCount.toDouble()
+                headingError = 0.0 //(noteFieldPose - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees
+                notePos = (noteFieldPose - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
+            }
+
+            if (notePos != Vector2(0.0, 0.0)) {
+
+                val headingVelocity = (headingError - prevHeadingError) / dt
+                val turnControl = -headingError.sign * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading + headingVelocity * Drive.parameters.kdHeading
+
+                val driveSpeed =  OI.driveLeftTrigger //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
+
+                if (notePos.x < 3) {
+                    Intake.intakeMotorTop.setPercentOutput(0.5)
+                    Intake.intakeMotorBottom.setPercentOutput(0.5)
+                }
+
+                val driveDirection = Vector2(-notePos.y, notePos.x).normalize()
+                Drive.drive(driveDirection * driveSpeed, turnControl, false)
+
+                prevHeadingError = headingError
+                prevTime = t
+
+                println("using estimation: $useEstimation")
+                println("x: ${notePos.x}, y: ${notePos.y}")
+                println("turn control: ${turnControl}, heading err: ${headingError}")
+
+
+            }
+
+            if (OI.driveLeftTrigger < 0.2) {
+                stop()
+            }
+
+
+        }
+
+    }
+}
+
+

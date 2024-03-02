@@ -287,6 +287,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override fun preEnable() {
+//        Preferences.setDouble("odometer 0", 0.0)
+//        Preferences.setDouble("odometer 1", 0.0)
+//        Preferences.setDouble("odometer 2", 0.0)
+//        Preferences.setDouble("odometer 3", 0.0)
+
         odometer0Entry.setDouble(Preferences.getDouble("odometer 0",0.0))
         odometer1Entry.setDouble(Preferences.getDouble("odometer 1",0.0))
         odometer2Entry.setDouble(Preferences.getDouble("odometer 2",0.0))
@@ -427,7 +432,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
         override val treadWear: Double
-            get() = linearMap(0.0, 10000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
+            get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
 
         val driveCurrent: Double
             get() = driveMotor.current
@@ -480,7 +485,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (87.8 / 96.0)
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (95.0 / 96.0)
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }

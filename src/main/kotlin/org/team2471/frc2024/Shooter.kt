@@ -174,7 +174,6 @@ object Shooter: Subsystem("Shooter") {
                 if (RPM15Entry.getDouble(13.7)!=RPMCurve.getValue(13.7)) { rebuildCurves() }
                 if (RPM21Entry.getDouble(21.0)!=RPMCurve.getValue(21.0)) { rebuildCurves() }
 
-
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
                         shooterMotorTop.setPercentOutput(0.0)
@@ -222,6 +221,11 @@ object Shooter: Subsystem("Shooter") {
                 }
             }
         }
+    }
+
+    override fun preEnable() {
+        rpmTopSetpoint  = 0.0
+        rpmBottomSetpoint = 0.0
     }
 
     fun rebuildCurves() {
