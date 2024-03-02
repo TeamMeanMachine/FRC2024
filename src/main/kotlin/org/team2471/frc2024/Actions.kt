@@ -63,9 +63,10 @@ suspend fun fire() = use(Shooter, Intake){
             }
         }
     }
-
-    Intake.intakeMotorTop.setPercentOutput(0.5)
-    Intake.intakeMotorBottom.setPercentOutput(0.5)
+    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
+        Intake.intakeMotorTop.setPercentOutput(0.5)
+        Intake.intakeMotorBottom.setPercentOutput(0.5)
+    }
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
