@@ -162,10 +162,6 @@ object Shooter: Subsystem("Shooter") {
                 motorRpmTopEntry.setDouble(motorRpmTop)
                 shootingEntry.setBoolean(manualShootState)
 
-                if (Robot.isEnabled && Pivot.autoAim) {
-                    rpmTopSetpoint = RPMCurve.getValue(Drive.distance)
-                    rpmBottomSetpoint = RPMCurve.getValue(Drive.distance)
-                }
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
                 if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
@@ -249,5 +245,4 @@ object Shooter: Subsystem("Shooter") {
         RPMCurve.storeValue(21.0, RPM21Entry.getDouble(5000.0))
 
     }
-
 }

@@ -1,6 +1,7 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.Relay
 import kotlinx.coroutines.GlobalScope
@@ -79,6 +80,11 @@ object Climb: Subsystem("Climb") {
                     relay.set(Relay.Value.kForward)
                 } else {
                     relay.set(Relay.Value.kOff)
+                }
+
+                if (DriverStation.getMatchTime() < 0.25) {
+                    println("locking climber!!!!!!!!!!!!!! Match Time ${DriverStation.getMatchTime()}")
+                    relayOn = true
                 }
             }
         }
