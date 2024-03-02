@@ -115,11 +115,10 @@ suspend fun driveToClosestNote() = use(Drive) {
 
 
 suspend fun pickUpSeenNote() = use(Drive, Intake) {
-    val angleMarginOfError = 5.0
-    val minDist = 2.5
     var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
     var notePosCount : Int = 0
-    val notePosMaxError = 2.5
+    val notePosMaxError = 4
+
     if (NoteDetector.seesNote) {
         var prevHeadingError = 0.0
         val timer = Timer()
@@ -141,7 +140,7 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
                 val note = NoteDetector.notes[0]
                 notePos = note.robotCoords
                 headingError = note.yawOffset
-                val fieldPosition = notePos.rotateDegrees(-Drive.heading.asDegrees) + Drive.position
+                val fieldPosition = note.fieldCoords
 
                 if ((noteEstimatedPosition/notePosCount.toDouble()-fieldPosition).length > notePosMaxError) { // is it a different note
                     useEstimation = true
@@ -151,9 +150,9 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
                 }
             }
             if (useEstimation && notePosCount > 0) {
-                val noteFieldPose = noteEstimatedPosition/notePosCount.toDouble()
-                headingError = noteFieldPose.angleAsDegrees
-                notePos = (noteEstimatedPosition/notePosCount.toDouble() - Drive.position).rotateDegrees(Drive.heading.asDegrees)
+                val noteFieldPose : Vector2 = noteEstimatedPosition/notePosCount.toDouble()
+                headingError = 0.0 //(noteFieldPose - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees
+                notePos = (noteFieldPose - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
             }
 
             if (notePos != Vector2(0.0, 0.0)) {
@@ -161,21 +160,27 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
                 val headingVelocity = (headingError - prevHeadingError) / dt
                 val turnControl = -headingError.sign * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading + headingVelocity * Drive.parameters.kdHeading
 
-                val driveSpeed = if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, 1.0) else 1.0
+                val driveSpeed =  OI.driveLeftTrigger //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                Drive.drive(notePos.normalize() * driveSpeed, turnControl, false)
-
-                if (notePos.length < minDist) {
+                if (notePos.x < 3) {
                     Intake.intakeMotorTop.setPercentOutput(0.5)
                     Intake.intakeMotorBottom.setPercentOutput(0.5)
                 }
 
+                val driveDirection = Vector2(-notePos.y, notePos.x).normalize()
+                Drive.drive(driveDirection * driveSpeed, turnControl, false)
+
                 prevHeadingError = headingError
                 prevTime = t
 
+                println("using estimation: $useEstimation")
+                println("x: ${notePos.x}, y: ${notePos.y}")
+                println("turn control: ${turnControl}, heading err: ${headingError}")
+
+
             }
 
-            if (OI.driveTranslation.x != 0.0 || OI.driveTranslation.y != 0.0 || OI.driveRotation != 0.0) {
+            if (OI.driveLeftTrigger < 0.2) {
                 stop()
             }
 
