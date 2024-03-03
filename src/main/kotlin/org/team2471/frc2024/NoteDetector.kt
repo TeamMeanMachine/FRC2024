@@ -77,6 +77,8 @@ object NoteDetector: Subsystem("NoteDetector") {
         distanceCurve.storeValue(-0.6, 3.0)
         distanceCurve.storeValue(8.35, 10.0)
         distanceCurve.storeValue(9.0, 12.0)
+        distanceCurve.storeValue(-13.3, 1.65)
+
 
 
 
@@ -159,6 +161,12 @@ object NoteDetector: Subsystem("NoteDetector") {
                 noteList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
                 noteList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
             }
+        }
+    }
+
+    override suspend fun default() {
+        periodic {
+
         }
     }
 

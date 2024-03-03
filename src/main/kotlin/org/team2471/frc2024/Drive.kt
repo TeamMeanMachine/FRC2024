@@ -95,7 +95,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kpHeading = 0.005,
         kdHeading = 0.02,
         kHeadingFeedForward = 0.001,
-        kMoveWhileSpin = 0.0,
+        kMoveWhileSpin = 27.0,
         invertDriveFactor = 1.0,
         invertSteerFactor = -1.0
     )

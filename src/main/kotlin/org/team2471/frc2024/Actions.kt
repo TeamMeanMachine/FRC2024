@@ -115,16 +115,20 @@ suspend fun driveToClosestNote() = use(Drive) {
 }
 
 
-suspend fun pickUpSeenNote() = use(Drive, Intake) {
+suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
     var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
     var notePosCount : Int = 0
     val notePosMaxError = 4
 
+    println("picking up note")
+
     if (NoteDetector.seesNote) {
+        println("sees note")
         var prevHeadingError = 0.0
         val timer = Timer()
         timer.start()
         var prevTime = 0.0
+        Intake.intakeState = Intake.IntakeState.INTAKING
         periodic {
             val t = timer.get()
             val dt = t - prevTime
@@ -134,7 +138,7 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
 
             var useEstimation = false
 
-            if (!NoteDetector.seesNote) {
+            if (NoteDetector.notes.size == 0) {
                 useEstimation = true
             }
             if (!useEstimation) {
@@ -159,16 +163,11 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
             if (notePos != Vector2(0.0, 0.0)) {
 
                 val headingVelocity = (headingError - prevHeadingError) / dt
-                val turnControl = -headingError.sign * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading + headingVelocity * Drive.parameters.kdHeading
+                val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading
 
                 val driveSpeed =  OI.driveLeftTrigger //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                if (notePos.x < 3) {
-                    Intake.intakeMotorTop.setPercentOutput(0.5)
-                    Intake.intakeMotorBottom.setPercentOutput(0.5)
-                }
-
-                val driveDirection = Vector2(-notePos.y, notePos.x).normalize()
+                val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
 
                 prevHeadingError = headingError
@@ -183,9 +182,11 @@ suspend fun pickUpSeenNote() = use(Drive, Intake) {
 
             if (OI.driveLeftTrigger < 0.2) {
                 stop()
+            } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
+                println("stopped because intake is done")
+                println("intake state ${Intake.intakeState.name}")
+                stop()
             }
-
-
         }
 
     }
