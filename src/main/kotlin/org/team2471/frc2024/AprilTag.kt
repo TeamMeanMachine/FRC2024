@@ -8,13 +8,12 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
-import org.photonvision.PhotonUtils
 import org.photonvision.targeting.MultiTargetPNPResult
-import org.photonvision.targeting.PhotonPipelineResult
-import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
+import org.team2471.frc2024.AprilTag.singleTagSLPoseEstimator
+import org.team2471.frc2024.AprilTag.singleTagSRPoseEstimator
 import org.team2471.frc2024.AprilTag.camIB
 import org.team2471.frc2024.AprilTag.camSL
 import org.team2471.frc2024.AprilTag.camSR
@@ -29,9 +28,8 @@ import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.AprilTag.robotToCamIB
 import org.team2471.frc2024.AprilTag.robotToCamSL
 import org.team2471.frc2024.AprilTag.robotToCamSR
-import org.team2471.frc2024.AprilTag.sLPoseEstimator
-import org.team2471.frc2024.AprilTag.sRPoseEstimator
-import kotlin.math.absoluteValue
+import org.team2471.frc2024.AprilTag.multiTagSLPoseEstimator
+import org.team2471.frc2024.AprilTag.multiTagSRPoseEstimator
 
 
 object AprilTag {
@@ -51,8 +49,10 @@ object AprilTag {
     //     Camera Intake B/W
     var camIB: PhotonCamera? = null
 
-    var sLPoseEstimator : PhotonPoseEstimator? = null
-    var sRPoseEstimator : PhotonPoseEstimator? = null
+    var multiTagSLPoseEstimator : PhotonPoseEstimator? = null
+    var multiTagSRPoseEstimator : PhotonPoseEstimator? = null
+    var singleTagSLPoseEstimator : PhotonPoseEstimator? = null
+    var singleTagSRPoseEstimator : PhotonPoseEstimator? = null
     var iBPoseEstimator : PhotonPoseEstimator? = null
     const val maxAmbiguity = 0.1
     var lastSLPose = Pose2d(0.0,0.0, Rotation2d(0.0))
@@ -99,17 +99,17 @@ object AprilTag {
             periodic {
                 try {
                     //val frontCamSelected = useFrontCam()
-                    val maybePoseSL: Pose2d? =
-                        sLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
                     val numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
+                    val maybePoseSL: Pose2d? =
+                        singleTagSLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, numTargetSL, it, multiTagSLPoseEstimator) } }
 
-                    val maybePoseSR: Pose2d? =
-                        sRPoseEstimator?.let { camSR?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
                     val numTargetSR: Int = camSR?.latestResult?.targets?.count() ?: 0
+                    val maybePoseSR: Pose2d? =
+                        singleTagSRPoseEstimator?.let { camSR?.let { it1 -> getEstimatedGlobalPose(it1, numTargetSR, it, multiTagSRPoseEstimator) } }
 
-                    val maybePoseIB: Pose2d? =
-                        iBPoseEstimator?.let { camIB?.let { it1 -> getEstimatedGlobalPose(it1, it) } }
                     val numTargetIB: Int = camIB?.latestResult?.targets?.count() ?: 0
+                    val maybePoseIB: Pose2d? =
+                        iBPoseEstimator?.let { camIB?.let { it1 -> getEstimatedGlobalPose(it1, numTargetIB, it) } }
 
                     if (maybePoseSL != null) {
                         seesAprilTagEntry.setBoolean(numTargetSL > 0)
@@ -158,7 +158,7 @@ object AprilTag {
     }
 }
 
-private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEstimator): Pose2d? {
+private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, singleTagEstimator: PhotonPoseEstimator, multiTagEstimator: PhotonPoseEstimator? = null): Pose2d? {
 
     try {
         if (!camera.isConnected) {
@@ -167,8 +167,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEs
         val cameraResult: MultiTargetPNPResult? = camera.latestResult.multiTagResult
         val validTargets = cameraResult?.fiducialIDsUsed//.filter{ validTags.contains(it.fiducialId) && it.poseAmbiguity < maxAmbiguity }
         if (validTargets != null) {
-            if (validTargets.isEmpty()) {
-                // println("AprilTag: Empty Tags")
+            if (numTargets < 1) {
                 return null
             }
         } else {
@@ -184,14 +183,25 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEs
 //            return null
 //        }
         //println("at least 2 valid targets found ${poseList}")
-        estimator.setReferencePose(
-            Pose2d(
-                cameraResult.estimatedPose.best.translation.toTranslation2d(),
-                cameraResult.estimatedPose.best.rotation.toRotation2d()
+        println("WHAT THE HECK: $numTargets")
+        if  (multiTagEstimator != null && numTargets > 1) {
+            multiTagEstimator.setReferencePose(
+                Pose2d(
+                    cameraResult.estimatedPose.best.translation.toTranslation2d(),
+                    cameraResult.estimatedPose.best.rotation.toRotation2d()
+                )
             )
-        )
+        } else {
+            println("Using singletag on camera ${camera.name}!!! HI!")
+            singleTagEstimator.setReferencePose(
+                Pose2d(
+                    cameraResult.estimatedPose.best.translation.toTranslation2d(),
+                    cameraResult.estimatedPose.best.rotation.toRotation2d()
+                )
+            )
+        }
 
-        val newPose = estimator.update()
+        val newPose = if (multiTagEstimator != null && validTargets.size > 1) multiTagEstimator.update() else singleTagEstimator.update()
 
 //                println("newPose: $newPose")
         if (newPose?.isPresent == true) {
@@ -216,19 +226,25 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, estimator: PhotonPoseEs
             return null
         }
     } catch (ex: Exception) {
-        println("***********************************************************AprilTag Failed. Try Operator down*****************************************************")
+        println("***********************************************************AprilTag Failed. Try Resetting IT!!!!*****************************************************")
         return null
     }
 }
 
 fun resetCameras() {
-    if (camSL == null || sLPoseEstimator == null) {
+    if (camSL == null || multiTagSLPoseEstimator == null) {
         try {
             if (pvTable.containsSubTable("CamSL")) {
                 camSL = PhotonCamera("CamSL")
-                sLPoseEstimator = PhotonPoseEstimator(
+                multiTagSLPoseEstimator = PhotonPoseEstimator(
                     aprilTagFieldLayout,
                     PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    camSL,
+                    robotToCamSL
+                )
+                singleTagSLPoseEstimator = PhotonPoseEstimator(
+                    aprilTagFieldLayout,
+                    PhotonPoseEstimator.PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
                     camSL,
                     robotToCamSL
                 )
@@ -239,13 +255,19 @@ fun resetCameras() {
     } else {
         println("CamSL already found, skipping reset")
     }
-    if (camSR == null || sRPoseEstimator == null) {
+    if (camSR == null || multiTagSRPoseEstimator == null) {
         try {
             if (pvTable.containsSubTable("CamSR")) {
                 camSR = PhotonCamera("CamSR")
-                sRPoseEstimator = PhotonPoseEstimator(
+                multiTagSRPoseEstimator = PhotonPoseEstimator(
                     aprilTagFieldLayout,
                     PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                    camSR,
+                    robotToCamSR
+                )
+                singleTagSRPoseEstimator = PhotonPoseEstimator(
+                    aprilTagFieldLayout,
+                    PhotonPoseEstimator.PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
                     camSR,
                     robotToCamSR
                 )
