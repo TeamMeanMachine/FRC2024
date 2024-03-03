@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
-import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
@@ -19,6 +18,7 @@ import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
+import kotlin.math.abs
 
 private lateinit var autonomi: Autonomi
 
@@ -147,37 +147,31 @@ object AutoChooser {
     }
 
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
-        Drive.zeroGyro()
-        Drive.combinedPosition = Vector2(48.32, 21.78) //sets position the starting position FOR RED ONLY!!!
-        Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(Pivot.distFromSpeaker)
-        Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
-        Pivot.angleSetpoint = 50.0.degrees
-        val auto = autonomi["2Far2CloseAmp"]
-        val path: Path2D? = auto?.get("1-Start")
+        try { //cam  8
+            Drive.zeroGyro()
+            Drive.combinedPosition = Vector2(48.32, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
+            val auto = autonomi["2Far2CloseAmp"]
+            var path: Path2D? = auto?.get("1-Start")
 
-        Drive.aimSpeaker = true
-        val t = Timer()
-        t.start()
-        suspendUntil { Shooter.motorRpmTop > 3500.0 && Shooter.motorRpmBottom > 3500.0 }
-        println("Shooter is at rpm.  Top: ${Shooter.motorRpmTop}   Bottom: ${Shooter.motorRpmBottom}   Time: ${t.get()}")
-        fire()
-        Drive.aimSpeaker = false
+//            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
+            aimAndShoot()
 
-        pickUpSeenNote(1.0)
-        Drive.aimSpeaker = true
-        Pivot.autoAim = true
-        Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(Pivot.distFromSpeaker)
-        Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
-//        Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
-        delay(0.1)
-        fire()
-        Drive.aimSpeaker = false
-        Pivot.autoAim = false
+            pickUpSeenNote(1.0)
+            aimAndShoot(true)
 
-        if (path != null) {
-            Drive.driveAlongPath(path,  true)
+            if (path != null) {
+                Drive.driveAlongPath(path,  false)
+            }
+            delay(0.4) //time for camera to recognize note
+            pickUpSeenNote(0.95, true)
+            path = auto?.get("2-ShootThird")
+            if (path != null) Drive.driveAlongPath(path, false)
+
+            aimAndShoot()
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
         }
-        pickUpSeenNote(1.0)
     }
 
 

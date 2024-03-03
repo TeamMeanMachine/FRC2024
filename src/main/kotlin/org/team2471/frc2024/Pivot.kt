@@ -12,6 +12,7 @@ import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 
@@ -46,7 +47,18 @@ object Pivot: Subsystem("Pivot") {
     private val MAXTICKS = if (isCompBot) 1393.0 else 940.0
 
 
-    var autoAim = false
+    var aimSpeaker = false
+        set(value) {
+            field = value
+            if (value) {
+                Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
+                Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+            } else {
+                Shooter.rpmTopSetpoint = 0.0
+                Shooter.rpmBottomSetpoint = 0.0
+            }
+        }
+    var revving = false
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -123,7 +135,7 @@ object Pivot: Subsystem("Pivot") {
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
-                if (autoAim) {
+                if (aimSpeaker) {
 
                     // Calculated. May change a lot with more data
 //                    val angle = (90.0 * (0.751492.pow(dist))).degrees
@@ -135,6 +147,22 @@ object Pivot: Subsystem("Pivot") {
             }
         }
 
+    }
+
+    fun speakerIsReady(rpmTol: Double = 100.0, pitchTol: Double = 1.0, aimTol: Double = 2.0, debug: Boolean = false): Boolean {
+        if (revving) return false
+
+        val rpmReady = abs(Shooter.rpmTopSetpoint - Shooter.motorRpmTop) < rpmTol && abs(Shooter.rpmBottomSetpoint - Shooter.motorRpmBottom) < rpmTol
+        val pitchReady = abs(angleSetpoint.asDegrees - pivotEncoderAngle.asDegrees) < pitchTol
+        val aimReady = abs(Drive.aimHeadingSetpoint.asDegrees - Drive.heading.asDegrees) < aimTol
+
+        if (debug) {
+            if (!rpmReady) println("Top RPM Setpoint: ${Shooter.rpmTopSetpoint} Top RPM: ${Shooter.motorRpmTop} Bottom RPM Setpoint: ${Shooter.rpmBottomSetpoint} Bottom RPM: ${Shooter.motorRpmBottom}")
+            if (!pitchReady) println("Pitch Setpoint: ${angleSetpoint.asDegrees} Pitch: ${pivotEncoderAngle.asDegrees}")
+            if (!aimReady) println("Aim Setpoint: ${Drive.aimHeadingSetpoint} Heading: ${Drive.heading}")
+        }
+
+        return rpmReady && pitchReady && aimReady
     }
 
     override fun postEnable() {

@@ -38,7 +38,12 @@ object NoteDetector: Subsystem("NoteDetector") {
     val seesNote: Boolean
         get() {
             return if (camera.isConnected) {
-                camera.latestResult.hasTargets()
+                try {
+                    camera.latestResult.hasTargets()
+                } catch (e: Exception) {
+                    println("Could not get latest result from note camera")
+                    false
+                }
             } else {
                 false
             }

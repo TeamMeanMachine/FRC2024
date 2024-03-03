@@ -188,6 +188,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
 
     val ampPos = Vector2(0.0, 0.0) //TODO
+
+    var aimHeadingSetpoint = 0.0.radians
     val distance: Double
         get() = (combinedPosition - speakerPos).length
 
@@ -288,14 +290,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
                         val dVector = combinedPosition - point
 
-                        val headingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
+                        aimHeadingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
 
-                        val angleError = (heading - headingSetpoint).wrap()
+                        val angleError = (heading - aimHeadingSetpoint).wrap()
 
                         if (abs(angleError.asDegrees) > 2.0) {
                             turn = aimPDController.update(angleError.asDegrees)
 
-                            println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
+//                            println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                         }
                     }
 
@@ -375,19 +377,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
                 val dVector = combinedPosition - point
 
-                val headingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
+                aimHeadingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
 
-                val angleError = (heading - headingSetpoint).wrap()
+                val angleError = (heading - aimHeadingSetpoint).wrap()
 
                 if (abs(angleError.asDegrees) > 2.0) {
                     turn = aimPDController.update(angleError.asDegrees)
-
 //                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                 }
             } else if (aimAmp) {
-                val ampHeadingSetpoint = 90.0.degrees
+                aimHeadingSetpoint = 90.0.degrees
 
-                val ampAngleError = (heading - ampHeadingSetpoint).wrap()
+                val ampAngleError = (heading - aimHeadingSetpoint).wrap()
 
                 val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asMeters else 581.77
 //                println(xError)

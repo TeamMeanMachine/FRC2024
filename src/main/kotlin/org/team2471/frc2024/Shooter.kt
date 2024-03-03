@@ -57,7 +57,6 @@ object Shooter: Subsystem("Shooter") {
         }
 
 
-
     var kFeedForwardTop = 1.0/5300.0
     var kFeedForwardBottom = 1.0/5300.0
 

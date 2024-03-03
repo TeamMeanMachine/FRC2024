@@ -1,6 +1,8 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.DelicateCoroutinesApi
+import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
@@ -10,7 +12,6 @@ import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
-import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -27,7 +28,7 @@ suspend fun climbWithTrigger() = use(Climb) {
 suspend fun spit() = use(Intake) {
     println("starting spit periodic")
     Intake.intakeState = Intake.IntakeState.SPITTING
-    Pivot.autoAim = false
+    Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
     periodic {
         if (OI.driverController.a) {
@@ -56,31 +57,51 @@ suspend fun fire() = use(Shooter, Intake){
             this.stop()
         }
     }
-    Intake.intakeState = Intake.IntakeState.EMPTY
-//    Shooter.shooting = false
-//    if (!Robot.isAutonomous) {
-//        Shooter.rpmTop = 0.0
-//        Shooter.rpmBottom = 0.0
-//    }
 
     println("Shot note..  Distance ${Pivot.distFromSpeaker.round(2)}  Pivot Setpoint: ${Pivot.angleSetpoint.asDegrees.round(1)}  Pivot Encoder:  ${Pivot.pivotEncoderAngle.asDegrees.round(1)}  ShooterTSetpoint: ${Shooter.rpmTopSetpoint.round(1)}  ShooterTRpm:  ${Shooter.motorRpmTop.round(1)}  ShooterBSetpoint:  ${Shooter.rpmBottomSetpoint.round(1)}  ShooterBRpm:  ${Shooter.motorRpmBottom.round(1)}")
+
+    Intake.intakeState = Intake.IntakeState.EMPTY
+    if (Robot.isAutonomous) {
+        Drive.aimSpeaker = false
+        Pivot.aimSpeaker = false
+    }
 }
 suspend fun aimAtSpeaker() {
+    Pivot.revving = true //unsure if this variable necessary. Comment out in pivot if an issue
     Drive.aimSpeaker = true
-    Pivot.autoAim = true
+    Pivot.aimSpeaker = true
 
-    suspendUntil(20) { !OI.driverController.y }
+    val t = Timer()
+    t.start()
 
-    Drive.aimSpeaker = false
-    Pivot.autoAim = false
+    delay(0.1)
+    Pivot.revving = false
 
-    Pivot.angleSetpoint = Pivot.DRIVEPOSE
-    Shooter.rpmTopSetpoint = 0.0
-    Shooter.rpmBottomSetpoint = 0.0
+    if (!DriverStation.isAutonomous()) {
+        suspendUntil(20) { !OI.driverController.y }
 
+        Drive.aimSpeaker = false
+        Pivot.aimSpeaker = false
+
+        Pivot.angleSetpoint = Pivot.DRIVEPOSE
+        Shooter.rpmTopSetpoint = 0.0
+        Shooter.rpmBottomSetpoint = 0.0
+    }
 }
 
-suspend fun pickUpSeenNote(speed: Double = -1.0) = use(Drive, name = "pick up note") {
+suspend fun aimAndShoot(print: Boolean = false) {
+    val t = Timer()
+    aimAtSpeaker()
+    t.start()
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 3.0 }
+    if (t.get() > 3.0) {
+        println("Aiming max time")
+        Pivot.speakerIsReady(debug = true)
+    }
+    fire()
+}
+
+suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = use(Drive, name = "pick up note") {
     var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
     var notePosCount : Int = 0
     val notePosMaxError = 4
@@ -88,7 +109,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0) = use(Drive, name = "pick up no
     println("picking up note")
 
     if (NoteDetector.seesNote) {
-//        println("sees note")
+        println("sees note")
         var prevHeadingError = 0.0
         val timer = Timer()
         timer.start()
@@ -141,11 +162,15 @@ suspend fun pickUpSeenNote(speed: Double = -1.0) = use(Drive, name = "pick up no
                 prevTime = t
 
 //                println("using estimation: $useEstimation")
-//                println("x: ${notePos.x}, y: ${notePos.y}")
+//                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
 //                println("turn control: ${turnControl}, heading err: ${headingError}")
             }
 
+//            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
+                stop()
+            } else if (cautious && notePos.x < 3.5) {
+                println("stopped because cautious")
                 stop()
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")
