@@ -201,7 +201,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
             )
         }
 
-        val newPose = if (multiTagEstimator != null && validTargets.size > 1) multiTagEstimator.update() else singleTagEstimator.update()
+        val newPose = if (multiTagEstimator != null && numTargets > 1) multiTagEstimator.update() else singleTagEstimator.update()
 
 //                println("newPose: $newPose")
         if (newPose?.isPresent == true) {
