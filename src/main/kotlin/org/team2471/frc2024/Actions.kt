@@ -83,12 +83,12 @@ suspend fun fire() = use(Shooter, Intake){
 //    }
 }
 suspend fun aimAtSpeaker() {
-    Drive.aimTarget = true
+    Drive.aimSpeaker = true
     Pivot.autoAim = true
 
     suspendUntil(20) { !OI.driverController.y }
 
-    Drive.aimTarget = false
+    Drive.aimSpeaker = false
     Pivot.autoAim = false
 
     Pivot.angleSetpoint = Pivot.DRIVEPOSE
@@ -190,6 +190,15 @@ suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
         }
 
     }
+}
+
+suspend fun lockToAmp() {
+    Drive.aimAmp = true
+
+    println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
+    suspendUntil(20) { !OI.driverController.b }
+
+    Drive.aimAmp = false
 }
 
 

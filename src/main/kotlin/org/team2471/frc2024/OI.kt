@@ -76,11 +76,12 @@ object OI : Subsystem("OI") {
                 Intake.intakeState = Intake.IntakeState.EMPTY
             }
         }
-        driverController::leftTriggerFullPress.whenTrue { spit() }
+        driverController::a.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
-//        ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote() }
+        ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote() }
+        driverController::b.whenTrue { lockToAmp() }
 
 
 

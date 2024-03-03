@@ -25,7 +25,6 @@ import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.units.Angle.Companion.atan2
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -183,7 +182,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimPDController = teleopPDController
 
-    var aimTarget = false
+    var aimSpeaker = false
+
+    var aimAmp = false
     val speakerPos
         get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
 
@@ -338,7 +339,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn = OI.driveRotation
             }
 
-            if (aimTarget) {
+            var translation = OI.driveTranslation
+
+            if (aimSpeaker) {
                 val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
                 val dVector = combinedPosition - point
 
@@ -349,7 +352,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 if (abs(angleError.asDegrees) > 2.0) {
                     turn = aimPDController.update(angleError.asDegrees)
 
-                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
+//                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
+                }
+            } else if (aimAmp) {
+                val ampHeadingSetpoint = 90.0.degrees
+
+                val ampAngleError = (heading - ampHeadingSetpoint).wrap()
+
+                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asMeters else 581.77
+//                println(xError)
+
+                if (abs(ampAngleError.asDegrees) > 2.0) {
+                    turn = aimPDController.update(ampAngleError.asDegrees)
+                }
+
+                if (abs(xError) > 0.1) {
+                    translation.x = xError
                 }
             }
 
@@ -358,10 +376,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
             val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
             drive(
-                OI.driveTranslation * maxTranslation,
+                translation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
-                !aimTarget  // true for teleop, false when aiming
+                !(aimSpeaker || aimAmp)  // true for teleop, false when aiming
             )
         }
     }
@@ -573,12 +591,4 @@ suspend fun Drive.currentTest() = use(this) {
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
-}
-
-fun Drive.aimAtPoint(point: Vector2) {
-    val angle = 180.degrees - atan2( combinedPosition.y - point.y, combinedPosition.x - point.x)
-
-    println("Goal: $angle")
-
-    val angleError = angle - heading
 }
