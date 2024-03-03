@@ -10,10 +10,12 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
@@ -144,46 +146,38 @@ object AutoChooser {
         println("finished autonomous  ${Robot.recentTimeTaken()}")
     }
 
-    suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter, Intake) {
-//        Shooter.rpmTopSetpoint = 5000.0
-//        Shooter.rpmBottomSetpoint = 5000.0
-//        Pivot.angleSetpoint = 52.0.degrees
+    suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
+        Drive.zeroGyro()
+        Drive.combinedPosition = Vector2(48.32, 21.78) //sets position the starting position FOR RED ONLY!!!
+        Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(Pivot.distFromSpeaker)
+        Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+        Pivot.angleSetpoint = 50.0.degrees
         val auto = autonomi["2Far2CloseAmp"]
-        var path: Path2D? = auto?.get("1-Start")
+        val path: Path2D? = auto?.get("1-Start")
 
-        parallel({
-            delay(0.5)
-            if (path != null) {
-                Drive.driveAlongPath(path!!,  true)
-            }
-        }, {
-            delay(0.5)
-//            Intake.setIntakeMotorsPercent(0.8)
-            suspendUntil { Pivot.distFromSpeaker > 10.0 }
-//            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
-            path = auto?.get("2-ShootThird")
-        })
-//        Intake.setIntakeMotorsPercent(0.8)
-        Intake.setIntakeMotorsPercent(0.0)
+        Drive.aimSpeaker = true
+        val t = Timer()
+        t.start()
+        suspendUntil { Shooter.motorRpmTop > 3500.0 && Shooter.motorRpmBottom > 3500.0 }
+        println("Shooter is at rpm.  Top: ${Shooter.motorRpmTop}   Bottom: ${Shooter.motorRpmBottom}   Time: ${t.get()}")
+        fire()
+        Drive.aimSpeaker = false
+
+        pickUpSeenNote(1.0)
+        Drive.aimSpeaker = true
+        Pivot.autoAim = true
+        Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(Pivot.distFromSpeaker)
+        Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+//        Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
+        delay(0.1)
+        fire()
+        Drive.aimSpeaker = false
+        Pivot.autoAim = false
+
         if (path != null) {
-            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(path!!.xyCurve.tailPoint.position.distance(Drive.speakerPos)).degrees
-            Drive.driveAlongPath(path!!, false)
+            Drive.driveAlongPath(path,  true)
         }
-        /*
-        Intake.setIntakeMotorsPercent(0.8)
-        path = auto?.get("3-GrabFourth")
-        if (path != null) {
-            Pivot.angleSetpoint = Pivot.DRIVEPOSE
-            Drive.driveAlongPath(path!!, false)
-        }
-        Intake.setIntakeMotorsPercent(0.8)
-        path = auto?.get("4-ShootFourth")
-        if (path != null) {
-            Pivot.angleSetpoint = Shooter.pitchCurve.getValue(path!!.xyCurve.tailPoint.position.distance(Drive.speakerPos)).degrees
-            Drive.driveAlongPath(path!!, false)
-        }
-        delay(3.0)
-*/
+        pickUpSeenNote(1.0)
     }
 
 

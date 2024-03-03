@@ -161,7 +161,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
         set(value) {
-            //position is in feet but PoseEstimator.combined pose is in meters
             position = value
             PoseEstimator.zeroOffset()
         }
@@ -283,6 +282,37 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
+                if (Robot.isAutonomous && aimSpeaker) {
+                    var turn = 0.0
+                    if (aimSpeaker) {
+                        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+                        val dVector = combinedPosition - point
+
+                        val headingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
+
+                        val angleError = (heading - headingSetpoint).wrap()
+
+                        if (abs(angleError.asDegrees) > 2.0) {
+                            turn = aimPDController.update(angleError.asDegrees)
+
+                            println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
+                        }
+                    }
+
+                    if (!useGyroEntry.exists()) {
+                        useGyroEntry.setBoolean(true)
+                    }
+                    val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
+
+
+
+                    drive(
+                        OI.driveTranslation * maxTranslation,
+                        turn * maxRotation,
+                        useGyro2,
+                        !aimSpeaker  // true for teleop, false when aiming
+                    )
+                }
             }
         }
     }

@@ -30,7 +30,7 @@ suspend fun spit() = use(Intake) {
     Pivot.autoAim = false
     Pivot.angleSetpoint = 45.0.degrees
     periodic {
-        if (OI.driverController.leftTriggerFullPress) {
+        if (OI.driverController.a) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
             Intake.intakeMotorBottom.setPercentOutput(-0.9)
             Intake.feederMotor.setPercentOutput(-0.9)
@@ -43,26 +43,7 @@ suspend fun spit() = use(Intake) {
 
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter, Intake){
-//    if (Robot.isAutonomous) {
-//        Shooter.rpmTop = Shooter.shootingRpmTop
-//        Shooter.rpmBottom = Shooter.shootingRpmBottom
-//    }
     val t = Timer()
-    if (Robot.isAutonomous) {
-        t.start()
-        periodic {
-            println("combined rpm error: ${(Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue}")
-            if ((Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0) {
-                println("at rpm shooting now!!! took ${t.get().round(3)} seconds")
-                this.stop()
-            }
-
-            if (t.get() > 2.0) {
-                println("waited 2.0 seconds shooting at lower power")
-                this.stop()
-            }
-        }
-    }
     if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
         Intake.intakeMotorTop.setPercentOutput(0.5)
         Intake.intakeMotorBottom.setPercentOutput(0.5)
@@ -70,7 +51,7 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if (t.get() > 0.5) {
+        if (t.get() > if (Robot.isAutonomous) 0.5 else 0.2) {
             println("exiting shooting")
             this.stop()
         }
@@ -81,6 +62,8 @@ suspend fun fire() = use(Shooter, Intake){
 //        Shooter.rpmTop = 0.0
 //        Shooter.rpmBottom = 0.0
 //    }
+
+    println("Shot note..  Distance ${Pivot.distFromSpeaker.round(2)}  Pivot Setpoint: ${Pivot.angleSetpoint.asDegrees.round(1)}  Pivot Encoder:  ${Pivot.pivotEncoderAngle.asDegrees.round(1)}  ShooterTSetpoint: ${Shooter.rpmTopSetpoint.round(1)}  ShooterTRpm:  ${Shooter.motorRpmTop.round(1)}  ShooterBSetpoint:  ${Shooter.rpmBottomSetpoint.round(1)}  ShooterBRpm:  ${Shooter.motorRpmBottom.round(1)}")
 }
 suspend fun aimAtSpeaker() {
     Drive.aimSpeaker = true
@@ -97,25 +80,7 @@ suspend fun aimAtSpeaker() {
 
 }
 
-suspend fun driveToClosestNote() = use(Drive) {
-    periodic {
-        if (NoteDetector.seesNote) {
-            NoteDetector.closestNote?.let {
-                Drive.drive(
-                    it.robotCoords.normalize(),
-                    0.0,
-                    false
-                )
-            }
-        }
-        if (Intake.holdingCargo) {
-            this.stop()
-        }
-    }
-}
-
-
-suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(speed: Double = -1.0) = use(Drive, name = "pick up note") {
     var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
     var notePosCount : Int = 0
     val notePosMaxError = 4
@@ -123,7 +88,7 @@ suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
     println("picking up note")
 
     if (NoteDetector.seesNote) {
-        println("sees note")
+//        println("sees note")
         var prevHeadingError = 0.0
         val timer = Timer()
         timer.start()
@@ -165,7 +130,9 @@ suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
                 val headingVelocity = (headingError - prevHeadingError) / dt
                 val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading
 
-                val driveSpeed =  OI.driveLeftTrigger //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
+                var driveSpeed = if (speed<0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
+
+                driveSpeed *= (notePos.length / 3.0).coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
@@ -173,22 +140,22 @@ suspend fun pickUpSeenNote() = use(Drive, name = "pick up note") {
                 prevHeadingError = headingError
                 prevTime = t
 
-                println("using estimation: $useEstimation")
-                println("x: ${notePos.x}, y: ${notePos.y}")
-                println("turn control: ${turnControl}, heading err: ${headingError}")
-
-
+//                println("using estimation: $useEstimation")
+//                println("x: ${notePos.x}, y: ${notePos.y}")
+//                println("turn control: ${turnControl}, heading err: ${headingError}")
             }
 
-            if (OI.driveLeftTrigger < 0.2) {
+            if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
                 stop()
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
-                println("stopped because intake is done")
-                println("intake state ${Intake.intakeState.name}")
+                println("stopped because intake is done, state: ${Intake.intakeState.name}")
+                stop()
+            } else if (Robot.isAutonomous && timer.get() > 2.0) {
+                println("exiting pick up note, its been too long")
                 stop()
             }
         }
-
+        Drive.drive(Vector2(0.0, 0.0), 0.0, false)
     }
 }
 
