@@ -183,7 +183,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
 //            return null
 //        }
         //println("at least 2 valid targets found ${poseList}")
-        println("WHAT THE HECK: $numTargets")
+//        println("WHAT THE HECK: $numTargets")
         if  (multiTagEstimator != null && numTargets > 1) {
             multiTagEstimator.setReferencePose(
                 Pose2d(
@@ -192,7 +192,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
                 )
             )
         } else {
-            println("Using singletag on camera ${camera.name}!!! HI!")
+//            println("Using singletag on camera ${camera.name}!!! HI!")
             singleTagEstimator.setReferencePose(
                 Pose2d(
                     cameraResult.estimatedPose.best.translation.toTranslation2d(),
