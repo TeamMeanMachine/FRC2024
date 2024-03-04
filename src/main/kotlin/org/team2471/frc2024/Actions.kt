@@ -126,9 +126,9 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
 
             var useEstimation = false
 
-            if (NoteDetector.notes.size == 0 || notePosCount > 10) {
-                useEstimation = true
-            }
+//            if (NoteDetector.notes.size == 0 || notePosCount > 10) {
+//                useEstimation = true
+//            }
             if (!useEstimation) {
                 val note = NoteDetector.notes[0]
                 notePos = note.robotCoords
