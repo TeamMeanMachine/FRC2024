@@ -74,7 +74,6 @@ object NoteDetector: Subsystem("NoteDetector") {
     var notePosAdv: MutableList<Array<Double>> = mutableListOf()
 
     init {
-        distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         distanceCurve.storeValue(-8.3, 2.0)
         distanceCurve.storeValue(2.4, 4.0)
         distanceCurve.storeValue(7.25, 8.0)
@@ -83,6 +82,7 @@ object NoteDetector: Subsystem("NoteDetector") {
         distanceCurve.storeValue(8.35, 10.0)
         distanceCurve.storeValue(9.0, 12.0)
         distanceCurve.storeValue(-13.3, 1.65)
+        distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
 
 
