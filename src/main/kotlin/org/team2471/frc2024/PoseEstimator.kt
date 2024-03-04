@@ -22,27 +22,33 @@ object PoseEstimator {
     private val advantagePoseEntry = poseTable.getEntry("Combined Advantage Pose")
     private val maAdvantagePoseEntry = poseTable.getEntry("MA Combined Advantage Pose")
     private val kAprilEntry = poseTable.getEntry("kApril")
-
     private val offsetEntry = poseTable.getEntry("Offset")
     private val lastResetEntry = poseTable.getEntry("LastResetTime")
     private val startingPosEntry = poseTable.getEntry("Starting Pose Check")
     private val startingHeadingEntry = poseTable.getEntry("Starting Heading Check")
     private val apriltagHeadingEntry = poseTable.getEntry("Apriltag Heading")
+    private val apriltagsEnabledEntry = poseTable.getEntry("AprilTags Enabled")
+
+
     private var offset = Vector2(0.0, 0.0)
     private var kAprilScalar: Double = 0.05
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
     val currentPose //in feet
-        get() = (robotPosM - offset).times(3.280839895) //this number is meters to feet conversion
+        get() = (robotPosM - if (apriltagsEnabled) offset else Vector2(0.0, 0.0)).times(3.280839895) //this number is meters to feet conversion
     var preEnableHadTarget = false
 
     val robotPosM
         get() = Vector2(Drive.position.x.feet.asMeters, Drive.position.y.feet.asMeters)
+
+    val apriltagsEnabled: Boolean
+        get() = apriltagsEnabledEntry.getBoolean(true)
     // val heading
     //   get() = (Drive.heading - headingOffset).wrap()
 
     init {
         apriltagHeadingEntry.setDouble(0.0)
+        apriltagsEnabledEntry.setBoolean(true)
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 startingHeadingEntry.setBoolean((isBlueAlliance && (Drive.heading > 179.0.degrees || Drive.heading < -179.0.degrees)) || (isRedAlliance && Drive.heading > -1.0.degrees && Drive.heading < 1.0.degrees))
