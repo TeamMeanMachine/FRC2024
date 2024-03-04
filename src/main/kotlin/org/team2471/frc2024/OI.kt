@@ -105,7 +105,7 @@ object OI : Subsystem("OI") {
         GlobalScope.launch {
             periodic {
                 // Driver Rumble
-                if (Robot.isEnabled && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
+                if (Robot.isTeleopEnabled && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
                     driverController.rumble = 1.0
                 } else if (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0) {
                     driverController.rumble = 0.7
@@ -115,7 +115,7 @@ object OI : Subsystem("OI") {
 
 
                 // Operator Rumble
-                if (Shooter.manualShootState) {
+                if (Shooter.manualShootState && Robot.isTeleopEnabled) {
                     operatorController.rumble = 0.7
                 } else {
                     operatorController.rumble = 0.0

@@ -112,7 +112,7 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.SLOWING -> {
-                    if (manualIntake.setBoolean(false)) {
+                    if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(0.2)
                     } else {
                         setIntakeMotorsPercent(0.2)
@@ -125,7 +125,7 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.REVERSING -> {
-                    if (manualIntake.setBoolean(false)) {
+                    if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(-0.1)
                     } else {
                         setIntakeMotorsPercent(-0.1)
@@ -135,7 +135,7 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.HOLDING -> {
-                    if (manualIntake.setBoolean(false)) {
+                    if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(0.0)
                     } else {
                         setIntakeMotorsPercent(0.0)

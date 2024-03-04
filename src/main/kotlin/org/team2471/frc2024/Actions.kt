@@ -54,7 +54,7 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if (t.get() > if (Robot.isAutonomous) 0.5 else 0.2) {
+        if ((Robot.isAutonomous && !Intake.topBreak) || t.get() > if (Robot.isAutonomous) 0.75 else 0.2) {
             println("exiting shooting")
             this.stop()
         }
@@ -126,9 +126,9 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
 
             var useEstimation = false
 
-//            if (NoteDetector.notes.size == 0 || notePosCount > 10) {
-//                useEstimation = true
-//            }
+            if (NoteDetector.notes.size == 0 /*|| notePosCount > 10*/) {
+                useEstimation = true
+            }
             if (!useEstimation) {
                 val note = NoteDetector.notes[0]
                 notePos = note.robotCoords
@@ -153,9 +153,11 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
                 val headingVelocity = (headingError - prevHeadingError) / dt
                 val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading * 1.75 //+ headingVelocity * Drive.parameters.kdHeading * 0.2
 
-                var driveSpeed = if (speed<0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
+                var driveSpeed = if (speed < 0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                //driveSpeed *= linearMap(0.0, 1.0, 0.4, 1.0, (notePos.length - 2.5) / 5.0)
+                if (Robot.isAutonomous) {
+                    driveSpeed *= linearMap(0.0, 1.0, 0.3, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
+                }
 
                 val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)

@@ -3,6 +3,7 @@ package org.team2471.frc2024
 import edu.wpi.first.networktables.NetworkTableEvent
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -149,27 +150,42 @@ object AutoChooser {
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
         try { //cam  8
             Drive.zeroGyro()
-            Drive.combinedPosition = Vector2(48.32, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
+            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(0.0, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
             var path: Path2D? = auto?.get("1-Start")
 
 //            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
-            aimAndShoot()
+            aimAndShoot() //preLoaded shot
 
-            pickUpSeenNote(1.0)
-            aimAndShoot(true)
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
+            aimAndShoot(true) //second note shot
 
             if (path != null) {
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote
                 })
             }
             //delay(0.4) //time for camera to recognize note
-            pickUpSeenNote(0.95, true)
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.6 else 0.3)
             path = auto?.get("2-ShootThird")
-            if (path != null) Drive.driveAlongPath(path, false)
+            if (path != null) {
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
+                Drive.driveAlongPath(path, false)
+            }
 
-            aimAndShoot()
+            delay(0.2) //Waiting for AprilTag to catch up
+            aimAndShoot() //third note shot
+
+            path = auto?.get("3-GrabFourth")
+            if (path != null) {
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(6.0)
+                Drive.driveAlongPath(path,  false, earlyExit = {
+                    NoteDetector.seesNote
+                })
+            }
+
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3)
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false

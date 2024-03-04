@@ -31,12 +31,12 @@ object Shooter: Subsystem("Shooter") {
     val Pitch6Entry = table.getEntry("Pitch6Entry")
     val Pitch9Entry = table.getEntry("Pitch9Entry")
     val Pitch15Entry = table.getEntry("Pitch15Entry")
-    val Pitch21Entry = table.getEntry("Pitch21Entry")
+    val Pitch17Entry = table.getEntry("Pitch17Entry")
     val RPM3Entry = table.getEntry("RPM3Entry")
     val RPM6Entry = table.getEntry("RPM6Entry")
     val RPM9Entry = table.getEntry("RPM9Entry")
     val RPM15Entry = table.getEntry("RPM15Entry")
-    val RPM21Entry = table.getEntry("RPM21Entry")
+    val RPM17Entry = table.getEntry("RPM17Entry")
 
     val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
     val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
@@ -94,29 +94,29 @@ object Shooter: Subsystem("Shooter") {
 
     init {
 
-        if (!Pitch3Entry.exists()) {
+        if (!Pitch17Entry.exists()) {
             Pitch3Entry.setDouble(59.0)
             Pitch6Entry.setDouble(47.0)
             Pitch9Entry.setDouble(37.5)
             Pitch15Entry.setDouble(30.5)
-            Pitch21Entry.setDouble(27.6)
+            Pitch17Entry.setDouble(27.6)
 
             RPM3Entry.setDouble(3500.0)
             RPM6Entry.setDouble(3750.0)
             RPM9Entry.setDouble(5000.0)
             RPM15Entry.setDouble(5000.0)
-            RPM21Entry.setDouble(5000.0)
+            RPM17Entry.setDouble(5000.0)
 
             Pitch3Entry.setPersistent()
             Pitch6Entry.setPersistent()
             Pitch9Entry.setPersistent()
             Pitch15Entry.setPersistent()
-            Pitch21Entry.setPersistent()
+            Pitch17Entry.setPersistent()
             RPM3Entry.setPersistent()
             RPM6Entry.setPersistent()
             RPM9Entry.setPersistent()
             RPM15Entry.setPersistent()
-            RPM21Entry.setPersistent()
+            RPM17Entry.setPersistent()
         }
 
         shooterPercentEntry.setDouble(1.0)
@@ -165,12 +165,12 @@ object Shooter: Subsystem("Shooter") {
                 if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
                 if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
                 if (Pitch15Entry.getDouble(13.7)!=pitchCurve.getValue(13.7)) { rebuildCurves() }
-                if (Pitch21Entry.getDouble(21.0)!=pitchCurve.getValue(21.0)) { rebuildCurves() }
+                if (Pitch17Entry.getDouble(17.0)!=pitchCurve.getValue(17.0)) { rebuildCurves() }
                 if (RPM3Entry.getDouble(5.0)!=rpmCurve.getValue(3.0)) { rebuildCurves() }
                 if (RPM6Entry.getDouble(6.0)!=rpmCurve.getValue(6.0)) { rebuildCurves() }
                 if (RPM9Entry.getDouble(9.0)!=rpmCurve.getValue(9.0)) { rebuildCurves() }
                 if (RPM15Entry.getDouble(13.7)!=rpmCurve.getValue(13.7)) { rebuildCurves() }
-                if (RPM21Entry.getDouble(21.0)!=rpmCurve.getValue(21.0)) { rebuildCurves() }
+                if (RPM17Entry.getDouble(17.0)!=rpmCurve.getValue(17.0)) { rebuildCurves() }
 
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
@@ -229,22 +229,19 @@ object Shooter: Subsystem("Shooter") {
     fun rebuildCurves() {
         println("Rebuilding curves. Hi.")
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
         pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(61.0))
         pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(50.0))
         pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(42.0))
         pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(30.0))
-        pitchCurve.storeValue(21.0, Pitch21Entry.getDouble(27.0))
+        pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(28.0))
 
-        rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
         rpmCurve.storeValue(3.0, RPM3Entry.getDouble(3500.0))
         rpmCurve.storeValue(6.0, RPM6Entry.getDouble(3750.0))
-        rpmCurve.storeValue(9.0, RPM9Entry.getDouble(4000.0))
-        rpmCurve.storeValue(13.7, RPM15Entry.getDouble(4500.0))
-        rpmCurve.storeValue(21.0, RPM21Entry.getDouble(5000.0))
-
+        rpmCurve.storeValue(9.0, RPM9Entry.getDouble(5000.0))
+        rpmCurve.storeValue(13.7, RPM15Entry.getDouble(5000.0))
+        rpmCurve.storeValue(17.0, RPM17Entry.getDouble(5000.0))
     }
 }
