@@ -186,7 +186,7 @@ object AutoChooser {
                 })
             }
 
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3)
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false

@@ -54,7 +54,7 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if ((Robot.isAutonomous && !Intake.topBreak) || t.get() > if (Robot.isAutonomous) 0.75 else 0.2) {
+        if ((Robot.isAutonomous && !Intake.topBreak && t.get() > 0.1) || t.get() > if (Robot.isAutonomous) 0.75 else 0.2) {
             println("exiting shooting")
             this.stop()
         }
@@ -103,7 +103,7 @@ suspend fun aimAndShoot(print: Boolean = false) {
     fire()
 }
 
-suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, timeOut: Boolean = true) = use(Drive, name = "pick up note") {
     var noteEstimatedPosition : Vector2 = Vector2(0.0, 0.0)
     var notePosCount : Int = 0
     val notePosMaxError = 4
@@ -180,7 +180,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")
                 stop()
-            } else if (Robot.isAutonomous && timer.get() > 2.0) {
+            } else if (Robot.isAutonomous && timer.get() > 2.0 && timeOut) {
                 println("exiting pick up note, its been too long")
                 stop()
             }

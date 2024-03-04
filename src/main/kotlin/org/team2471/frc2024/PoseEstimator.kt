@@ -139,5 +139,6 @@ val isRedAlliance: Boolean
             return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
         }
     }
+
 val isBlueAlliance: Boolean
     get() = !isRedAlliance
