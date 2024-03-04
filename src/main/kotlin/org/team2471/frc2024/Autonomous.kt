@@ -150,8 +150,9 @@ object AutoChooser {
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
         try { //cam  8
             Drive.zeroGyro()
-            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(0.0, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
+            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(3.95, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
+            auto?.isReflected = isBlueAlliance
             var path: Path2D? = auto?.get("1-Start")
 
 //            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
