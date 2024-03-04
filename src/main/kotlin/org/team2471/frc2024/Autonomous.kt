@@ -160,9 +160,11 @@ object AutoChooser {
             aimAndShoot(true)
 
             if (path != null) {
-                Drive.driveAlongPath(path,  false)
+                Drive.driveAlongPath(path,  false, earlyExit = {
+                    NoteDetector.seesNote
+                })
             }
-            delay(0.4) //time for camera to recognize note
+            //delay(0.4) //time for camera to recognize note
             pickUpSeenNote(0.95, true)
             path = auto?.get("2-ShootThird")
             if (path != null) Drive.driveAlongPath(path, false)

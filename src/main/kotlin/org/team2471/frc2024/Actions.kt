@@ -6,7 +6,9 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.math.DoubleRange
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.degrees
@@ -124,7 +126,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
 
             var useEstimation = false
 
-            if (NoteDetector.notes.size == 0) {
+            if (NoteDetector.notes.size == 0 || notePosCount > 10) {
                 useEstimation = true
             }
             if (!useEstimation) {
@@ -149,11 +151,11 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
             if (notePos != Vector2(0.0, 0.0)) {
 
                 val headingVelocity = (headingError - prevHeadingError) / dt
-                val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading
+                val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading * 1.75 //+ headingVelocity * Drive.parameters.kdHeading * 0.2
 
                 var driveSpeed = if (speed<0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                driveSpeed *= (notePos.length / 3.0).coerceIn(0.0, 1.0)
+                //driveSpeed *= linearMap(0.0, 1.0, 0.4, 1.0, (notePos.length - 2.5) / 5.0)
 
                 val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
@@ -161,9 +163,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false) = us
                 prevHeadingError = headingError
                 prevTime = t
 
-//                println("using estimation: $useEstimation")
-//                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
-//                println("turn control: ${turnControl}, heading err: ${headingError}")
+                println("using estimation: $useEstimation")
+                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+                println("Drive Speed $driveSpeed")
+                println("turn control: ${turnControl}, heading err: ${headingError}")
             }
 
 //            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
