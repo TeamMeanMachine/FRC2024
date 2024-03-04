@@ -10,6 +10,8 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.cubicMap
+import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.units.*
@@ -65,14 +67,17 @@ object PoseEstimator {
         }
     }
     fun addVision(detection: AprilDetection, numTarget: Int) {
-        //Ignoring Vision data if timestamp is before the last zero
 
+        //Ignoring Vision data if timestamp is before the last zero
         if (detection.timestamp < (lastZeroTimestamp + 0.3)) { // || robotPosM == Vector2(0.0,0.0)) {
             println("Ignoring update during reset") // and initialization ...")
             return
         } else {
             try {
-                val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (if (numTarget == 1) 0.25 else numTarget / 2.0)).coerceIn(0.0, 1.0)
+//                println("ldkhfshaldjkhfaksdhfalsdkjfhalkhfsalsdkfhalsd: ${detection.averageDistance.asFeet}")
+
+                val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (if (numTarget == 1) 0.25 else numTarget / 2.0) * cubicMap(0.0, 18.0, 1.0, 0.0, detection.averageDistance.asFeet)).coerceIn(0.0, 1.0)
+//                println("wadflkajdshlkasdjhflkajdshflkasdhflkajsf ${detection.averageDistance.asFeet}")
 //                    println(detection.ambiguity)
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
 //                    val latencyPose = Drive.lookupPose(detection.timestamp)
@@ -80,7 +85,7 @@ object PoseEstimator {
                     val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
                     preEnableHadTarget = true
                     Drive.position = apriltagPoseF
-                    Drive.heading = detection.pose.rotation.radians.radians
+//                    Drive.heading = detection.pose.rotation.radians.radians
                 }
 //                    if (latencyPose != null) {
 //                        val odomDiff = robotPosM - latencyPose.position

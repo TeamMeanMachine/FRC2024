@@ -10,6 +10,7 @@ import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.MultiTargetPNPResult
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
 import org.team2471.frc2024.AprilTag.singleTagSLPoseEstimator
@@ -20,16 +21,20 @@ import org.team2471.frc2024.AprilTag.camSR
 import org.team2471.frc2024.AprilTag.iBPoseEstimator
 import org.team2471.frc2024.AprilTag.lastIBAmbiguity
 import org.team2471.frc2024.AprilTag.lastIBDetectionTime
+import org.team2471.frc2024.AprilTag.lastIBDist
 import org.team2471.frc2024.AprilTag.lastSLAmbiguity
 import org.team2471.frc2024.AprilTag.lastSLDetectionTime
+import org.team2471.frc2024.AprilTag.lastSLDist
 import org.team2471.frc2024.AprilTag.lastSRAmbiguity
 import org.team2471.frc2024.AprilTag.lastSRDetectionTime
+import org.team2471.frc2024.AprilTag.lastSRDist
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.AprilTag.robotToCamIB
 import org.team2471.frc2024.AprilTag.robotToCamSL
 import org.team2471.frc2024.AprilTag.robotToCamSR
 import org.team2471.frc2024.AprilTag.multiTagSLPoseEstimator
 import org.team2471.frc2024.AprilTag.multiTagSRPoseEstimator
+import org.team2471.frc2024.AprilTag.singleTagMinDist
 
 
 object AprilTag {
@@ -67,18 +72,23 @@ object AprilTag {
     var lastSRAmbiguity = 0.0
     var lastIBAmbiguity = 0.0
 
+    var lastSLDist = 0.0.feet
+    var lastSRDist = 0.0.feet
+    var lastIBDist = 0.0.feet
+
 
     // TODO: Test Single Tags at different distances to find the min Dist.
-    private var singleTagMinDist: Double = 17.35
+    var singleTagMinDist: Double = 5.0
+    private var multiTagMinDist: Double = 15.0
 
 
     val lastSLDetection: AprilDetection
-        get() = AprilDetection(lastSLDetectionTime, lastSLPose, lastSLAmbiguity)
+        get() = AprilDetection(lastSLDetectionTime, lastSLPose, lastSLDist, lastSLAmbiguity)
 
     val lastSRDetection: AprilDetection
-        get() = AprilDetection(lastSRDetectionTime, lastSRPose, lastSRAmbiguity)
+        get() = AprilDetection(lastSRDetectionTime, lastSRPose, lastSRDist, lastSRAmbiguity)
     val lastIBDetection: AprilDetection
-        get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBAmbiguity)
+        get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBDist, lastIBAmbiguity)
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
@@ -121,6 +131,7 @@ object AprilTag {
                             )
                         )
                         lastSLPose = maybePoseSL
+
                         PoseEstimator.addVision(lastSLDetection, numTargetSL)
                     }
                     if (maybePoseSR != null) {
@@ -165,16 +176,18 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
             return null
         }
         val cameraResult: MultiTargetPNPResult? = camera.latestResult.multiTagResult
-        val validTargets = cameraResult?.fiducialIDsUsed//.filter{ validTags.contains(it.fiducialId) && it.poseAmbiguity < maxAmbiguity }
+        val validTargets = camera.latestResult.targets//.filter{ validTags.contains(it.fiducialId) && it.poseAmbiguity < maxAmbiguity }
+//        println("WHSlkfjasdhflkjadhsflaefaAAAAAAAAAAAAAAAAAAA ${validTargets}")
         if (validTargets != null) {
             if (numTargets < 1) {
+//                println("Apriltag: Not enough tags")
                 return null
             }
         } else {
             return null
         }
         for (target in validTargets) {
-            if (target > 16) {
+            if (target.fiducialId > 16) {
                 println("AprilTag: Invalid Tag")
                 return null
             }
@@ -182,23 +195,28 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
 //        if ((validTargets.count() < 2 && cameraResult.estimatedPose.ambiguity > 0.05) || cameraResult.estimatedPose.ambiguity > 0.15) {
 //            return null
 //        }
+
         //println("at least 2 valid targets found ${poseList}")
 //        println("WHAT THE HECK: $numTargets")
         if  (multiTagEstimator != null && numTargets > 1) {
-            multiTagEstimator.setReferencePose(
-                Pose2d(
-                    cameraResult.estimatedPose.best.translation.toTranslation2d(),
-                    cameraResult.estimatedPose.best.rotation.toRotation2d()
+            if (cameraResult != null) {
+                multiTagEstimator.setReferencePose(
+                    Pose2d(
+                        cameraResult.estimatedPose.best.translation.toTranslation2d(),
+                        cameraResult.estimatedPose.best.rotation.toRotation2d()
+                    )
                 )
-            )
+            }
         } else {
 //            println("Using singletag on camera ${camera.name}!!! HI!")
-            singleTagEstimator.setReferencePose(
-                Pose2d(
-                    cameraResult.estimatedPose.best.translation.toTranslation2d(),
-                    cameraResult.estimatedPose.best.rotation.toRotation2d()
+            if (cameraResult != null) {
+                singleTagEstimator.setReferencePose(
+                    Pose2d(
+                        cameraResult.estimatedPose.best.translation.toTranslation2d(),
+                        cameraResult.estimatedPose.best.rotation.toRotation2d()
+                    )
                 )
-            )
+            }
         }
 
         val newPose = if (multiTagEstimator != null && numTargets > 1) multiTagEstimator.update() else singleTagEstimator.update()
@@ -207,16 +225,67 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
         if (newPose?.isPresent == true) {
             val result = newPose.get()
             //TODO: filter single tags by distance
-//                if (validTargets.count() < 2 && result.s) {
+                if (numTargets < 2) {
+                    for (target in validTargets) {
+                        val dist = cameraResult?.estimatedPose?.best?.let {
+                            Vector2(
+                                it.x, cameraResult.estimatedPose.best.y)
+                        }?.let {
+                            Vector2(aprilTagFieldLayout.getTagPose(target.fiducialId).get().x, aprilTagFieldLayout.getTagPose(target.fiducialId).get().y).distance(
+                                it
+                            )
+                        }
 
+                        if (dist != null) {
+                            if (dist > singleTagMinDist) {
+//                                println("Apriltag: Too far!")
+                                return null
+                            }
+                        }
+                    }
+                }
 //                println("AprilTag: Single target too far away ${result.estimatedPose.toPose2d().toTMMField().y.absoluteValue} vs ${(FieldManager.chargeFromCenterY + FieldManager.chargingStationDepth).asFeet}")
 //                    return null
 //                }
 //            println("Valid target found ${validTargets.count()}")
-            when (camera.name) {
-                "CamSL" -> {lastSLDetectionTime = result.timestampSeconds; lastSLAmbiguity = cameraResult.estimatedPose.ambiguity}
-                "CamSR" -> {lastSRDetectionTime = result.timestampSeconds; lastSRAmbiguity = cameraResult.estimatedPose.ambiguity}
-                "CamIB" -> {lastIBDetectionTime = result.timestampSeconds; lastIBAmbiguity = cameraResult.estimatedPose.ambiguity}
+            var avgDist = 0.0.feet
+
+            if (cameraResult != null) {
+                for (target in validTargets)
+                    avgDist += (Vector2(aprilTagFieldLayout.getTagPose(target.fiducialId).get().x, aprilTagFieldLayout.getTagPose(target.fiducialId).get().y).distance(Vector2(result.estimatedPose.toPose2d().x, result.estimatedPose.toPose2d().y)) / numTargets).meters
+                    if (cameraResult != null) {
+//                        println(
+//                            "askldfhadlkfhasdlkfhasdlkfjhadslkfhasdlkjfasklghalkghsf: ${
+//                                (Vector2(
+//                                    aprilTagFieldLayout.getTagPose(
+//                                        target.fiducialId
+//                                    ).get().x, aprilTagFieldLayout.getTagPose(target.fiducialId).get().y
+//                                ).distance(
+//                                    Vector2(
+//                                        cameraResult.estimatedPose.best.x,
+//                                        cameraResult.estimatedPose.best.y
+//                                    )
+//                                ) / numTargets).meters
+//                            }"
+//                        )
+                    }
+
+                when (camera.name) {
+                    "CamSL" -> {
+                        lastSLDetectionTime = result.timestampSeconds; lastSLAmbiguity =
+                            cameraResult.estimatedPose.ambiguity; lastSLDist = avgDist
+                    }
+
+                    "CamSR" -> {
+                        lastSRDetectionTime = result.timestampSeconds; lastSRAmbiguity =
+                            cameraResult.estimatedPose.ambiguity; lastSRDist = avgDist
+                    }
+
+                    "CamIB" -> {
+                        lastIBDetectionTime = result.timestampSeconds; lastIBAmbiguity =
+                            cameraResult.estimatedPose.ambiguity; lastIBDist = avgDist
+                    }
+                }
             }
 
 
@@ -302,5 +371,6 @@ fun resetCameras() {
 data class AprilDetection (
     val timestamp: Double,
     val pose: Pose2d,
+    val averageDistance: Length,
     val ambiguity: Double
 )
