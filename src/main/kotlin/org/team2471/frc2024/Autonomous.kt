@@ -148,7 +148,7 @@ object AutoChooser {
     }
 
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
-        try { //cam  8
+        try {
             Drive.zeroGyro()
             Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(3.95, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
@@ -159,7 +159,7 @@ object AutoChooser {
             aimAndShoot() //preLoaded shot
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
-            aimAndShoot(true) //second note shot
+            aimAndShoot() //second note shot
 
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)

@@ -165,10 +165,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 prevHeadingError = headingError
                 prevTime = t
 
-                println("using estimation: $useEstimation")
-                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
-                println("Drive Speed $driveSpeed")
-                println("turn control: ${turnControl}, heading err: ${headingError}")
+//                println("using estimation: $useEstimation")
+//                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+//                println("Drive Speed $driveSpeed")
+//                println("turn control: ${turnControl}, heading err: ${headingError}")
             }
 
 //            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")

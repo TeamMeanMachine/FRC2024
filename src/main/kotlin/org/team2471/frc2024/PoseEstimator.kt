@@ -82,7 +82,7 @@ object PoseEstimator {
             try {
 //                println("ldkhfshaldjkhfaksdhfalsdkjfhalkhfsalsdkfhalsd: ${detection.averageDistance.asFeet}")
 
-                val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (if (numTarget == 1) 0.25 else numTarget / 2.0)/* * cubicMap(0.0, 18.0, 1.0, 0.0, detection.averageDistance.asFeet)*/).coerceIn(0.0, 1.0)
+                val kAprilFinal = (kAprilScalar * (1 - detection.ambiguity) * (if (numTarget == 1) 0.1 else numTarget / 2.0)/* * cubicMap(0.0, 18.0, 1.0, 0.0, detection.averageDistance.asFeet)*/).coerceIn(0.0, 1.0)
 //                println("wadflkajdshlkasdjhflkajdshflkasdhflkajsf ${detection.averageDistance.asFeet}")
 //                    println(detection.ambiguity)
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
