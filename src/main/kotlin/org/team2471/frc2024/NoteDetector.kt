@@ -49,6 +49,19 @@ object NoteDetector: Subsystem("NoteDetector") {
             }
         }
 
+    val closestIsValid: Boolean
+        get() {
+            val n = closestNote
+            if (n != null) {
+                if (isRedAlliance) {
+                    return n.fieldCoords.x > 26.135 - 1.5 //if x > middle of the field - offset 1.5 feet
+                } else {
+                    return n.fieldCoords.x < 26.135 + 1.5 //if x < middle of the field + offset 1.5 feet
+                }
+            }
+            return false
+        }
+
     private val distanceCurve = MotionCurve()
     var notes : List<Note> = listOf()
 
@@ -74,6 +87,8 @@ object NoteDetector: Subsystem("NoteDetector") {
     var notePosAdv: MutableList<Array<Double>> = mutableListOf()
 
     init {
+        println("init note detector")
+
         distanceCurve.storeValue(-8.3, 2.0)
         distanceCurve.storeValue(2.4, 4.0)
         distanceCurve.storeValue(7.25, 8.0)
@@ -83,8 +98,6 @@ object NoteDetector: Subsystem("NoteDetector") {
         distanceCurve.storeValue(9.0, 12.0)
         distanceCurve.storeValue(-13.3, 1.65)
         distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-
-
 
 
         for (n in 0 until 5 ) { //create five notes for the center of the field
@@ -108,10 +121,9 @@ object NoteDetector: Subsystem("NoteDetector") {
             }
             val noteCoord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
             println("creating note with ID: $n  Vector: $noteCoord  Offset: $offset  Offset Vector: ${noteCoord + offset}")
-            noteList[n] = SchrodingerNote(noteCoord + offset, true)
+            noteList[n] = SchrodingerNote(noteCoord + offset)
         }
 
-        println("init note detector")
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -150,17 +162,16 @@ object NoteDetector: Subsystem("NoteDetector") {
 
 
 //                if (Robot.isAutonomous) {
-                    for (n in notes) {
-                        for (s in noteList) {
+                    for (s in noteList) {
+                        s.value.isPresent = false
+                        for (n in notes) {
                             if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
                                 s.value.isPresent = true
-                            } else {
-                                s.value.isPresent = false
                             }
                         }
                     }
 //                }
-                noteList[0]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                noteList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
                 noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
                 noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
                 noteList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }

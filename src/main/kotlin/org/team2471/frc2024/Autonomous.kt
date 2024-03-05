@@ -168,7 +168,7 @@ object AutoChooser {
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
                 Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
             //delay(0.4) //time for camera to recognize note
@@ -186,7 +186,7 @@ object AutoChooser {
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(6.0)
                 Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
 
@@ -207,7 +207,7 @@ object AutoChooser {
         aimAndShoot()
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(1.0)
@@ -215,7 +215,7 @@ object AutoChooser {
         path = auto?.get("2-GrabThird")
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(1.0)
@@ -223,7 +223,7 @@ object AutoChooser {
         path = auto?.get("3-GrabFourth")
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(1.0)
@@ -231,7 +231,7 @@ object AutoChooser {
         path = auto?.get("4-GrabFifth")
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(0.7)
@@ -251,7 +251,7 @@ object AutoChooser {
         aimAndShoot()
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(0.7)
@@ -263,7 +263,7 @@ object AutoChooser {
         path = auto?.get("3-GrabThird")
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(0.7)
@@ -275,7 +275,7 @@ object AutoChooser {
         path = auto?.get("5-GrabFourth")
         if (path != null) {
             Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
+                NoteDetector.seesNote && NoteDetector.closestIsValid
             })
         }
         pickUpSeenNote(0.7)
