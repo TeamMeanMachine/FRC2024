@@ -81,6 +81,7 @@ object AutoChooser {
         setDefaultOption("Tests", "testAuto")
         addOption("2Far2CloseAmp", "2Far2CloseAmp")
         addOption("4Close", "4Close")
+        addOption("SubSide", "SubSide")
 
     }
 
@@ -143,6 +144,7 @@ object AutoChooser {
             "Tests" -> testAuto()
             "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4Close" -> fourClose()
+            "SubSide" -> substationSide()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -238,6 +240,51 @@ object AutoChooser {
             Drive.driveAlongPath(path,  false)
         }
         aimAndShoot()
+    }
+
+    suspend fun substationSide() = use(Drive, Shooter) {
+        Drive.zeroGyro()
+        Drive.combinedPosition = if (isRedAlliance) Vector2(49.48, 11.95) else Vector2(49.48, 11.95).reflectAcrossField()
+        val auto = autonomi["SubSide"]
+        auto?.isReflected = isBlueAlliance
+        var path = auto?.get("1-GrabSecond")
+        aimAndShoot()
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(0.7)
+        path = auto?.get("2-ShootSecond")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false)
+        }
+        aimAndShoot()
+        path = auto?.get("3-GrabThird")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(0.7)
+        path = auto?.get("4-ShootThird")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false)
+        }
+        aimAndShoot()
+        path = auto?.get("5-GrabFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(0.7)
+        path = auto?.get("6-ShootFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false)
+        }
+        aimAndShoot()
+
     }
 
 
