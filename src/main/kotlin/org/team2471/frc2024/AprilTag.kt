@@ -174,7 +174,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
     try {
         //Exclusion zones
         if (Drive.combinedPosition.x > 14.0 && Drive.combinedPosition.x < 39.0 && (Drive.combinedPosition.y < 17.0 || Drive.combinedPosition.y > 9.0)) {
-            println("Don't trust AprilTag from here")
+//            println("Don't trust AprilTag from here")
             return null
         }
 
@@ -248,7 +248,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
 
                     if (dist != null) {
                         if (dist > singleTagMinDist) {
-                            println("Apriltag: Too far!")
+//                            println("Apriltag: Too far!")
                             return null
                         }
                     }

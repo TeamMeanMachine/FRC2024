@@ -80,6 +80,7 @@ object AutoChooser {
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
         addOption("2Far2CloseAmp", "2Far2CloseAmp")
+        addOption("4Close", "4Close")
 
     }
 
@@ -141,6 +142,7 @@ object AutoChooser {
             "HIII" -> hiii()
             "Tests" -> testAuto()
             "2Far2CloseAmp" -> twoFarTwoCloseAmp()
+            "4Close" -> fourClose()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -191,6 +193,51 @@ object AutoChooser {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
+    }
+
+    suspend fun fourClose() = use(Drive, Shooter) {
+        Drive.zeroGyro()
+        Drive.combinedPosition = if (isRedAlliance) Vector2(49.54, 13.49) else Vector2(49.54, 13.49).reflectAcrossField()
+        val auto = autonomi["4Close"]
+        auto?.isReflected = isBlueAlliance
+        var path = auto?.get("1-GrabSecond")
+
+        aimAndShoot()
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(1.0)
+        aimAndShoot()
+        path = auto?.get("2-GrabThird")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(1.0)
+        aimAndShoot()
+        path = auto?.get("3-GrabFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(1.0)
+        aimAndShoot()
+        path = auto?.get("4-GrabFifth")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false, earlyExit = {
+                NoteDetector.seesNote
+            })
+        }
+        pickUpSeenNote(0.7)
+        path = auto?.get("5-ShootFifth")
+        if (path != null) {
+            Drive.driveAlongPath(path,  false)
+        }
+        aimAndShoot()
     }
 
 
