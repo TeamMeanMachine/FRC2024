@@ -235,6 +235,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             println("in init just before periodic")
             periodic {
+                val batteryVolt = RobotController.getBatteryVoltage() > 12.7
+                SmartDashboard.putBoolean("Battery Good", batteryVolt)
+                val demoDisabled = demoSpeed == 1.0
+                SmartDashboard.putBoolean("FullSpeed", demoDisabled)
+
                 val (x, y) = position
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)

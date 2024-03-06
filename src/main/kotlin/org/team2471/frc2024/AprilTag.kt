@@ -4,6 +4,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
@@ -60,6 +61,8 @@ object AprilTag {
     var singleTagSRPoseEstimator : PhotonPoseEstimator? = null
     var iBPoseEstimator : PhotonPoseEstimator? = null
     const val maxAmbiguity = 0.1
+    var distFromSpeaker: Length = 0.0.feet
+
     var lastSLPose = Pose2d(0.0,0.0, Rotation2d(0.0))
     var lastSRPose = Pose2d(0.0,0.0, Rotation2d(0.0))
     var lastIBPose = Pose2d(0.0,0.0, Rotation2d(0.0))
@@ -161,6 +164,9 @@ object AprilTag {
 
                         PoseEstimator.addVision(lastIBDetection, numTargetIB)
                     }
+                    SmartDashboard.putBoolean("CamSLConnected", camSL?.isConnected ?: false)
+                    SmartDashboard.putBoolean("CamSRConnected", camSR?.isConnected ?: false)
+                    SmartDashboard.putBoolean("CamIBConnected", camIB?.isConnected ?: false)
                 } catch (ex:Exception) {
                     println("Error in apriltag $ex")
                 }
@@ -376,6 +382,29 @@ fun resetCameras() {
         println("CamIB already found, skipping reset")
     }
 }
+
+fun getSpeakerDist(camera: PhotonCamera): Double? {
+    try {
+        if (!camera.isConnected) {
+            return null
+        }
+        val validTargets = camera.latestResult.targets
+        for (target in validTargets) {
+            if (target.fiducialId == if (isRedAlliance) 1 else 2) {
+                println("pitch: ${target.pitch}")
+                var theta = target.pitch - robotToCamSL.rotation.y //TODO: find the correct calculation
+
+
+
+            }
+        }
+
+        return null
+    } catch (e: Exception) {
+        return null
+    }
+}
+
 
 data class AprilDetection (
     val timestamp: Double,
