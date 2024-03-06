@@ -136,6 +136,7 @@ object AutoChooser {
         println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.recentTimeTaken()}")
         SmartDashboard.putString("autoStatus", "init")
         println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
+        resetCameras()
         when (selAuto) {
             "HIII" -> hiii()
             "Tests" -> testAuto()
@@ -235,7 +236,7 @@ object AutoChooser {
                         NoteDetector.seesNote && NoteDetector.closestIsValid
                     })
                 }
-                pickUpSeenNote(0.7)
+                pickUpSeenNote(0.8, cautious = true)
                 path = auto?.get("5-ShootFifth")
                 if (path != null) {
                     Drive.driveAlongPath(path, false)

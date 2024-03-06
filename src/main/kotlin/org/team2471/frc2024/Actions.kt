@@ -47,14 +47,14 @@ suspend fun spit() = use(Intake) {
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter, Intake){
     val t = Timer()
-    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
-        Intake.intakeMotorTop.setPercentOutput(0.5)
-        Intake.intakeMotorBottom.setPercentOutput(0.5)
-    }
+//    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
+    Intake.intakeMotorTop.setPercentOutput(1.0)
+    Intake.intakeMotorBottom.setPercentOutput(1.0)
+//    }
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if ((Robot.isAutonomous && !Intake.topBreak && t.get() > 0.1) || t.get() > if (Robot.isAutonomous) 0.75 else 0.2) {
+        if (/*(Robot.isAutonomous && !Intake.topBreak && t.get() > 0.5) ||*/ (t.get() > 2.0 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.8))) { //undeployed
             println("exiting shooting")
             this.stop()
         }
@@ -95,8 +95,8 @@ suspend fun aimAndShoot(print: Boolean = false) {
     val t = Timer()
     aimAtSpeaker()
     t.start()
-    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 3.0 }
-    if (t.get() > 3.0) {
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 1.0 }
+    if (t.get() > 1.0) {
         println("Aiming max time")
         Pivot.speakerIsReady(debug = true)
     }
@@ -151,31 +151,34 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
             if (notePos != Vector2(0.0, 0.0)) {
 
                 val headingVelocity = (headingError - prevHeadingError) / dt
-                val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading * 1.75 //+ headingVelocity * Drive.parameters.kdHeading * 0.2
+                val velocityComponent = headingVelocity * Drive.parameters.kdHeading * 0.1
+                val turnControl = sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading * 1 //+ velocityComponent
 
                 var driveSpeed = if (speed < 0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                //if (Robot.isAutonomous) {
-                    driveSpeed *= linearMap(0.0, 1.0, 0.3, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
-                //}
+                if (cautious) {
+                    driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
+                }
 
-                val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
+                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
 
-                prevHeadingError = headingError
-                prevTime = t
 
 //                println("using estimation: $useEstimation")
 //                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
 //                println("Drive Speed $driveSpeed")
 //                println("turn control: ${turnControl}, heading err: ${headingError}")
+//                println("velocity ${headingVelocity} dt: $dt")
+//                println("difference ${headingError - prevHeadingError}")
+//                println("vcomponent: ${velocityComponent}")
+
+                prevHeadingError = headingError
+                prevTime = t
+
             }
 
 //            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
-                stop()
-            } else if (cautious && notePos.x < 3.5) {
-                println("stopped because cautious")
                 stop()
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")

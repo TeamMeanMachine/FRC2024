@@ -510,8 +510,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Drive/Total Drive Current": true
+              "Y-axis/Unit": "ul"
             }
           },
           "4,0": {
@@ -530,8 +529,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Drive/Total Turn Current": true
+              "Y-axis/Unit": "ul"
             }
           },
           "4,4": {
@@ -550,8 +548,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Intake/Intake Current": true
+              "Y-axis/Unit": "ul"
             }
           },
           "9,4": {
@@ -583,8 +580,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Intake/Feeder Current": true
+              "Y-axis/Unit": "ul"
             }
           },
           "0,4": {
@@ -799,8 +795,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Shooter/RPM Bottom": true
+              "Y-axis/Unit": "ul"
             }
           },
           "8,0": {
@@ -819,8 +814,7 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul",
-              "Visible data/Shooter/RPM Top": true
+              "Y-axis/Unit": "ul"
             }
           },
           "4,1": {

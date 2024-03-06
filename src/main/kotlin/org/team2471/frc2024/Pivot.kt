@@ -149,7 +149,7 @@ object Pivot: Subsystem("Pivot") {
 
     }
 
-    fun speakerIsReady(rpmTol: Double = 500.0, pitchTol: Double = 1.0, aimTol: Double = 3.0, debug: Boolean = false): Boolean {
+    fun speakerIsReady(rpmTol: Double = 400.0, pitchTol: Double = 1.0, aimTol: Double = 3.0, debug: Boolean = false): Boolean {
         if (revving) return false
 
         val rpmReady = abs(Shooter.rpmTopSetpoint - Shooter.motorRpmTop) < rpmTol && abs(Shooter.rpmBottomSetpoint - Shooter.motorRpmBottom) < rpmTol
