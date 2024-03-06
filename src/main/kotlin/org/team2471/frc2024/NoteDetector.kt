@@ -1,6 +1,7 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
@@ -176,6 +177,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                 noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
                 noteList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
                 noteList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                SmartDashboard.putBoolean("NoteCameraIsConnected", camera.isConnected)
             }
         }
     }

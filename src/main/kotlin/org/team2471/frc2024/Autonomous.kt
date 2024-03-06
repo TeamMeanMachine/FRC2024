@@ -6,7 +6,11 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.delay
+import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
@@ -86,7 +90,13 @@ object AutoChooser {
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
         closeFourToFiveEntry.setBoolean(false)
+        GlobalScope.launch(MeanlibDispatcher) {
+            periodic {
+                val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
 
+                SmartDashboard.putBoolean("Auto is selected", autoChosen)
+            }
+        }
         try {
             cacheFile = File("/home/lvuser/autonomi.json")
             if (cacheFile != null) {
