@@ -3,23 +3,18 @@ package org.team2471.frc2024
 import edu.wpi.first.networktables.NetworkTableEvent
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
-import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
-import kotlin.math.abs
 
 private lateinit var autonomi: Autonomi
 
@@ -39,6 +34,7 @@ val selAuto
 
 object AutoChooser {
     private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
+    private val closeFourToFiveEntry = PoseEstimator.poseTable.getEntry("Auto Close4 to 5")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
 
@@ -89,6 +85,7 @@ object AutoChooser {
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
+        closeFourToFiveEntry.setBoolean(false)
 
         try {
             cacheFile = File("/home/lvuser/autonomi.json")
@@ -168,7 +165,7 @@ object AutoChooser {
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
                 Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
             //delay(0.4) //time for camera to recognize note
@@ -186,105 +183,119 @@ object AutoChooser {
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(6.0)
                 Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
+        } finally {
+            Drive.aimSpeaker = false //TODO: Talk to drive team if this wanted
+            Pivot.aimSpeaker = false
+        }
+    }
+
+    suspend fun fourClose() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(49.54, 13.49) else Vector2(49.54, 13.49).reflectAcrossField()
+            val auto = autonomi["4Close"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("1-GrabSecond")
+
+            aimAndShoot()
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(1.0)
+            aimAndShoot()
+            path = auto?.get("2-GrabThird")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(1.0)
+            aimAndShoot()
+            path = auto?.get("3-GrabFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(1.0)
+            aimAndShoot()
+
+            if (closeFourToFiveEntry.getBoolean(false)) {
+                path = auto?.get("4-GrabFifth")
+                if (path != null) {
+                    Drive.driveAlongPath(path, false, earlyExit = {
+                        NoteDetector.seesNote && NoteDetector.closestIsValid
+                    })
+                }
+                pickUpSeenNote(0.7)
+                path = auto?.get("5-ShootFifth")
+                if (path != null) {
+                    Drive.driveAlongPath(path, false)
+                }
+                aimAndShoot()
+            }
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
     }
 
-    suspend fun fourClose() = use(Drive, Shooter) {
-        Drive.zeroGyro()
-        Drive.combinedPosition = if (isRedAlliance) Vector2(49.54, 13.49) else Vector2(49.54, 13.49).reflectAcrossField()
-        val auto = autonomi["4Close"]
-        auto?.isReflected = isBlueAlliance
-        var path = auto?.get("1-GrabSecond")
-
-        aimAndShoot()
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(1.0)
-        aimAndShoot()
-        path = auto?.get("2-GrabThird")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(1.0)
-        aimAndShoot()
-        path = auto?.get("3-GrabFourth")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(1.0)
-        aimAndShoot()
-        path = auto?.get("4-GrabFifth")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(0.7)
-        path = auto?.get("5-ShootFifth")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false)
-        }
-        aimAndShoot()
-    }
-
     suspend fun substationSide() = use(Drive, Shooter) {
-        Drive.zeroGyro()
-        Drive.combinedPosition = if (isRedAlliance) Vector2(49.48, 11.95) else Vector2(49.48, 11.95).reflectAcrossField()
-        val auto = autonomi["SubSide"]
-        auto?.isReflected = isBlueAlliance
-        var path = auto?.get("1-GrabSecond")
-        aimAndShoot()
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(49.48, 11.95) else Vector2(49.48, 11.95).reflectAcrossField()
+            val auto = autonomi["SubSide"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("1-GrabSecond")
+            aimAndShoot()
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(0.7)
+            path = auto?.get("2-ShootSecond")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            aimAndShoot()
+            path = auto?.get("3-GrabThird")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(0.7)
+            path = auto?.get("4-ShootThird")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            aimAndShoot()
+            path = auto?.get("5-GrabFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(0.7)
+            path = auto?.get("6-ShootFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            aimAndShoot()
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
         }
-        pickUpSeenNote(0.7)
-        path = auto?.get("2-ShootSecond")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false)
-        }
-        aimAndShoot()
-        path = auto?.get("3-GrabThird")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(0.7)
-        path = auto?.get("4-ShootThird")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false)
-        }
-        aimAndShoot()
-        path = auto?.get("5-GrabFourth")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false, earlyExit = {
-                NoteDetector.seesNote
-            })
-        }
-        pickUpSeenNote(0.7)
-        path = auto?.get("6-ShootFourth")
-        if (path != null) {
-            Drive.driveAlongPath(path,  false)
-        }
-        aimAndShoot()
-
     }
 
 
