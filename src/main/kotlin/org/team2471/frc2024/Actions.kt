@@ -155,9 +155,9 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
                 var driveSpeed = if (speed < 0.0 ) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
 
-                if (Robot.isAutonomous) {
+                //if (Robot.isAutonomous) {
                     driveSpeed *= linearMap(0.0, 1.0, 0.3, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
-                }
+                //}
 
                 val driveDirection = Vector2( -notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
