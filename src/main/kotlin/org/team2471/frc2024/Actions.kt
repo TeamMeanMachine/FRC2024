@@ -11,9 +11,13 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.motion.following.driveAlongPath
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
+import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -160,7 +164,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                     driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
                 }
 
-                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x).normalize()
+                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x.coerceIn(0.0, 1.0)).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
 
 
@@ -193,12 +197,30 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 }
 
 suspend fun lockToAmp() {
-    Drive.aimAmp = true
-
+//    Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
-    suspendUntil(20) { !OI.driverController.b }
+//    suspendUntil(20) { !OI.driverController.b }
+//    Drive.aimAmp = false
 
-    Drive.aimAmp = false
+    val newPath = Path2D("newPath")
+    newPath.addVector2(Drive.combinedPosition)
+    if (isBlueAlliance) {
+        newPath.addPoint(7.0, 25.0)  // coords??
+//        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)
+    } else {
+        newPath.addPoint(47.0, 25.0)  // coords??
+//        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
+    }
+    val distance = newPath.length
+    val rate = max(Drive.velocity.length, 5.0) // if we are stopped, use 5 fps
+    val time = distance / rate * 2.0
+    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
+    newPath.addEasePoint(0.0, 0.0)
+    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(true)
+    newPath.addEasePoint(time, 1.0)
+    newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
+    newPath.addHeadingPoint(time, 90.0)
+    Drive.driveAlongPath(newPath) { OI.driverController.b }
 }
 
 
