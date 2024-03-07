@@ -83,6 +83,7 @@ object AutoChooser {
         addOption("2Far2CloseAmp", "2Far2CloseAmp")
         addOption("4Close", "4Close")
         addOption("SubSide", "SubSide")
+        addOption("SafeSubSide", "SafeSubSide")
 
     }
 
@@ -154,6 +155,7 @@ object AutoChooser {
             "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4Close" -> fourClose()
             "SubSide" -> substationSide()
+            "SafeSubSide" -> safeSubstationSide()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -313,6 +315,64 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
             aimAndShoot()
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+        }
+    }
+
+    suspend fun safeSubstationSide() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(49.51, 11.58) else Vector2(49.51, 11.58).reflectAcrossField()
+            val auto = autonomi["SafeSubSide"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("1-GrabSecond")
+//            PoseEstimator.apriltagsEnabled = true
+            aimAndShoot()
+//            PoseEstimator.apriltagsEnabled = false
+            if (path != null) {
+                Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            println("finished path")
+            pickUpSeenNote(0.6)
+            path = auto?.get("2-ShootSecond")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+//            PoseEstimator.apriltagsEnabled = true
+            aimAndShoot()
+//            PoseEstimator.apriltagsEnabled = false
+            path = auto?.get("3-GrabThird")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(0.6)
+            path = auto?.get("4-ShootThird")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+//            PoseEstimator.apriltagsEnabled = true
+            aimAndShoot()
+//            PoseEstimator.apriltagsEnabled = false
+            path = auto?.get("5-GrabFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(0.6)
+//            PoseEstimator.apriltagsEnabled = true
+//            path = auto?.get("6-ShootFourth")
+//            if (path != null) {
+//                Drive.driveAlongPath(path, false)
+//            }
+//            aimAndShoot()
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false

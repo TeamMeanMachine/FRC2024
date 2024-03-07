@@ -43,8 +43,12 @@ object PoseEstimator {
     val robotPosM
         get() = Vector2(Drive.position.x.feet.asMeters, Drive.position.y.feet.asMeters)
 
-    val apriltagsEnabled: Boolean
+    var apriltagsEnabled: Boolean
         get() = apriltagsEnabledEntry.getBoolean(true)
+        set(value) {
+            apriltagsEnabledEntry.setBoolean(value)
+            zeroOffset()
+        }
     // val heading
     //   get() = (Drive.heading - headingOffset).wrap()
 
