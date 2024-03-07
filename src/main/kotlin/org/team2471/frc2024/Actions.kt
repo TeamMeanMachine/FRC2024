@@ -24,7 +24,7 @@ suspend fun climbWithTrigger() = use(Climb) {
             this.stop()
         }
         Climb.climbSetpoint = (OI.operatorRightTrigger * (Climb.MAX_CLIMB_INCHES - Climb.MIN_CLIMB_INCHES) + Climb.MIN_CLIMB_INCHES).inches
-        println("climbing with ${OI.operatorController.rightTrigger} setpoint ${Climb.climbSetpoint} tried to set to ${(OI.operatorRightTrigger * (Climb.MAX_CLIMB_INCHES - Climb.MIN_CLIMB_INCHES) + Climb.MIN_CLIMB_INCHES).inches}")
+//        println("climbing with ${OI.operatorController.rightTrigger} setpoint ${Climb.climbSetpoint} tried to set to ${(OI.operatorRightTrigger * (Climb.MAX_CLIMB_INCHES - Climb.MIN_CLIMB_INCHES) + Climb.MIN_CLIMB_INCHES).inches}")
     }
 }
 
@@ -55,7 +55,7 @@ suspend fun fire() = use(Shooter, Intake){
     Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if (/*(Robot.isAutonomous && !Intake.topBreak && t.get() > 0.5) ||*/ (t.get() > 2.0 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.8))) { //undeployed
+        if (/*(Robot.isAutonomous && !Intake.topBreak && t.get() > 0.5) ||*/ (t.get() > 1.0 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.8))) { //undeployed
             println("exiting shooting")
             this.stop()
         }
@@ -127,7 +127,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
             var useEstimation = false
 
-            if (NoteDetector.notes.size == 0 /*|| notePosCount > 10*/) {
+            if (NoteDetector.notes.isEmpty() /*|| notePosCount > 10*/) {
                 useEstimation = true
             }
             if (!useEstimation) {
@@ -180,6 +180,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
 //            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
+                println("Stopping because ")
                 stop()
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")

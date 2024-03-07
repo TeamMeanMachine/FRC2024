@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
@@ -171,6 +172,8 @@ object AutoChooser {
             aimAndShoot() //preLoaded shot
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
+            println("Staged!")
             aimAndShoot() //second note shot
 
             if (path != null) {
@@ -179,7 +182,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            //delay(0.4) //time for camera to recognize note
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.6 else 0.3)
             path = auto?.get("2-ShootThird")
             if (path != null) {
@@ -221,6 +224,7 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote(1.0)
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
             aimAndShoot()
             path = auto?.get("2-GrabThird")
             if (path != null) {
@@ -229,6 +233,7 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote(1.0)
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
             aimAndShoot()
             path = auto?.get("3-GrabFourth")
             if (path != null) {
@@ -237,6 +242,7 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote(1.0)
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
             aimAndShoot()
 
             if (closeFourToFiveEntry.getBoolean(false)) {
@@ -263,16 +269,17 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(49.48, 11.95) else Vector2(49.48, 11.95).reflectAcrossField()
+                if (isRedAlliance) Vector2(46.0, 11.95) else Vector2(46.0, 11.95).reflectAcrossField()
             val auto = autonomi["SubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
             aimAndShoot()
             if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
+                    Drive.combinedPosition.x > 23.0 && NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.7)
             path = auto?.get("2-ShootSecond")
             if (path != null) {
@@ -285,6 +292,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.7)
             path = auto?.get("4-ShootThird")
             if (path != null) {
@@ -297,6 +305,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.7)
             path = auto?.get("6-ShootFourth")
             if (path != null) {
