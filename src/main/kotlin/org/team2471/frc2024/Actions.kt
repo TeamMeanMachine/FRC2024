@@ -11,6 +11,8 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.motion.following.driveAlongPath
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
@@ -194,12 +196,30 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 }
 
 suspend fun lockToAmp() {
-    Drive.aimAmp = true
-
+//    Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
-    suspendUntil(20) { !OI.driverController.b }
+//    suspendUntil(20) { !OI.driverController.b }
+//    Drive.aimAmp = false
 
-    Drive.aimAmp = false
+    val newPath = Path2D("newPath")
+    newPath.addVector2(Drive.combinedPosition)
+    if (isBlueAlliance) {
+        newPath.addPoint(7.0, 25.0)  // coords??
+//        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)
+    } else {
+        newPath.addPoint(47.0, 25.0)  // coords??
+//        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
+    }
+    val distance = newPath.length
+    val rate = Drive.velocity.length
+    val time = distance / rate * 2.0
+    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+    newPath.addEasePoint(0.0, 0.0)
+    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(true)
+    newPath.addEasePoint(time, 1.0)
+    newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
+    newPath.addHeadingPoint(time, 90.0)
+    Drive.driveAlongPath(newPath) { OI.driverController.b }
 }
 
 
