@@ -196,12 +196,12 @@ object Shooter: Subsystem("Shooter") {
 //                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
                 }
 
-                if (Robot.isAutonomousEnabled && !Pivot.revving) {
-//                    println("Pre-Revving!!!")
-                    rpmTopSetpoint = 5000.0
-                    rpmBottomSetpoint = 5000.0
-//                    println("RpmSetpoints: Top: $rpmTopSetpoint Bottom: $rpmBottomSetpoint")
-                }
+//                if (Robot.isAutonomousEnabled && !Pivot.revving) { Shoots out too early during staging too often
+////                    println("Pre-Revving!!!")
+//                    rpmTopSetpoint = 5000.0
+//                    rpmBottomSetpoint = 5000.0
+////                    println("RpmSetpoints: Top: $rpmTopSetpoint Bottom: $rpmBottomSetpoint")
+//                }
             }
         }
     }
