@@ -179,7 +179,6 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
 //            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
-                println("Stopping because ")
                 stop()
             } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")

@@ -113,9 +113,9 @@ object Intake: Subsystem("Intake") {
                 }
                 IntakeState.SLOWING -> {
                     if (manualIntake.getBoolean(false)) {
-                        feederMotor.setPercentOutput(0.2)
+                        feederMotor.setPercentOutput(0.15)
                     } else {
-                        setIntakeMotorsPercent(0.2)
+                        setIntakeMotorsPercent(0.15)
                     }
                     if (topBreak) {
                         intakeState = IntakeState.REVERSING

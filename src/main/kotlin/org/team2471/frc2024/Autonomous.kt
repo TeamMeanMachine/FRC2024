@@ -203,7 +203,7 @@ object AutoChooser {
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
         } finally {
-            Drive.aimSpeaker = false //TODO: Talk to drive team if this wanted
+            Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
     }
@@ -276,11 +276,12 @@ object AutoChooser {
             aimAndShoot()
             if (path != null) {
                 Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
-                    Drive.combinedPosition.x > 23.0 && NoteDetector.seesNote && NoteDetector.closestIsValid
+                    /*Drive.combinedPosition.x > 23.0 &&*/ NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.7)
+            println("finished path")
+//            if (!NoteDetector.seesNote) delay(0.2)
+            pickUpSeenNote(0.5)
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -292,8 +293,8 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.7)
+//            if (!NoteDetector.seesNote) delay(0.2)
+            pickUpSeenNote(0.5)
             path = auto?.get("4-ShootThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -305,8 +306,8 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.7)
+//            if (!NoteDetector.seesNote) delay(0.2)
+            pickUpSeenNote(0.5)
             path = auto?.get("6-ShootFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
