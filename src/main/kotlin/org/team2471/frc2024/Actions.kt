@@ -164,7 +164,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                     driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
                 }
 
-                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x.coerceIn(0.0, 1.0)).normalize()
+                if (notePos.x < 0.0) {
+                    notePos.x = 0.0
+                }
+                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
 
 
@@ -205,10 +208,10 @@ suspend fun lockToAmp() {
     val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition)
     if (isBlueAlliance) {
-        newPath.addPoint(7.0, 25.0)  // coords??
+        newPath.addPoint(6.0, 25.0)
 //        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)
     } else {
-        newPath.addPoint(47.0, 25.0)  // coords??
+        newPath.addPoint(47.25, 25.0)
 //        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
     }
     val distance = newPath.length
