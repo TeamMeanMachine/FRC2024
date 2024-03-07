@@ -117,6 +117,7 @@ object AprilTag {
         resetCameras()
         GlobalScope.launch {
             periodic {
+                get2DSpeakerOffset()?.let { println(it.x) }
                 try {
                     //val frontCamSelected = useFrontCam()
                     val numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
