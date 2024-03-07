@@ -14,6 +14,7 @@ import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
+import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -160,7 +161,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                     driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
                 }
 
-                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x).normalize()
+                val driveDirection = Vector2( -1.5 * notePos.y, notePos.x.coerceIn(0.0, 1.0)).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnControl, false)
 
 

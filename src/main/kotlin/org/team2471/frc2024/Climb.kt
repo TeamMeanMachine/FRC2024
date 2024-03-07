@@ -26,6 +26,8 @@ object Climb: Subsystem("Climb") {
     val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
     private val relay = Relay(Solenoids.CLIMB_SWITCH)
 
+    var preEnabled = false
+
     val climberHeight: Length
         get() = climberMotor.position.inches
     var climbSetpoint: Length = climberHeight
@@ -41,15 +43,7 @@ object Climb: Subsystem("Climb") {
         }
 
 
-    private var relayOn: Boolean
-        get() = relay.get() == Relay.Value.kForward
-        set(value) {
-            if (value) {
-                relay.set(Relay.Value.kForward)
-            } else {
-                relay.set(Relay.Value.kOff)
-            }
-        }
+    private var relayOn: Boolean = false
 
     const val MIN_CLIMB_INCHES = 23.5
     const val MAX_CLIMB_INCHES = 45.625
@@ -81,8 +75,9 @@ object Climb: Subsystem("Climb") {
                 relayOnEntry.setBoolean(relayOn)
 
 
-                if (relayOn) {
+                if (relayOn && preEnabled) {
                     relay.set(Relay.Value.kForward)
+//                    println("SETTING RELAY TO TRUE!! periodic")
                 } else {
                     relay.set(Relay.Value.kOff)
                 }
@@ -98,9 +93,13 @@ object Climb: Subsystem("Climb") {
     }
     override fun preEnable() {
         relayOn = false
+        preEnabled = true
         println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         climbSetpoint = climberHeight
         println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
+    }
+    override fun onDisable() {
+        preEnabled = false
     }
 
     fun activateRelay() {
