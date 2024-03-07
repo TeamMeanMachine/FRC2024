@@ -17,6 +17,7 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -212,9 +213,9 @@ suspend fun lockToAmp() {
 //        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
     }
     val distance = newPath.length
-    val rate = Drive.velocity.length
+    val rate = max(Drive.velocity.length, 5.0) // if we are stopped, use 5 fps
     val time = distance / rate * 2.0
-    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+    newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
     newPath.addEasePoint(0.0, 0.0)
     newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(true)
     newPath.addEasePoint(time, 1.0)
