@@ -216,10 +216,10 @@ suspend fun lockToAmp() = use(Drive) {
     val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition)
     if (isBlueAlliance) {
-        newPath.addPoint(6.0, 25.0)
+        newPath.addPoint(7.0, 25.0)  // coords??
 //        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)
     } else {
-        newPath.addPoint(47.25, 25.0)
+        newPath.addPoint(47.0, 25.0)  // coords??
 //        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
     }
     val distance = newPath.length

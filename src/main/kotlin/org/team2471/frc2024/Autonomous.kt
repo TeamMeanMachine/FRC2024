@@ -17,6 +17,7 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 import java.util.*
@@ -39,7 +40,7 @@ val selAuto
 
 object AutoChooser {
     private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
-    private val closeFourToFiveEntry = PoseEstimator.poseTable.getEntry("Auto Close4 to 5")
+    private val closeFourToFiveEntry = PoseEstimator.poseTable.getEntry("Auto, Go For It")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
 
@@ -165,16 +166,18 @@ object AutoChooser {
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(3.95, 21.78) //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
+            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(48.32, 21.78).reflectAcrossField() //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
             auto?.isReflected = isBlueAlliance
             var path: Path2D? = auto?.get("1-Start")
+            val t = Timer()
+            t.start()
 
 //            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
             aimAndShoot() //preLoaded shot
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0}
             println("Staged!")
             aimAndShoot() //second note shot
 
@@ -192,7 +195,7 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
 
-            delay(0.2) //Waiting for AprilTag to catch up
+            delay(0.3) //Waiting for AprilTag to catch up
             aimAndShoot() //third note shot
 
             path = auto?.get("3-GrabFourth")
@@ -204,6 +207,17 @@ object AutoChooser {
             }
 
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
+
+            if (closeFourToFiveEntry.getBoolean(false)) {
+                path = auto?.get("4-ShootFourth")
+                if (path != null) {
+                    if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
+                    Drive.driveAlongPath(path, false)
+                }
+
+                delay(0.3) //Waiting for AprilTag to catch up
+                aimAndShoot() //third note shot
+            }
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
@@ -218,6 +232,7 @@ object AutoChooser {
             val auto = autonomi["4Close"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
+            val t = Timer()
 
             aimAndShoot()
             if (path != null) {
@@ -225,8 +240,9 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
+            t.start()
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 0.5}
             aimAndShoot()
             path = auto?.get("2-GrabThird")
             if (path != null) {
@@ -235,7 +251,7 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0 }
             aimAndShoot()
             path = auto?.get("3-GrabFourth")
             if (path != null) {
@@ -244,7 +260,7 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0 }
             aimAndShoot()
 
             if (closeFourToFiveEntry.getBoolean(false)) {
