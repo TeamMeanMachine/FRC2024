@@ -19,6 +19,7 @@ import org.team2471.frc2024.AprilTag.singleTagSRPoseEstimator
 import org.team2471.frc2024.AprilTag.camIB
 import org.team2471.frc2024.AprilTag.camSL
 import org.team2471.frc2024.AprilTag.camSR
+import org.team2471.frc2024.AprilTag.excludedTagsList
 import org.team2471.frc2024.AprilTag.iBPoseEstimator
 import org.team2471.frc2024.AprilTag.lastIBAmbiguity
 import org.team2471.frc2024.AprilTag.lastIBDetectionTime
@@ -78,6 +79,8 @@ object AprilTag {
     var lastSLDist = 0.0.feet
     var lastSRDist = 0.0.feet
     var lastIBDist = 0.0.feet
+
+    var excludedTagsList: List<Int> = listOf() //EXCLUDE APRILTAGS HERE!!!!!!!!!
 
 
     // TODO: Test Single Tags at different distances to find the min Dist.
@@ -202,8 +205,9 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
             return null
         }
 
+//        println("outside for loop")
         for (target in validTargets) {
-            if (target.fiducialId > 16) {
+            if (target.fiducialId > 16 || excludedTagsList.contains(target.fiducialId)) {
                 println("AprilTag: Invalid Tag")
                 return null
             }
