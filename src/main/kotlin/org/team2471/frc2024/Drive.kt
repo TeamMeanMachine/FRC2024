@@ -185,7 +185,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimAmp = false
     val speakerPos
-        get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 218.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 218.42.inches.asFeet)
+        get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 223.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 213.42.inches.asFeet) //orig 218.42 for both -- aiming left
 
     val ampPos = Vector2(0.0, 0.0) //TODO
 

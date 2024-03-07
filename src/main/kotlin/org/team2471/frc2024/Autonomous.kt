@@ -170,19 +170,18 @@ object AutoChooser {
             val auto = autonomi["2Far2CloseAmp"]
             auto?.isReflected = isBlueAlliance
             var path: Path2D? = auto?.get("1-Start")
-            val t = Timer()
-            t.start()
+            val ti = Timer()
 
 //            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
             aimAndShoot() //preLoaded shot
 
+            ti.start()
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0}
-            println("Staged!")
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 1.0}
             aimAndShoot() //second note shot
 
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -191,7 +190,7 @@ object AutoChooser {
             pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.6 else 0.3)
             path = auto?.get("2-ShootThird")
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.0)
                 Drive.driveAlongPath(path, false)
             }
 
@@ -200,7 +199,7 @@ object AutoChooser {
 
             path = auto?.get("3-GrabFourth")
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(6.0)
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -298,7 +297,7 @@ object AutoChooser {
                 })
             }
             println("finished path")
-//            if (!NoteDetector.seesNote) delay(0.2)
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.5)
             path = auto?.get("2-ShootSecond")
             if (path != null) {
@@ -311,7 +310,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-//            if (!NoteDetector.seesNote) delay(0.2)
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.5)
             path = auto?.get("4-ShootThird")
             if (path != null) {
@@ -324,7 +323,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-//            if (!NoteDetector.seesNote) delay(0.2)
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.5)
             path = auto?.get("6-ShootFourth")
             if (path != null) {
