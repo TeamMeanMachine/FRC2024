@@ -13,6 +13,7 @@ import org.photonvision.targeting.MultiTargetPNPResult
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.units.Angle.Companion.tan
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
 import org.team2471.frc2024.AprilTag.singleTagSLPoseEstimator
 import org.team2471.frc2024.AprilTag.singleTagSRPoseEstimator
@@ -36,6 +37,7 @@ import org.team2471.frc2024.AprilTag.robotToCamSR
 import org.team2471.frc2024.AprilTag.multiTagSLPoseEstimator
 import org.team2471.frc2024.AprilTag.multiTagSRPoseEstimator
 import org.team2471.frc2024.AprilTag.singleTagMinDist
+import org.team2471.frc2024.AprilTag.speakerTagHeight
 
 
 object AprilTag {
@@ -62,6 +64,8 @@ object AprilTag {
     var iBPoseEstimator : PhotonPoseEstimator? = null
     const val maxAmbiguity = 0.1
     var distFromSpeaker: Length = 0.0.feet
+
+    val speakerTagHeight = 57.13.inches
 
     var lastSLPose = Pose2d(0.0,0.0, Rotation2d(0.0))
     var lastSRPose = Pose2d(0.0,0.0, Rotation2d(0.0))
@@ -383,27 +387,38 @@ fun resetCameras() {
     }
 }
 
-fun getSpeakerDist(camera: PhotonCamera): Double? {
+fun get2DSpeakerOffset(): Vector2? {
     try {
-        if (!camera.isConnected) {
+        if (camSL == null || camSR == null) {
             return null
-        }
-        val validTargets = camera.latestResult.targets
-        for (target in validTargets) {
-            if (target.fiducialId == if (isRedAlliance) 1 else 2) {
-                println("pitch: ${target.pitch}")
-                var theta = target.pitch - robotToCamSL.rotation.y //TODO: find the correct calculation
-
-
-
+        } else {
+            if (!camSL!!.isConnected || !camSR!!.isConnected) {
+                return null
             }
-        }
+            val validSLTargets = camSL!!.latestResult.targets
+            val validSRTargets = camSR!!.latestResult.targets
+            var slDist = 0.0.feet
+            var srDist = 0.0.feet
+            for (target in validSLTargets) {
+                if (target.fiducialId == if (isRedAlliance) 4 else 7) {
+                    println("pitch SL: ${target.pitch}")
+                    slDist = (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.degrees + target.pitch.degrees)
+                }
+            }
+            for (target in validSRTargets) {
+                if (target.fiducialId == if (isRedAlliance) 4 else 7) {
+                    println("pitch SR: ${target.pitch}")
+                    srDist = (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.degrees + target.pitch.degrees)
+                }
+            }
 
-        return null
+            return Vector2((slDist.asFeet + srDist.asFeet) / 2.0, 0.0)
+        }
     } catch (e: Exception) {
         return null
     }
 }
+
 
 
 data class AprilDetection (
