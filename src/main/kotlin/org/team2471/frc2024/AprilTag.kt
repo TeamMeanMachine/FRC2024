@@ -101,12 +101,12 @@ object AprilTag {
         get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBDist, lastIBAmbiguity)
 
     var robotToCamSL: Transform3d = Transform3d(
-        Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 9.0.inches.asMeters),
+        Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
         Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
-        Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 9.0.inches.asMeters),
+        Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 8.75.inches.asMeters),
         Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
@@ -117,7 +117,7 @@ object AprilTag {
         resetCameras()
         GlobalScope.launch {
             periodic {
-//                get2DSpeakerOffset()?.let { println(it.x) }
+                println(get2DSpeakerOffset())
                 try {
                     //val frontCamSelected = useFrontCam()
                     val numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
@@ -406,18 +406,18 @@ fun get2DSpeakerOffset(): Vector2? {
             var srDist = 0.0.feet
             for (target in validSLTargets) {
                 if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-                    println("pitch SL: ${target.pitch}")
-                    slDist = (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.degrees + target.pitch.degrees)
+//                    println("pitch SL: ${-robotToCamSL.rotation.y.radians}")
+                    slDist = (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
                 }
             }
             for (target in validSRTargets) {
                 if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-                    println("pitch SR: ${target.pitch}")
-                    srDist = (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.degrees + target.pitch.degrees)
+//                    println("pitch SR: ${-robotToCamSR.rotation.y.radians}")
+                    srDist = (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
                 }
             }
 
-            return Vector2((slDist.asFeet + srDist.asFeet) / 2.0, 0.0)
+            return Vector2((slDist.asFeet.meters.asFeet + srDist.asFeet.meters.asFeet) / 2.0, 0.0)
         }
     } catch (e: Exception) {
         return null

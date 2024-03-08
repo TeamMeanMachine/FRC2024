@@ -225,6 +225,7 @@ suspend fun lockToAmp() = use(Drive) {
     val distance = newPath.length
     val rate = max(Drive.velocity.length, 5.0) // if we are stopped, use 5 fps
     val time = distance / rate * 2.0
+    newPath.duration = time
     newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
     newPath.addEasePoint(0.0, 0.0)
     newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(true)
