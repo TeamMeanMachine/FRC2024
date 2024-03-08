@@ -9,6 +9,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
+import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
@@ -88,7 +89,7 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = PoseEstimator.currentPose.distance(speakerPos)
+        get() = if (PoseEstimator.apriltagsEnabled) PoseEstimator.currentPose.distance(speakerPos) else AprilTag.last2DSpeakerDist.asFeet
 
 
 

@@ -591,13 +591,11 @@
               1
             ],
             "content": {
-              "_type": "Boolean Box",
+              "_type": "Toggle Switch",
               "_source0": "network_table:///Pose Estimator/AprilTags Enabled",
               "_title": "/Pose Estimator/AprilTags Enabled",
               "_glyph": 148,
-              "_showGlyph": false,
-              "Colors/Color when true": "#7CFC00FF",
-              "Colors/Color when false": "#8B0000FF"
+              "_showGlyph": false
             }
           },
           "10,3": {
@@ -987,9 +985,9 @@
     }
   ],
   "windowGeometry": {
-    "x": 1.0,
-    "y": 1.0,
-    "width": 1706.0,
-    "height": 1018.0
+    "x": -8.0,
+    "y": -8.0,
+    "width": 1936.0,
+    "height": 1048.0
   }
 }

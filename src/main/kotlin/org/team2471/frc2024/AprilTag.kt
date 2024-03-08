@@ -100,6 +100,10 @@ object AprilTag {
     val lastIBDetection: AprilDetection
         get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBDist, lastIBAmbiguity)
 
+
+    var last2DSpeakerDist: Length = 0.0.feet
+    var  last2DSpeakerAngle: Angle = 0.0.degrees
+
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
         Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
@@ -117,10 +121,17 @@ object AprilTag {
         resetCameras()
         GlobalScope.launch {
             periodic {
-                println(get2DSpeakerOffset())
+                val temp2DOffset = get2DSpeakerOffset()
+                if (temp2DOffset != null) {
+//                    println("Setting angle to ${temp2DOffset.second}")
+                    last2DSpeakerDist = temp2DOffset.first
+                    last2DSpeakerAngle = -temp2DOffset.second
+                }
+//                println("2d: ${get2DSpeakerOffset()}")
                 try {
                     //val frontCamSelected = useFrontCam()
                     val numTargetSL: Int = camSL?.latestResult?.targets?.count() ?: 0
+//                    println(numTargetSL)
                     val maybePoseSL: Pose2d? =
                         singleTagSLPoseEstimator?.let { camSL?.let { it1 -> getEstimatedGlobalPose(it1, numTargetSL, it, multiTagSLPoseEstimator) } }
 
@@ -144,6 +155,8 @@ object AprilTag {
                         lastSLPose = maybePoseSL
 
                         PoseEstimator.addVision(lastSLDetection, numTargetSL)
+                    } else {
+//                        println("SLSLSLSLSLSL")
                     }
                     if (maybePoseSR != null) {
                         seesAprilTagEntry.setBoolean(numTargetSR > 0)
@@ -157,6 +170,8 @@ object AprilTag {
                         lastSRPose = maybePoseSR
 
                         PoseEstimator.addVision(lastSRDetection, numTargetSR)
+                    } else {
+//                        println("SRSSRSRSRSRSRSRS")
                     }
                     if (maybePoseIB != null) {
                         seesAprilTagEntry.setBoolean(numTargetIB > 0)
@@ -171,6 +186,8 @@ object AprilTag {
 
 
                         PoseEstimator.addVision(lastIBDetection, numTargetIB)
+                    } else {
+//                        println("IBIBIBIBIBIBIBIBI")
                     }
                     SmartDashboard.putBoolean("CamSLConnected", camSL?.isConnected ?: false)
                     SmartDashboard.putBoolean("CamSRConnected", camSR?.isConnected ?: false)
@@ -188,11 +205,14 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
     try {
         //Exclusion zones
         if (Drive.combinedPosition.x > 14.0 && Drive.combinedPosition.x < 39.0 && (Drive.combinedPosition.y < 17.0 || Drive.combinedPosition.y > 9.0)) {
-//            println("Don't trust AprilTag from here")
-            return null
+            if (!OI.operatorController.start) {
+                println("Don't trust AprilTag from here")
+                return null
+            }
         }
 
         if (!camera.isConnected) {
+//            println("Camera not connected")
             return null
         }
 
@@ -207,6 +227,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
                 return null
             }
         } else {
+            println("Valid targets null")
             return null
         }
 
@@ -315,7 +336,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
 
             return result.estimatedPose.toPose2d()
         } else {
-
+//            println("noPose")
             return null
         }
     } catch (ex: Exception) {
@@ -392,32 +413,52 @@ fun resetCameras() {
     }
 }
 
-fun get2DSpeakerOffset(): Vector2? {
+fun get2DSpeakerOffset(): Pair<Length, Angle>? {
     try {
-        if (camSL == null || camSR == null) {
+        if (camSL == null && camSR == null) {
             return null
         } else {
-            if (!camSL!!.isConnected || !camSR!!.isConnected) {
+            if (!camSL!!.isConnected && !camSR!!.isConnected) {
                 return null
             }
-            val validSLTargets = camSL!!.latestResult.targets
-            val validSRTargets = camSR!!.latestResult.targets
             var slDist = 0.0.feet
             var srDist = 0.0.feet
-            for (target in validSLTargets) {
-                if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-//                    println("pitch SL: ${-robotToCamSL.rotation.y.radians}")
-                    slDist = (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
+            var slRot = 0.0.degrees
+            var srRot = 0.0.degrees
+            var numCams = 0.0
+            if (camSL != null) {
+                if (camSL!!.isConnected) {
+                    numCams += 1.0
+                    val validSLTargets = camSL!!.latestResult.targets
+                    for (target in validSLTargets) {
+                        if (target.fiducialId == if (isRedAlliance) 4 else 7) {
+                            //                    println("pitch SL: ${-robotToCamSL.rotation.y.radians}")
+                            slDist =
+                                (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
+                            //                    println("slDist: ${slDist}")
+                            slRot = (10.0.degrees) + target.yaw.degrees
+                        }
+                    }
                 }
+
             }
-            for (target in validSRTargets) {
-                if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-//                    println("pitch SR: ${-robotToCamSR.rotation.y.radians}")
-                    srDist = (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
+            if (camSL != null) {
+                if (camSL!!.isConnected) {
+                    numCams += 1.0
+                    val validSRTargets = camSR!!.latestResult.targets
+                    for (target in validSRTargets) {
+                        if (target.fiducialId == if (isRedAlliance) 4 else 7) {
+                            //                    println("pitch SR: ${-robotToCamSR.rotation.y.radians}")
+                            srDist =
+                                (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
+                            srRot = ((-10.0).degrees) + target.yaw.degrees
+                            //                    println("sr =dist ${srDist}")
+                        }
+                    }
                 }
             }
 
-            return Vector2((slDist.asFeet.meters.asFeet + srDist.asFeet.meters.asFeet) / 2.0, 0.0)
+            return Pair((slDist.asFeet.meters + srDist.asFeet.meters) / numCams, slRot + srRot / numCams)
         }
     } catch (e: Exception) {
         return null

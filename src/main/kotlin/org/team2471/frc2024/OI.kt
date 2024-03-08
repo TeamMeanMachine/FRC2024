@@ -82,6 +82,7 @@ object OI : Subsystem("OI") {
         driverController::y.whenTrue { aimAtSpeaker() }
         ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote() }
         driverController::b.whenTrue { lockToAmp() }
+        operatorController::back.whenTrue { resetCameras() }
 
 
 
