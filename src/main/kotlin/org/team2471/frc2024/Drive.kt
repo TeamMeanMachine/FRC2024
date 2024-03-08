@@ -170,7 +170,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val carpetFlow = Vector2(-1.0, 0.0)
     //    override val carpetFlow = Vector2(1.0, 0.0)
 //    override val carpetFlow = Vector2(0.0, 1.0)
-    override val kCarpet = 0.0104 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (1.04% more distance downstream)
+    override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
@@ -539,7 +539,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (95.0 / 96.0)
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
