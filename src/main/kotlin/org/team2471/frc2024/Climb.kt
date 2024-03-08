@@ -12,6 +12,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.units.Length
 import org.team2471.frc.lib.units.inches
+import org.team2471.frc.lib.util.Timer
 
 object Climb: Subsystem("Climb") {
     private val table = NetworkTableInstance.getDefault().getTable("Climb")
@@ -21,6 +22,7 @@ object Climb: Subsystem("Climb") {
     private val climberHeightEntry = table.getEntry("Motor Height")
     private val climbSetpointEntry = table.getEntry("Climb Setpoint")
     private val relayOnEntry = table.getEntry("Relay On")
+    private val matchTimeLeft = table.getEntry("Match time left")
 
     val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
     val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
@@ -60,10 +62,11 @@ object Climb: Subsystem("Climb") {
         }
         climberMotor.setRawOffset(MIN_CLIMB_INCHES)
         climbSetpoint = MIN_CLIMB_INCHES.inches
+        val matchTimeTimer = Timer()
 
         GlobalScope.launch {
             periodic {
-                if (DriverStation.getMatchTime() < 0.25 && DriverStation.getMatchTime() > 0.0) {
+                if (DriverStation.getMatchTime() < 1.0 && DriverStation.getMatchTime() > 0.0) {
                     println("locking climber!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Match Time ${DriverStation.getMatchTime()}")
                     relayOn = true
                 }
@@ -73,6 +76,7 @@ object Climb: Subsystem("Climb") {
                 climberHeightEntry.setDouble(climberHeight.asInches)
                 climbSetpointEntry.setDouble(climbSetpoint.asInches)
                 relayOnEntry.setBoolean(relayOn)
+                matchTimeLeft.setDouble(DriverStation.getMatchTime())
 
 
                 if (relayOn && preEnabled) {

@@ -22,7 +22,7 @@
               "_title": "Field",
               "_glyph": 148,
               "_showGlyph": false,
-              "Game/Game": "k2024Crescendo",
+              "Game/Game": "A2023_Charged_Up",
               "Visuals/Robot Icon Size": 50.0,
               "Visuals/Show Outside Circles": false
             }
@@ -77,7 +77,7 @@
               "_title": "Radar",
               "_glyph": 148,
               "_showGlyph": false,
-              "Game/Game": "k2024Crescendo",
+              "Game/Game": "A2023_Charged_Up",
               "Visuals/Robot Icon Size": 50.0,
               "Visuals/Show Outside Circles": false
             }
@@ -976,6 +976,32 @@
               "_type": "Text View",
               "_source0": "network_table:///Shooter/rpm top setpoint",
               "_title": "Shooter/rpm top setpoint",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "6,6": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///Shooter/Bottom Amp RPM",
+              "_title": "Shooter/Bottom Amp RPM",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "8,6": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///Shooter/Top Amp RPM",
+              "_title": "Shooter/Top Amp RPM",
               "_glyph": 148,
               "_showGlyph": false
             }

@@ -27,6 +27,8 @@ object Shooter: Subsystem("Shooter") {
     private val bottomDEntry = table.getEntry("bottom D")
     private val bottomPEntry = table.getEntry("bottom P")
     private val shootingEntry = table.getEntry("shooting")
+    val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
+    val topAmpRPMEntry = table.getEntry("Top Amp RPM")
     val Pitch3Entry = table.getEntry("Pitch3Entry")
     val Pitch6Entry = table.getEntry("Pitch6Entry")
     val Pitch9Entry = table.getEntry("Pitch9Entry")
@@ -37,6 +39,7 @@ object Shooter: Subsystem("Shooter") {
     val RPM9Entry = table.getEntry("RPM9Entry")
     val RPM15Entry = table.getEntry("RPM15Entry")
     val RPM17Entry = table.getEntry("RPM17Entry")
+
 
     val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
     val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
@@ -150,6 +153,10 @@ object Shooter: Subsystem("Shooter") {
         bottomPEntry.setDouble(shooterMotorBottom.getP())
         bottomDEntry.setDouble(shooterMotorBottom.getD())
 
+        topAmpRPMEntry.setDouble(1100.0)
+        bottomAmpRPMEntry.setDouble(900.0)
+
+
         GlobalScope.launch {
             periodic {
                 shooterCurrentEntry.setDouble(shooterMotorBottom.current)
@@ -215,8 +222,8 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
-                    rpmTopSetpoint = 1000.0
-                    rpmBottomSetpoint = 1150.0
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1100.0)
+                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(900.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0

@@ -68,7 +68,7 @@ object Intake: Subsystem("Intake") {
         }
 
         feederMotor.config {
-            currentLimit(35, 40, 1)
+            currentLimit(37, 60, 1)
             coastMode()
             inverted(false)
         }
