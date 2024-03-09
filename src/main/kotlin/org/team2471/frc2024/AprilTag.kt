@@ -12,6 +12,7 @@ import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.MultiTargetPNPResult
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
@@ -205,7 +206,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
     try {
         //Exclusion zones
         if (Drive.combinedPosition.x > 14.0 && Drive.combinedPosition.x < 39.0 && (Drive.combinedPosition.y < 17.0 || Drive.combinedPosition.y > 9.0)) {
-            if (!OI.operatorController.start) {
+            if (!OI.operatorController.start && PoseEstimator.apriltagsEnabled) {
                 println("Don't trust AprilTag from here")
                 return null
             }

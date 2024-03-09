@@ -169,15 +169,21 @@ object AutoChooser {
             Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(48.32, 21.78).reflectAcrossField() //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
             auto?.isReflected = isBlueAlliance
-            var path: Path2D? = auto?.get("1-Start")
+            var path: Path2D? = auto?.get("0.5-GrabSecond")
             val ti = Timer()
 
 //            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
             aimAndShoot() //preLoaded shot
 
             ti.start()
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.7 else 0.3)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 1.0}
+            if (path != null) {
+                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(0.2)
+                Drive.driveAlongPath(path,  false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 0.4}
             aimAndShoot() //second note shot
 
             if (path != null) {
@@ -187,7 +193,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.6 else 0.3)
+            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
             path = auto?.get("2-ShootThird")
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.0)
@@ -352,7 +358,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            println("finished path")
+            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote(0.6)
             path = auto?.get("2-ShootSecond")
             if (path != null) {
