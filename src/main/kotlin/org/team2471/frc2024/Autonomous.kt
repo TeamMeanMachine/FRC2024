@@ -243,6 +243,7 @@ object AutoChooser {
             pickUpSeenNote(1.0)
             suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 0.5}
             aimAndShoot()
+
             path = auto?.get("2-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
@@ -252,6 +253,7 @@ object AutoChooser {
             pickUpSeenNote(1.0)
             suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0 }
             aimAndShoot()
+
             path = auto?.get("3-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
