@@ -98,8 +98,8 @@ object OI : Subsystem("OI") {
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1100.0) + 50); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(900.0) + 50) }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1100.0) - 50); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(900.0) - 50) }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) + 25); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) + 25) }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) - 25); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) - 25) }
 
         operatorController::start.whenTrue { resetCameras() }
 
