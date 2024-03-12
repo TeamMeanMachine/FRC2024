@@ -54,10 +54,10 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
-    private val MAXTICKS = if (isCompBot) 1393.0 else 940.0
+    private val MINTICKS = if (isCompBot) 1924.0 else 2124.0
+    private val MAXTICKS = if (isCompBot) 714.0 else 940.0
 
-    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d(0.0, MINHARDSTOP.asDegrees, 0.0))
+    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
     var aimSpeaker = false
@@ -91,7 +91,8 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             Shooter.manualShootState = Shooter.manualShootState
-
+//
+        //            Uh oh
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -101,7 +102,7 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (PoseEstimator.apriltagsEnabled) PoseEstimator.currentPose.distance(speakerPos) else AprilTag.last2DSpeakerDist.asFeet
+        get() = if (PoseEstimator.apriltagsEnabled) PoseEstimator.currentPose.distance(speakerPos) else AprilTag.last2DSpeakerDist.lastValue()
 
 
 
@@ -138,7 +139,7 @@ object Pivot: Subsystem("Pivot") {
                 encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
-                advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d(0.0, pivotEncoderAngle.asDegrees, 0.0))
+                advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
                 advantagePivotPublisher.set(advantagePivotTransform)
 
 

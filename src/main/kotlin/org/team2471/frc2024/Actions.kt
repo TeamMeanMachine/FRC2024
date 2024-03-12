@@ -49,16 +49,15 @@ suspend fun spit() = use(Intake) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun fire() = use(Shooter, Intake){
+suspend fun fire() = use(Shooter){
     val t = Timer()
 //    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
-    Intake.intakeMotorTop.setPercentOutput(1.0)
-    Intake.intakeMotorBottom.setPercentOutput(1.0)
+    Intake.intakeState = Intake.IntakeState.SHOOTING
 //    }
-    Intake.feederMotor.setPercentOutput(1.0)
     t.start()
     periodic {
-        if ((t.get() > 0.5 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.8))) {
+        Intake.intakeState = Intake.IntakeState.SHOOTING
+        if ((t.get() > 0.3 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.1) && t.get() > 0.1)) {
             println("exiting shooting")
             this.stop()
         }
@@ -99,8 +98,8 @@ suspend fun aimAndShoot(print: Boolean = false) {
     val t = Timer()
     aimAtSpeaker()
     t.start()
-    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 1.0 }
-    if (t.get() > 1.0) {
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 0.75 }
+    if (t.get() > 0.75) {
         println("Aiming max time")
         Pivot.speakerIsReady(debug = true)
     }

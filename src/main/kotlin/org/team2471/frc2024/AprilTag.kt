@@ -2,6 +2,7 @@ package org.team2471.frc2024
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -102,8 +103,8 @@ object AprilTag {
         get() = AprilDetection(lastIBDetectionTime, lastIBPose, lastIBDist, lastIBAmbiguity)
 
 
-    var last2DSpeakerDist: Length = 0.0.feet
-    var  last2DSpeakerAngle: Angle = 0.0.degrees
+    var last2DSpeakerDist = LinearFilter.movingAverage(5)
+    var last2DSpeakerAngle = LinearFilter.movingAverage(5)
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
@@ -120,13 +121,17 @@ object AprilTag {
     )
     init {
         resetCameras()
+        last2DSpeakerDist.reset()
+        last2DSpeakerAngle.reset()
+        last2DSpeakerAngle.calculate(0.0)
+        last2DSpeakerDist.calculate(0.0)
         GlobalScope.launch {
             periodic {
                 val temp2DOffset = get2DSpeakerOffset()
                 if (temp2DOffset != null) {
 //                    println("Setting angle to ${temp2DOffset.second}")
-                    last2DSpeakerDist = temp2DOffset.first
-                    last2DSpeakerAngle = -temp2DOffset.second
+                    last2DSpeakerDist.calculate(temp2DOffset.first.asFeet)
+                    last2DSpeakerAngle.calculate(-temp2DOffset.second.asDegrees)
                 }
 //                println("2d: ${get2DSpeakerOffset()}")
                 try {
@@ -207,7 +212,7 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
         //Exclusion zones
         if (Drive.combinedPosition.x > 14.0 && Drive.combinedPosition.x < 39.0 && (Drive.combinedPosition.y < 17.0 || Drive.combinedPosition.y > 9.0)) {
             if (!OI.operatorController.start && PoseEstimator.apriltagsEnabled) {
-                println("Don't trust AprilTag from here")
+//                println("Don't trust AprilTag from here")
                 return null
             }
         }
@@ -429,15 +434,17 @@ fun get2DSpeakerOffset(): Pair<Length, Angle>? {
             var numCams = 0.0
             if (camSL != null) {
                 if (camSL!!.isConnected) {
-                    numCams += 1.0
                     val validSLTargets = camSL!!.latestResult.targets
                     for (target in validSLTargets) {
                         if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-                            //                    println("pitch SL: ${-robotToCamSL.rotation.y.radians}")
-                            slDist =
-                                (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
-                            //                    println("slDist: ${slDist}")
-                            slRot = (10.0.degrees) + target.yaw.degrees
+                            if (target.area > 5.0){
+                                //                    println("pitch SL: ${-robotToCamSL.rotation.y.radians}")
+                                slDist =
+                                    (speakerTagHeight - robotToCamSL.z.meters) / tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
+                                //                    println("slDist: ${slDist}")
+                                slRot = (10.0.degrees) + target.yaw.degrees
+                                numCams += 1.0
+                            }
                         }
                     }
                 }
@@ -445,15 +452,18 @@ fun get2DSpeakerOffset(): Pair<Length, Angle>? {
             }
             if (camSL != null) {
                 if (camSL!!.isConnected) {
-                    numCams += 1.0
                     val validSRTargets = camSR!!.latestResult.targets
                     for (target in validSRTargets) {
                         if (target.fiducialId == if (isRedAlliance) 4 else 7) {
-                            //                    println("pitch SR: ${-robotToCamSR.rotation.y.radians}")
-                            srDist =
-                                (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
-                            srRot = ((-10.0).degrees) + target.yaw.degrees
-                            //                    println("sr =dist ${srDist}")
+                            if (target.area > 5.0) {
+
+                                //                    println("pitch SR: ${-robotToCamSR.rotation.y.radians}")
+                                srDist =
+                                    (speakerTagHeight - robotToCamSR.z.meters) / tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
+                                srRot = ((-10.0).degrees) + target.yaw.degrees
+                                numCams += 1.0
+                                //                    println("sr =dist ${srDist}")
+                            }
                         }
                     }
                 }

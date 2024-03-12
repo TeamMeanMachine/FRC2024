@@ -63,6 +63,16 @@ object NoteDetector: Subsystem("NoteDetector") {
             return false
         }
 
+    val closestIsMiddle: Boolean
+        get() {
+            val n = closestNote
+            if (n != null) {
+                println("Closest is middle: ${(26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5)} x: ${n.fieldCoords.x}")
+                return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
+            }
+            return false
+        }
+
     private val distanceCurve = MotionCurve()
     var notes : List<Note> = listOf()
 

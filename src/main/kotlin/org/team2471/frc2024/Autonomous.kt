@@ -233,7 +233,7 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(49.54, 13.49) else Vector2(49.54, 13.49).reflectAcrossField()
+                if (isRedAlliance) Vector2(48.27, 13.16) else Vector2(48.27, 13.16).reflectAcrossField()
             val auto = autonomi["4Close"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -242,30 +242,34 @@ object AutoChooser {
             aimAndShoot()
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle  /* && NoteDetector.closestIsValid*/
                 })
             }
             t.start()
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 0.5}
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3}
+            path = auto?.get("1.5-ShootSecond")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
             aimAndShoot()
             path = auto?.get("2-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle /*&& NoteDetector.closestIsValid*/
                 })
             }
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0 }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3 }
             aimAndShoot()
             path = auto?.get("3-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle /*&& NoteDetector.closestIsValid*/
                 })
             }
             pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || t.get() > 1.0 }
+            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3 }
             aimAndShoot()
 
             if (closeFourToFiveEntry.getBoolean(false)) {
@@ -275,7 +279,7 @@ object AutoChooser {
                         NoteDetector.seesNote && NoteDetector.closestIsValid
                     })
                 }
-                pickUpSeenNote(0.8, cautious = true)
+                pickUpSeenNote(0.75)
                 path = auto?.get("5-ShootFifth")
                 if (path != null) {
                     Drive.driveAlongPath(path, false)
@@ -346,7 +350,7 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(49.51, 11.58) else Vector2(49.51, 11.58).reflectAcrossField()
+                if (isRedAlliance) Vector2(48.52, 11.62) else Vector2(48.52, 11.62).reflectAcrossField()
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -359,7 +363,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.6)
+            pickUpSeenNote(0.8)
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -400,6 +404,26 @@ object AutoChooser {
         }
     }
 
+    suspend fun propAuto() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(0.0, 0.0) else Vector2(0.0, 0.0).reflectAcrossField()
+            val auto = autonomi["Tests"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("8 Foot Straight")
+            aimAndShoot()
+
+            if (path != null) {
+                Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
+                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                })
+            }
+            if (!NoteDetector.seesNote) delay(0.2)
+        } finally {
+
+        }
+    }
 
     private suspend fun testAuto() = use(Drive) {
         val testPath = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
