@@ -227,7 +227,6 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
                 return null
             }
         } else {
-            println("Valid targets null")
             return null
         }
 
@@ -467,7 +466,7 @@ fun get2DSpeakerOffset(): Pair<Length, Angle>? {
 
 
 
-data class AprilDetection (
+data class AprilFDetection (
     val timestamp: Double,
     val pose: Pose2d,
     val averageDistance: Length,

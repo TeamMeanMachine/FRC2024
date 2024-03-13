@@ -18,9 +18,7 @@ import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
@@ -626,5 +624,23 @@ suspend fun Drive.currentTest() = use(this) {
         currModule.turnMotor.setPositionSetpoint(0.0)
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
+    }
+}
+
+fun latencyAdjust(vector: Vector2, latencySeconds: Double): Vector2? {
+    val odomDiff = Drive.poseDiff(latencySeconds)
+    return if (odomDiff != null) {
+        vector + odomDiff.position
+    } else  {
+        null
+    }
+}
+
+fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L? {
+    val odomDiff = Drive.poseDiff(latencySeconds)
+    return if (odomDiff != null) {
+        vector + odomDiff.position.feet
+    } else  {
+        null
     }
 }
