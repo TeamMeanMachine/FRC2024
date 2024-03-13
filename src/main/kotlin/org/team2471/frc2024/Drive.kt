@@ -1,7 +1,14 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.estimator.KalmanFilter
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics
+import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.math.kinematics.WheelPositions
+import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -79,6 +86,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val distanceEntry = table.getEntry("Distance")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
+
+    private val advantageTestPoseEntry = table.getEntry("Test Advantage Pose")
 
 
     val rateCurve = MotionCurve()
@@ -162,6 +171,33 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             position = value
             PoseEstimator.zeroOffset()
         }
+
+    var poseEstimator = SwerveDrivePoseEstimator(
+        SwerveDriveKinematics(
+            Translation2d(
+                modules[0].modulePosition.x.inches.asMeters,
+                modules[0].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[1].modulePosition.x.inches.asMeters,
+                modules[1].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[2].modulePosition.x.inches.asMeters,
+                modules[2].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[3].modulePosition.x.inches.asMeters,
+                modules[3].modulePosition.y.inches.asMeters
+            )
+        ),
+        Rotation2d(heading.asRadians),
+        arrayOf(SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition()),
+        Pose2d(
+            Translation2d(0.0, 0.0), Rotation2d(0.0)
+        )
+    )
+
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
@@ -287,6 +323,37 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
+
+                poseEstimator.update(
+                    Rotation2d(heading.asRadians),
+                    arrayOf(
+                        SwerveModulePosition(
+                            (modules[0].currDistance - modules[0].prevDistance).feet.asMeters,
+                            Rotation2d(modules[0].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[1].currDistance - modules[1].prevDistance).feet.asMeters,
+                            Rotation2d(modules[1].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[2].currDistance - modules[2].prevDistance).feet.asMeters,
+                            Rotation2d(modules[2].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[3].currDistance - modules[3].prevDistance).feet.asMeters,
+                            Rotation2d(modules[3].angle.asRadians)
+                        )
+                    )
+                )
+
+                advantageTestPoseEntry.setDoubleArray(
+                    doubleArrayOf(
+                        poseEstimator.estimatedPosition.x,
+                        poseEstimator.estimatedPosition.y,
+                        heading.asDegrees
+                    )
+                )
+
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
                     if (aimSpeaker) {

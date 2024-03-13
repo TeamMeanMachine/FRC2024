@@ -466,7 +466,7 @@ fun get2DSpeakerOffset(): Pair<Length, Angle>? {
 
 
 
-data class AprilFDetection (
+data class AprilDetection (
     val timestamp: Double,
     val pose: Pose2d,
     val averageDistance: Length,
