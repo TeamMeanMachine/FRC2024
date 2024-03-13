@@ -1,6 +1,11 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.AnalogInput
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -9,13 +14,16 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.motion.following.SwerveDrive
-import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.asFeet
+import org.team2471.frc.lib.units.asRadians
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.cos
+
 
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
@@ -29,12 +37,14 @@ object Pivot: Subsystem("Pivot") {
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
+    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
+
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
     private val pivotEncoder = AnalogInput(AnalogSensors.PIVOT)
 
-    private val gearRatio = 1 / 61.71
+    private const val GEARRATIO = 1 / 61.71
 
     val TESTPOSE = 30.5.degrees //18 //32
     val CLOSESPEAKERPOSE = 59.0.degrees
@@ -44,8 +54,10 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 2592.0 else 2124.0
-    private val MAXTICKS = if (isCompBot) 1393.0 else 940.0
+    private val MINTICKS = if (isCompBot) 1924.0 else 2124.0
+    private val MAXTICKS = if (isCompBot) 714.0 else 940.0
+
+    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
     var aimSpeaker = false
@@ -79,7 +91,8 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             Shooter.manualShootState = Shooter.manualShootState
-
+//
+        //            Uh oh
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -89,7 +102,7 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (PoseEstimator.apriltagsEnabled) PoseEstimator.currentPose.distance(speakerPos) else AprilTag.last2DSpeakerDist.asFeet
+        get() = if (PoseEstimator.apriltagsEnabled) PoseEstimator.currentPose.distance(speakerPos) else AprilTag.last2DSpeakerDist.lastValue()
 
 
 
@@ -106,7 +119,7 @@ object Pivot: Subsystem("Pivot") {
             }
 
             //                              ticks / gear ratio   fudge factor
-            feedbackCoefficient = (360.0 / 2048.0 / gearRatio) * (107.0 / 305.0)
+            feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
 //            brakeMode()
             coastMode()
             inverted(true)
@@ -125,6 +138,11 @@ object Pivot: Subsystem("Pivot") {
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
                 encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
+
+                advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
+                advantagePivotPublisher.set(advantagePivotTransform)
+
+
 //                pivotErrorEntry.setDouble(pivotError)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)

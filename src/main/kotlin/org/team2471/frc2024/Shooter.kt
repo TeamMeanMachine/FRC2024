@@ -154,8 +154,13 @@ object Shooter: Subsystem("Shooter") {
         bottomPEntry.setDouble(shooterMotorBottom.getP())
         bottomDEntry.setDouble(shooterMotorBottom.getD())
 
-        topAmpRPMEntry.setDouble(1100.0)
-        bottomAmpRPMEntry.setDouble(900.0)
+        if (isRedAlliance) {
+            topAmpRPMEntry.setDouble(1150.0)
+            bottomAmpRPMEntry.setDouble(950.0)
+        } else {
+            topAmpRPMEntry.setDouble(1175.0)
+            bottomAmpRPMEntry.setDouble(975.0)
+        }
 
 
         GlobalScope.launch {

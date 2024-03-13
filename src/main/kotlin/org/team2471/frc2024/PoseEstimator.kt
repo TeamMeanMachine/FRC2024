@@ -33,7 +33,7 @@ object PoseEstimator {
 
 
     private var offset = Vector2(0.0, 0.0)
-    private var kAprilScalar: Double = 0.02
+    private var kAprilScalar: Double = 0.1
     var headingOffset = 0.0.degrees
     private var lastZeroTimestamp = 0.0
     val currentPose //in feet

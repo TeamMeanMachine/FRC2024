@@ -325,10 +325,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override fun preEnable() {
-//        Preferences.setDouble("odometer 0", 0.0)
-//        Preferences.setDouble("odometer 1", 0.0)
-//        Preferences.setDouble("odometer 2", 0.0)
-//        Preferences.setDouble("odometer 3", 0.0)
+        Preferences.setDouble("odometer 0", 0.0)
+        Preferences.setDouble("odometer 1", 0.0)
+        Preferences.setDouble("odometer 2", 0.0)
+        Preferences.setDouble("odometer 3", 0.0)
+
 
         odometer0Entry.setDouble(Preferences.getDouble("odometer 0",0.0))
         odometer1Entry.setDouble(Preferences.getDouble("odometer 1",0.0))
@@ -381,7 +382,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             if (aimSpeaker) {
                 val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
                 val dVector = combinedPosition - point
-                aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle else AprilTag.last2DSpeakerAngle
+                aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
 //                println("alkjdfhlsk $aimHeadingSetpoint")
 
                 val angleError = (heading - aimHeadingSetpoint).wrap()
