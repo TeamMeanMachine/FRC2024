@@ -126,22 +126,26 @@ object Robot : MeanlibRobot() {
     }
 
     private fun initTimeMeasurement() {
-        startMeasureTime = System.nanoTime()
+        startMeasureTime = getSystemTimeSeconds()
         lastMeasureTime = startMeasureTime
     }
 
     private fun updateNanosTaken() {
-        lastMeasureTime = System.nanoTime()
+        lastMeasureTime = getSystemTimeSeconds()
     }
 
     fun totalTimeTaken(): Long {
-        return System.nanoTime() - startMeasureTime
+        return getSystemTimeSeconds() - startMeasureTime
     }
 
-    fun recentTimeTaken(): Long {
-        val timeTaken = System.nanoTime() - lastMeasureTime
+    fun recentTimeTaken(): Double {
+        val timeTaken = getSystemTimeSeconds() - lastMeasureTime
         updateNanosTaken()
-        return timeTaken
+        return timeTaken.toDouble()
+    }
+
+    fun getSystemTimeSeconds(): Long {
+        return System.nanoTime() * 1000000
     }
 }
 

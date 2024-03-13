@@ -9,6 +9,7 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion_profiling.MotionCurve
+import org.team2471.frc.lib.units.degrees
 
 object Shooter: Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
@@ -221,7 +222,7 @@ object Shooter: Subsystem("Shooter") {
             if (manualShootState) {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                if (Pivot.pivotEncoderAngle.asDegrees > 90.0 || Pivot.angleSetpoint.asDegrees > 90.0) {
+                if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
                     rpmTopSetpoint = topAmpRPMEntry.getDouble(1100.0)
                     rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(900.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {

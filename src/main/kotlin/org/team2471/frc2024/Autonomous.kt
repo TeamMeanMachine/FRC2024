@@ -150,6 +150,7 @@ object AutoChooser {
         SmartDashboard.putString("autoStatus", "init")
         println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
         resetCameras()
+        println("reset cams ${Robot.recentTimeTaken()}")
         when (selAuto) {
             "HIII" -> hiii()
             "Tests" -> testAuto()
@@ -225,6 +226,7 @@ object AutoChooser {
 
     suspend fun fourClose() = use(Drive, Shooter) {
         try {
+            println("in 4close ${Robot.recentTimeTaken()}")
             Drive.zeroGyro()
             Drive.combinedPosition =
                 if (isRedAlliance) Vector2(49.54, 13.49) else Vector2(49.54, 13.49).reflectAcrossField()
@@ -233,7 +235,9 @@ object AutoChooser {
             var path = auto?.get("1-GrabSecond")
             val t = Timer()
 
+            println("starting aim ${Robot.recentTimeTaken()}")
             aimAndShoot()
+
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid

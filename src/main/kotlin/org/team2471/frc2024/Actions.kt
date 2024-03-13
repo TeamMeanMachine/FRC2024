@@ -3,6 +3,7 @@ package org.team2471.frc2024
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
@@ -12,7 +13,9 @@ import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import org.team2471.frc.lib.util.Timer
@@ -233,6 +236,42 @@ suspend fun lockToAmp() = use(Drive) {
     newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
     newPath.addHeadingPoint(time, 90.0)
     Drive.driveAlongPath(newPath) { OI.driverController.b }
+}
+
+suspend fun flipAmpShot() = use(Pivot) {
+    val endingAngle = Pivot.AMPPOSE
+    val startingAngle = endingAngle - 20.0.degrees
+    val pivotAngleRate = 90.0 //deg per second
+    val shootingAngleThreshold: Angle = 90.0.degrees
+
+    val pivotCurve = MotionCurve()
+    val curveTime = (startingAngle - endingAngle).asDegrees.absoluteValue / pivotAngleRate
+
+    pivotCurve.storeValue(0.0, startingAngle.asDegrees)
+    pivotCurve.storeValue(curveTime, endingAngle.asDegrees)
+
+
+    //start animating
+    val timer = Timer()
+    timer.start()
+    parallel({
+        suspendUntil { Pivot.pivotEncoderAngle > shootingAngleThreshold }
+        println("firing note at time: ${timer.get()}  angle: ${Pivot.pivotEncoderAngle}")
+        fire()
+    }, {
+        periodic {
+            val t = timer.get()
+
+            Pivot.angleSetpoint = pivotCurve.getValue(t).degrees
+
+            if (t > curveTime) {
+                this.stop()
+            }
+        }
+    })
+
+
+    println("finished pivot animation of ${curveTime.round(1)} seconds, took ${timer.get().round(1)} seconds. pivotAngle: ${Pivot.pivotEncoderAngle} endingAngle: $endingAngle")
 }
 
 
