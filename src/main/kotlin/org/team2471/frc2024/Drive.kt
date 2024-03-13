@@ -629,3 +629,12 @@ suspend fun Drive.currentTest() = use(this) {
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
 }
+
+fun latencyAdjust(vector: Vector2, latencySeconds: Double): Vector2? {
+    val odomDiff = Drive.poseDiff(latencySeconds)
+    return if (odomDiff != null) {
+        vector + odomDiff.position
+    } else  {
+        null
+    }
+}
