@@ -1,6 +1,7 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -151,10 +152,11 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 robotCoords,
                                 fieldCoords,
                                 target.yaw,
-                                camera.latestResult.timestampSeconds
+                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis
                             )
                         )
-//                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
+                        println(("pitch: ${target.pitch}"))
+                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
 
                         //advantage scope list
                         notePosAdv.add(

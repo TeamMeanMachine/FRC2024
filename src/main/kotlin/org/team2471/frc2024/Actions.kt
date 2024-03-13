@@ -7,7 +7,6 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.DoubleRange
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
@@ -18,7 +17,9 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
-import org.team2471.frc.lib.util.Timer
+import edu.wpi.first.wpilibj.Timer
+import org.team2471.frc.lib.motion.following.lookupPose
+import org.team2471.frc.lib.motion.following.poseDiff
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.sign
@@ -109,103 +110,118 @@ suspend fun aimAndShoot(print: Boolean = false) {
     fire()
 }
 
-suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, timeOut: Boolean = true) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, timeOut: Boolean = true, expectedPos : Vector2? = null) = use(Drive, name = "pick up note") {
     try {
-        var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
-        var notePosCount: Int = 0
-        val notePosMaxError = 4
-
         println("picking up note")
 
-        if (NoteDetector.seesNote) {
-            println("sees note")
-            var prevHeadingError = 0.0
-            val timer = Timer()
-            timer.start()
-            var prevTime = 0.0
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            periodic {
-                val t = timer.get()
-                val dt = t - prevTime
+        var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
+        var notePosCount: Double = 0.0
 
-                var headingError = 0.0
-                var notePos = Vector2(0.0, 0.0)
+        var success = false
 
-                var useEstimation = false
+        val startTime = Timer.getFPGATimestamp()
 
-                if (NoteDetector.notes.isEmpty() /*|| notePosCount > 10*/) {
-                    useEstimation = true
-                }
-                if (!useEstimation) {
-                    val note = NoteDetector.notes[0]
-                    notePos = note.robotCoords
-                    headingError = note.yawOffset
-                    val fieldPosition = note.fieldCoords
+        var prevHeadingError = 0.0
 
-                    if ((noteEstimatedPosition / notePosCount.toDouble() - fieldPosition).length > notePosMaxError) { // is it a different note
-                        useEstimation = true
-                    } else {
-                        noteEstimatedPosition += fieldPosition
-                        notePosCount++
-                    }
-                }
-                if (useEstimation && notePosCount > 0) {
-                    val noteFieldPose: Vector2 = noteEstimatedPosition / notePosCount.toDouble()
-                    headingError =
-                        0.0 //(noteFieldPose - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees
-                    notePos = (noteFieldPose - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
-                }
+        // Start intaking
+        Intake.intakeState = Intake.IntakeState.INTAKING
 
-                if (notePos != Vector2(0.0, 0.0)) {
+        periodic {
 
-                    val headingVelocity = (headingError - prevHeadingError) / dt
-                    val velocityComponent = headingVelocity * Drive.parameters.kdHeading * 0.1
-                    val turnControl =
-                        sign(headingError) * Drive.parameters.kHeadingFeedForward + headingError * Drive.parameters.kpHeading * 1 //+ velocityComponent
+            var headingError : Double? = null
+            var notePos : Vector2? = null
+            var fieldPos : Vector2? = null
 
-                    var driveSpeed =
-                        if (speed < 0.0) OI.driveLeftTrigger else speed //if (headingError > angleMarginOfError) ((notePos.length - minDist) / 5.0).coerceIn(0.0, OI.driveLeftTrigger) else  OI.driveLeftTrigger
+            val elapsedTime = Timer.getFPGATimestamp() - startTime
 
-                    if (cautious) {
-                        driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
-                    }
+            val estimatedFieldPos = noteEstimatedPosition / notePosCount
 
-//                    if (notePos.x < 0.0) {
-//                        notePos.x = 0.0
-//                    }
-                    val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
-                    Drive.drive(driveDirection * driveSpeed, turnControl, false)
+            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
+            val expectedFieldPos = if (expectedPos != null) { expectedPos * expectedPosWeight + noteEstimatedPosition * (1.0 - expectedPosWeight) } else estimatedFieldPos
+            val notePosMaxError = 2.5 + (2/notePosCount).coerceIn(0.0, 3.0) // If we don't have many measurements then some more error is acceptable
 
+            var noteFound = false
 
-//                println("using estimation: $useEstimation")
-//                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
-//                println("Drive Speed $driveSpeed")
-//                println("turn control: ${turnControl}, heading err: ${headingError}")
-//                println("velocity ${headingVelocity} dt: $dt")
-//                println("difference ${headingError - prevHeadingError}")
-//                println("vcomponent: ${velocityComponent}")
+            for (note in NoteDetector.notes) {
+                val latency = Timer.getFPGATimestamp() - note.timestampSeconds
+                val previousPose = Drive.lookupPose(note.timestampSeconds)!!
+                val poseDiff = Drive.poseDiff(latency)!! // Exclamation marks are probably fine
+                val timeAdjustedRobotPose = (note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
 
-                    prevHeadingError = headingError
-                    prevTime = t
+                val fieldPosition = note.fieldCoords + poseDiff.position
 
-                }
-
-//            println("combinedx: ${Drive.combinedPosition.x}  notex: ${notePos.x}")
-                if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
-                    stop()
-                } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
-                    println("stopped because intake is done, state: ${Intake.intakeState.name}")
-                    stop()
-                } else if (Robot.isAutonomous && timeOut && ((timer.get() > 2.5 && PoseEstimator.apriltagsEnabled) || timer.get() > 4.5)) {
-                    println("exiting pick up note, its been too long")
-                    stop()
+                if ((expectedFieldPos - fieldPosition).length < notePosMaxError) { // is it a different note
+                    notePos = timeAdjustedRobotPose
+                    headingError = note.yawOffset + poseDiff.heading.asDegrees
+                    fieldPos = fieldPosition
+                    noteFound = true
+                    break
                 }
             }
-            Drive.drive(Vector2(0.0, 0.0), 0.0, false)
-        }
 
-    } catch (_: Exception) {
-        println("errored somewhere in seekAndDestroyNote")
+            if (noteFound) {
+                val weight = 1.0
+                noteEstimatedPosition += fieldPos!! * weight
+                notePosCount += weight
+
+            }
+
+            if (!noteFound && notePosCount == 0.0) {
+                println("pick up seen note did not see any note to pickup")
+                stop() // we did not see any note
+            }
+
+            if (!noteFound && notePosCount != 0.0) {
+                headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
+                notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
+            }
+
+            if (notePos != null && headingError != null) {
+
+                val headingVelocity = (headingError - prevHeadingError) / 0.02
+
+                val feedForward = sign(headingError) * 0.001
+                val p = headingError * 0.05
+                val d = headingVelocity * 0.005
+
+                var driveSpeed = if (speed < 0.0) OI.driveLeftTrigger else speed
+                val turnSpeed = feedForward + p + d
+
+                if (cautious) {
+                    driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
+                }
+
+                val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
+                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
+
+                println("using estimation: $noteFound")
+                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+                println("Drive Speed $driveSpeed")
+                println("turn control: ${turnSpeed}, heading err: ${headingError}")
+                println("heading velocity ${headingVelocity}")
+                println("difference ${headingError - prevHeadingError}")
+                println("pcomponent: $p \nvcomponent: ${d}")
+            }
+
+            if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
+                stop()
+            } else if (Intake.intakeState != Intake.IntakeState.INTAKING) {
+                println("stopped because intake is done, state: ${Intake.intakeState.name}")
+                success = true
+                stop()
+            } else if (Robot.isAutonomous && timeOut && ((elapsedTime > 2.5 && PoseEstimator.apriltagsEnabled) || elapsedTime > 4.5)) {
+                println("exiting pick up note, its been too long")
+                stop()
+            }
+
+
+
+        }
+        Drive.drive(Vector2(0.0, 0.0), 0.0, false)
+        return@use success
+
+    } catch (exception: Exception) {
+        println("error in pickUpSeenNote: $exception")
     }
 }
 

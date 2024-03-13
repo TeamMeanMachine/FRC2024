@@ -80,7 +80,7 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
-        ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote() }
+        ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote(cautious = true) }
         driverController::b.whenTrue { lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
 
