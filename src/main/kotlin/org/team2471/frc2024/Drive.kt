@@ -192,7 +192,24 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             )
         ),
         Rotation2d(heading.asRadians),
-        arrayOf(SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition()),
+        arrayOf(
+            SwerveModulePosition(
+                (modules[0].currDistance /*- modules[0].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[0].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[1].currDistance /*- modules[1].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[1].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[2].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[3].angle.asRadians)
+            )
+        ),
         Pose2d(
             Translation2d(0.0, 0.0), Rotation2d(0.0)
         )
@@ -328,19 +345,19 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     Rotation2d(heading.asRadians),
                     arrayOf(
                         SwerveModulePosition(
-                            (modules[0].currDistance - modules[0].prevDistance).feet.asMeters,
+                            (modules[0].currDistance/* - modules[0].prevDistance*/).feet.asMeters,
                             Rotation2d(modules[0].angle.asRadians)
                         ),
                         SwerveModulePosition(
-                            (modules[1].currDistance - modules[1].prevDistance).feet.asMeters,
+                            (modules[1].currDistance/* - modules[1].prevDistance*/).feet.asMeters,
                             Rotation2d(modules[1].angle.asRadians)
                         ),
                         SwerveModulePosition(
-                            (modules[2].currDistance - modules[2].prevDistance).feet.asMeters,
+                            (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
                             Rotation2d(modules[2].angle.asRadians)
                         ),
                         SwerveModulePosition(
-                            (modules[3].currDistance - modules[3].prevDistance).feet.asMeters,
+                            (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
                             Rotation2d(modules[3].angle.asRadians)
                         )
                     )
