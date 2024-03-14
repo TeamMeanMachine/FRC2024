@@ -113,7 +113,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-140.8).degrees,
+            Preferences.getDouble("Angle Offset 0",-140.58).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -122,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-21.4).degrees,
+            Preferences.getDouble("Angle Offset 1",-20.39).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -131,7 +131,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",39.06).degrees,
+            Preferences.getDouble("Angle Offset 2",36.67).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -140,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",43.65).degrees,
+            Preferences.getDouble("Angle Offset 3",164.47).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -586,7 +586,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
@@ -673,5 +673,14 @@ suspend fun Drive.currentTest() = use(this) {
         currModule.turnMotor.setPositionSetpoint(0.0)
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
+    }
+}
+
+fun latencyAdjust(vector: Vector2, latencySeconds: Double): Vector2? {
+    val odomDiff = Drive.poseDiff(latencySeconds)
+    return if (odomDiff != null) {
+        vector + odomDiff.position
+    } else  {
+        null
     }
 }
