@@ -25,6 +25,7 @@ import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.util.Timer
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -73,6 +74,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val positionXEntry = table.getEntry("Position X")
     val positionYEntry = table.getEntry("Position Y")
 
+    val speedEntry = table.getEntry("Speed")
+    val accelerationEntry = table.getEntry("Acceleration")
+    val rotationalSpeedEntry = table.getEntry("rotational Speed")
+    val rotationalAccelerationEntry = table.getEntry("rotational Acceleration")
 
     val useGyroEntry = table.getEntry("Use Gyro")
 
@@ -153,10 +158,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             gyroOffset = gyro.angle.degrees + value
         }
 
+    private var prevSpeed = 0.0
+    private var prevRotationalSpeed = 0.0
+    private var prevHeading = 0.0
+    private var prevPosition = Vector2(0.0, 0.0)
+    private var prevTime = 0.0
+//    private var velocityField = Vector2(0.0, 0.0)
+
     override val headingRate: AngularVelocity
         get() = -gyro.rate.degrees.perSecond
 
-    override var velocity = Vector2(0.0, 0.0)
+    override var velocity = Vector2 (0.0, 0.0)
+//        get() = velocityField
     override var position = Vector2(0.0, 0.0)
     override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
@@ -234,6 +247,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
             println("in init just before periodic")
+            val t = Timer()
+            t.start()
             periodic {
                 val batteryVolt = RobotController.getBatteryVoltage() > 12.7
                 SmartDashboard.putBoolean("Battery Good", batteryVolt)
@@ -278,6 +293,26 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
                 distanceEntry.setDouble(distance)
+
+//                val time = t.get()
+//                val dt = time - prevTime
+//                velocity = (position - prevPosition) / dt //velocityField
+//                val speed = velocity.length
+//                speedEntry.setDouble(speed)
+//                val acceleration = (speed - prevSpeed) / dt
+//                accelerationEntry.setDouble(acceleration)
+//                val rotationalSpeed = (heading.asDegrees - prevHeading) / dt
+//                rotationalSpeedEntry.setDouble(rotationalSpeed)
+//                val rotationalAcceleration = (rotationalSpeed - prevRotationalSpeed) / dt
+//                rotationalAccelerationEntry.setDouble(rotationalAcceleration)
+
+//                if (speed.round(2) != 0.0) println("t: ${time.round(2)}  position: ${position.round(2)}  speed: ${speed.round(2)}  accel: ${acceleration.round(2)}  heading ${heading.asDegrees.round(2)}  rSpeed: ${rotationalSpeed.round(2)}  rAccel: ${rotationalAcceleration.round(2)}")
+
+//                prevPosition = position
+//                prevSpeed = speed
+//                prevRotationalSpeed = rotationalSpeed
+//                prevHeading = heading.asDegrees
+//                prevTime = time
 
                 var totalDriveCurrent = 0.0
                 for (i in modules) {
@@ -363,6 +398,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
     }
+
+    fun frontSpeakerResetOdom() {
+        if (isRedAlliance) {
+            position = Vector2(48.2, 18.25)
+        } else {
+            position = Vector2(48.2, 18.25).reflectAcrossField()
+        }
+        println("resetting to front speaker pos. $position")
+    }
+
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {
         val modX = -y.asMeters + fieldCenterOffsetInMeters.y
         val modY = x.asMeters + fieldCenterOffsetInMeters.x
@@ -379,10 +424,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             var translation = OI.driveTranslation
 
-            if (aimSpeaker) {
-                val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-                val dVector = combinedPosition - point
-                aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+
+            if (aimSpeaker || aimAmp) {
+                if (aimSpeaker) {
+                    val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+                    val dVector = combinedPosition - point
+                    aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+                } else {
+                    aimHeadingSetpoint = 90.0.degrees
+                }
 //                println("alkjdfhlsk $aimHeadingSetpoint")
 
                 val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -391,22 +441,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     turn = aimPDController.update(angleError.asDegrees)
 //                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                 }
-            } else if (aimAmp) {
-                aimHeadingSetpoint = 90.0.degrees
-
-                val ampAngleError = (heading - aimHeadingSetpoint).wrap()
-
-                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asMeters else 581.77
+            }
+//            if (aimAmp) {
+//                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asFeet else 581.77.inches.asFeet
 //                println(xError)
 
-                if (abs(ampAngleError.asDegrees) > 2.0) {
-                    turn = aimPDController.update(ampAngleError.asDegrees)
-                }
 
-                if (abs(xError) > 0.1) {
-                    translation.x = xError
-                }
-            }
+
+
+//                if (abs(xError) > 0.1) {
+//                    translation.y = xError * parameters.kpPosition
+//                }
+//            }
 
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
