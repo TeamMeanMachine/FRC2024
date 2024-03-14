@@ -269,7 +269,7 @@ suspend fun lockToAmp() /*= use(Drive)*/ {
 suspend fun flipAmpShot() = use(Pivot) {
     val endingAngle = Pivot.MAXHARDSTOP
     val startingAngle = Pivot.AMPPOSE
-    val pivotAngleRate = 80.0 //deg per second
+    val pivotAngleRate = Pivot.pivotAmpRate.getDouble(80.0) //deg per second
     val shootingAngleThreshold: Angle = 90.0.degrees
 
     val pivotCurve = MotionCurve()

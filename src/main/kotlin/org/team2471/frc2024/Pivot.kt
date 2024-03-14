@@ -1,6 +1,5 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation3d
@@ -15,7 +14,6 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Drive.speakerPos
@@ -37,6 +35,7 @@ object Pivot: Subsystem("Pivot") {
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
+    val pivotAmpRate = table.getEntry("Pivot amp rate")
     var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
 
 
@@ -128,6 +127,7 @@ object Pivot: Subsystem("Pivot") {
         }
 
         pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+        pivotAmpRate.setDouble(80.0)
 
 
         GlobalScope.launch {

@@ -155,8 +155,8 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 Timer.getFPGATimestamp() - camera.latestResult.latencyMillis
                             )
                         )
-                        println(("pitch: ${target.pitch}"))
-                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
+//                        println(("pitch: ${target.pitch}"))
+//                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
 
                         //advantage scope list
                         notePosAdv.add(
