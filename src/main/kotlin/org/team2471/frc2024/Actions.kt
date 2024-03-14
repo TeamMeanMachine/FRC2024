@@ -117,6 +117,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
         var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
         var notePosCount: Double = 0.0
 
+        val newMeasurementWeight : Double = 0.07
+
+        var noteFoundFlag = false
+
         var success = false
 
         val startTime = Timer.getFPGATimestamp()
@@ -134,11 +138,15 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
             val elapsedTime = Timer.getFPGATimestamp() - startTime
 
-            val estimatedFieldPos = noteEstimatedPosition / notePosCount
+            val estimatedFieldPos = noteEstimatedPosition
 
-            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
-            val expectedFieldPos = if (expectedPos != null) { expectedPos * expectedPosWeight + noteEstimatedPosition * (1.0 - expectedPosWeight) } else estimatedFieldPos
-            val notePosMaxError = 2.5 + (2/notePosCount).coerceIn(0.0, 3.0) // If we don't have many measurements then some more error is acceptable
+//            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
+            var expectedFieldPos : Vector2? = expectedPos
+            var notePosMaxError = 3.5
+            if (noteFoundFlag) {
+                expectedFieldPos = expectedPos ?: estimatedFieldPos
+//                notePosMaxError = 3.5 // If we don't have many measurements then some more error is acceptable
+            }
 
             var noteFound = false
 
@@ -146,32 +154,41 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 val latency = Timer.getFPGATimestamp() - note.timestampSeconds
                 val previousPose = Drive.lookupPose(note.timestampSeconds)!!
                 val poseDiff = Drive.poseDiff(latency)!! // Exclamation marks are probably fine
-                val timeAdjustedRobotPose = (note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
+//                println(previousPose)
+//                println(poseDiff)
+                val timeAdjustedRobotPose = note.robotCoords//(note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
 
-                val fieldPosition = note.fieldCoords + poseDiff.position
+                val fieldPosition = note.fieldCoords //+ poseDiff.position
 
-                if ((expectedFieldPos - fieldPosition).length < notePosMaxError) { // is it a different note
+//                if ((expectedFieldPos != null && (expectedFieldPos!! - fieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
+//                    println("note passed check")
                     notePos = timeAdjustedRobotPose
-                    headingError = note.yawOffset + poseDiff.heading.asDegrees
+                    headingError = note.yawOffset //+ poseDiff.heading.asDegrees
                     fieldPos = fieldPosition
                     noteFound = true
                     break
-                }
+//                }
             }
 
+            // Update estimated Position
             if (noteFound) {
-                val weight = 1.0
-                noteEstimatedPosition += fieldPos!! * weight
-                notePosCount += weight
+                noteEstimatedPosition *= (1 - newMeasurementWeight)
+                noteEstimatedPosition += (fieldPos!! * newMeasurementWeight)
+
+//                val weight = 1.0
+//                noteEstimatedPosition += weight * fieldPos
+//                notePosCount += weight
 
             }
 
-            if (!noteFound && notePosCount == 0.0) {
+            if (!noteFound && !noteFoundFlag) {
                 println("pick up seen note did not see any note to pickup")
                 stop() // we did not see any note
             }
 
-            if (!noteFound && notePosCount != 0.0) {
+            noteFoundFlag = true
+
+            if (!noteFound && noteFoundFlag) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
                 notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
             }
@@ -181,7 +198,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 val headingVelocity = (headingError - prevHeadingError) / 0.02
 
                 val feedForward = sign(headingError) * 0.001
-                val p = headingError * 0.05
+                val p = headingError * 0.005
                 val d = headingVelocity * 0.005
 
                 var driveSpeed = if (speed < 0.0) OI.driveLeftTrigger else speed
@@ -192,15 +209,18 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 }
 
                 val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
-                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
+                Drive.drive(driveDirection * driveSpeed * 0.0, turnSpeed, false)
 
-                println("using estimation: $noteFound")
+                println("note Found: $noteFound")
                 println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+                println("FIELD x: ${fieldPos!!.x}, y: ${fieldPos!!.y}")
                 println("Drive Speed $driveSpeed")
                 println("turn control: ${turnSpeed}, heading err: ${headingError}")
                 println("heading velocity ${headingVelocity}")
                 println("difference ${headingError - prevHeadingError}")
                 println("pcomponent: $p \nvcomponent: ${d}")
+
+                prevHeadingError = headingError
             }
 
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
@@ -221,7 +241,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
         return@use success
 
     } catch (exception: Exception) {
-        println("error in pickUpSeenNote: $exception")
+        println("error in pickUpSeenNote: \n$exception")
     }
 }
 

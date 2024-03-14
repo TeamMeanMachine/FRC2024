@@ -101,14 +101,18 @@ object NoteDetector: Subsystem("NoteDetector") {
     init {
         println("init note detector")
 
-        distanceCurve.storeValue(-8.3, 2.0)
-        distanceCurve.storeValue(2.4, 4.0)
-        distanceCurve.storeValue(7.25, 8.0)
-        distanceCurve.storeValue(5.5, 6.0)
-        distanceCurve.storeValue(-0.6, 3.0)
-        distanceCurve.storeValue(8.35, 10.0)
-        distanceCurve.storeValue(9.0, 12.0)
-        distanceCurve.storeValue(-13.3, 1.65)
+        distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false) // IDK IF THIS GOES BFORE OR AFTER
+        distanceCurve.storeValue(-14.7, 14.0.inches.asFeet)
+        distanceCurve.storeValue(-11.3, 1.5)
+        distanceCurve.storeValue(-6.14, 2.0)
+        distanceCurve.storeValue(-2.3, 2.5)
+        distanceCurve.storeValue(0.35, 3.0)
+        distanceCurve.storeValue(1.8, 3.5)
+        distanceCurve.storeValue(3.5, 4.0)
+        distanceCurve.storeValue(6.85, 6.0)
+        distanceCurve.storeValue(8.49, 8.0)
+        distanceCurve.storeValue(9.7, 10.0)
+        distanceCurve.storeValue(10.6, 12.0)
         distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
 
@@ -155,8 +159,9 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 Timer.getFPGATimestamp() - camera.latestResult.latencyMillis
                             )
                         )
-                        println(("pitch: ${target.pitch}"))
-                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
+
+//                        println(("pitch: ${target.pitch}"))
+//                        println("x: ${robotCoords.x}\ny:${robotCoords.y}")
 
                         //advantage scope list
                         notePosAdv.add(
