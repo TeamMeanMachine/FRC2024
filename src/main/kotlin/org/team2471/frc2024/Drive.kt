@@ -1,7 +1,14 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.estimator.KalmanFilter
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics
+import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.math.kinematics.WheelPositions
+import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -18,13 +25,12 @@ import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.util.Timer
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -73,6 +79,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val positionXEntry = table.getEntry("Position X")
     val positionYEntry = table.getEntry("Position Y")
 
+    val speedEntry = table.getEntry("Speed")
+    val accelerationEntry = table.getEntry("Acceleration")
+    val rotationalSpeedEntry = table.getEntry("rotational Speed")
+    val rotationalAccelerationEntry = table.getEntry("rotational Acceleration")
 
     val useGyroEntry = table.getEntry("Use Gyro")
 
@@ -81,6 +91,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val distanceEntry = table.getEntry("Distance")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
+
+    private val advantageTestPoseEntry = table.getEntry("Test Advantage Pose")
 
 
     val rateCurve = MotionCurve()
@@ -108,7 +120,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-140.58).degrees,
+            Preferences.getDouble("Angle Offset 0",-140.8).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -117,7 +129,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-20.39).degrees,
+            Preferences.getDouble("Angle Offset 1",-21.4).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -126,7 +138,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",36.67).degrees,
+            Preferences.getDouble("Angle Offset 2",39.06).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -135,7 +147,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",164.47).degrees,
+            Preferences.getDouble("Angle Offset 3",43.65).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -153,6 +165,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             gyroOffset = gyro.angle.degrees + value
         }
 
+    private var prevSpeed = 0.0
+    private var prevRotationalSpeed = 0.0
+    private var prevHeading = 0.0
+    private var prevPosition = Vector2(0.0, 0.0)
+    private var prevTime = 0.0
+//    private var velocityField = Vector2(0.0, 0.0)
+
     override val headingRate: AngularVelocity
         get() = -gyro.rate.degrees.perSecond
 
@@ -164,6 +183,50 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             position = value
             PoseEstimator.zeroOffset()
         }
+
+    var poseEstimator = SwerveDrivePoseEstimator(
+        SwerveDriveKinematics(
+            Translation2d(
+                modules[0].modulePosition.x.inches.asMeters,
+                modules[0].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[1].modulePosition.x.inches.asMeters,
+                modules[1].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[2].modulePosition.x.inches.asMeters,
+                modules[2].modulePosition.y.inches.asMeters
+            ),
+            Translation2d(
+                modules[3].modulePosition.x.inches.asMeters,
+                modules[3].modulePosition.y.inches.asMeters
+            )
+        ),
+        Rotation2d(heading.asRadians),
+        arrayOf(
+            SwerveModulePosition(
+                (modules[0].currDistance /*- modules[0].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[0].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[1].currDistance /*- modules[1].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[1].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[2].angle.asRadians)
+            ),
+            SwerveModulePosition(
+                (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
+                Rotation2d(modules[3].angle.asRadians)
+            )
+        ),
+        Pose2d(
+            Translation2d(0.0, 0.0), Rotation2d(0.0)
+        )
+    )
+
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
@@ -234,6 +297,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
             println("in init just before periodic")
+            val t = Timer()
+            t.start()
             periodic {
                 val batteryVolt = RobotController.getBatteryVoltage() > 12.7
                 SmartDashboard.putBoolean("Battery Good", batteryVolt)
@@ -279,6 +344,24 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 positionYEntry.setDouble(position.y)
                 distanceEntry.setDouble(distance)
 
+                val time = t.get()
+                val dt = time - prevTime
+                velocity = (position - prevPosition) / dt
+//                val speed = velocity.length
+//                speedEntry.setDouble(speed)
+//                val acceleration = (speed - prevSpeed) / dt
+//                accelerationEntry.setDouble(acceleration)
+//                val rotationalSpeed = (heading.asDegrees - prevHeading) / dt
+//                rotationalSpeedEntry.setDouble(rotationalSpeed)
+//                val rotationalAcceleration = (rotationalSpeed - prevRotationalSpeed) / dt
+//                rotationalAccelerationEntry.setDouble(rotationalAcceleration)
+//                if (speed.round(2) != 0.0) println("t: ${time.round(2)}  position: ${position.round(2)}  speed: ${speed.round(2)}  accel: ${acceleration.round(2)}  heading ${heading.asDegrees.round(2)}  rSpeed: ${rotationalSpeed.round(2)}  rAccel: ${rotationalAcceleration.round(2)}")
+//                prevSpeed = speed
+//                prevRotationalSpeed = rotationalSpeed
+//                prevHeading = heading.asDegrees
+                prevPosition = position
+                prevTime = time
+
                 var totalDriveCurrent = 0.0
                 for (i in modules) {
                     totalDriveCurrent += (i as Module).driveCurrent
@@ -289,6 +372,37 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += (i as Module).turnMotor.current
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
+
+                poseEstimator.update(
+                    Rotation2d(heading.asRadians),
+                    arrayOf(
+                        SwerveModulePosition(
+                            (modules[0].currDistance/* - modules[0].prevDistance*/).feet.asMeters,
+                            Rotation2d(modules[0].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[1].currDistance/* - modules[1].prevDistance*/).feet.asMeters,
+                            Rotation2d(modules[1].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
+                            Rotation2d(modules[2].angle.asRadians)
+                        ),
+                        SwerveModulePosition(
+                            (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
+                            Rotation2d(modules[3].angle.asRadians)
+                        )
+                    )
+                )
+
+                advantageTestPoseEntry.setDoubleArray(
+                    doubleArrayOf(
+                        poseEstimator.estimatedPosition.x,
+                        poseEstimator.estimatedPosition.y,
+                        heading.asDegrees
+                    )
+                )
+
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
                     if (aimSpeaker) {
@@ -325,11 +439,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override fun preEnable() {
-        Preferences.setDouble("odometer 0", 0.0)
-        Preferences.setDouble("odometer 1", 0.0)
-        Preferences.setDouble("odometer 2", 0.0)
-        Preferences.setDouble("odometer 3", 0.0)
-
+//        Preferences.setDouble("odometer 0", 0.0)
+//        Preferences.setDouble("odometer 1", 0.0)
+//        Preferences.setDouble("odometer 2", 0.0)
+//        Preferences.setDouble("odometer 3", 0.0)
 
         odometer0Entry.setDouble(Preferences.getDouble("odometer 0",0.0))
         odometer1Entry.setDouble(Preferences.getDouble("odometer 1",0.0))
@@ -363,6 +476,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
         println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
     }
+
+    fun frontSpeakerResetOdom() {
+        if (isRedAlliance) {
+            position = Vector2(48.2, 18.25)
+        } else {
+            position = Vector2(48.2, 18.25).reflectAcrossField()
+        }
+        println("resetting to front speaker pos. $position")
+    }
+
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {
         val modX = -y.asMeters + fieldCenterOffsetInMeters.y
         val modY = x.asMeters + fieldCenterOffsetInMeters.x
@@ -379,10 +502,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             var translation = OI.driveTranslation
 
-            if (aimSpeaker) {
-                val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-                val dVector = combinedPosition - point
-                aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+
+            if (aimSpeaker || aimAmp) {
+                if (aimSpeaker) {
+                    val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+                    val dVector = combinedPosition - point
+                    aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+                } else {
+                    aimHeadingSetpoint = 90.0.degrees
+                }
 //                println("alkjdfhlsk $aimHeadingSetpoint")
 
                 val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -391,22 +519,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     turn = aimPDController.update(angleError.asDegrees)
 //                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                 }
-            } else if (aimAmp) {
-                aimHeadingSetpoint = 90.0.degrees
-
-                val ampAngleError = (heading - aimHeadingSetpoint).wrap()
-
-                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asMeters else 581.77
+            }
+//            if (aimAmp) {
+//                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asFeet else 581.77.inches.asFeet
 //                println(xError)
 
-                if (abs(ampAngleError.asDegrees) > 2.0) {
-                    turn = aimPDController.update(ampAngleError.asDegrees)
-                }
 
-                if (abs(xError) > 0.1) {
-                    translation.x = xError
-                }
-            }
+
+
+//                if (abs(xError) > 0.1) {
+//                    translation.y = xError * parameters.kpPosition
+//                }
+//            }
 
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
@@ -540,7 +664,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
@@ -630,10 +754,10 @@ suspend fun Drive.currentTest() = use(this) {
     }
 }
 
-fun latencyAdjust(vector: Vector2, latencySeconds: Double): Vector2? {
+fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L? {
     val odomDiff = Drive.poseDiff(latencySeconds)
     return if (odomDiff != null) {
-        vector + odomDiff.position
+        vector + odomDiff.position.feet
     } else  {
         null
     }

@@ -77,18 +77,12 @@ object OI : Subsystem("OI") {
             }
         }
         driverController::a.whenTrue { spit() }
-        driverController::rightTriggerFullPress.whenTrue { fire() }
+        driverController::rightTriggerFullPress.whenTrue { if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
         ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote(cautious = true) }
-        driverController::b.whenTrue { lockToAmp() }
+        driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
-
-
-
-
-
-
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
@@ -98,10 +92,10 @@ object OI : Subsystem("OI") {
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) + 25); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) + 25) }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) - 25); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) - 25) }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) + 25.0); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) + 25) }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) - 25.0); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) - 25) }
 
-        operatorController::start.whenTrue { resetCameras() }
+        operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
 
         GlobalScope.launch {
             periodic {
