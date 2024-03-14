@@ -185,46 +185,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
     var poseEstimator = SwerveDrivePoseEstimator(
-        SwerveDriveKinematics(
-            Translation2d(
-                modules[0].modulePosition.x.inches.asMeters,
-                modules[0].modulePosition.y.inches.asMeters
-            ),
-            Translation2d(
-                modules[1].modulePosition.x.inches.asMeters,
-                modules[1].modulePosition.y.inches.asMeters
-            ),
-            Translation2d(
-                modules[2].modulePosition.x.inches.asMeters,
-                modules[2].modulePosition.y.inches.asMeters
-            ),
-            Translation2d(
-                modules[3].modulePosition.x.inches.asMeters,
-                modules[3].modulePosition.y.inches.asMeters
-            )
-        ),
+        SwerveDriveKinematics(Translation2d(), Translation2d()),
         Rotation2d(heading.asRadians),
-        arrayOf(
-            SwerveModulePosition(
-                (modules[0].currDistance /*- modules[0].prevDistance*/).feet.asMeters,
-                Rotation2d(modules[0].angle.asRadians)
-            ),
-            SwerveModulePosition(
-                (modules[1].currDistance /*- modules[1].prevDistance*/).feet.asMeters,
-                Rotation2d(modules[1].angle.asRadians)
-            ),
-            SwerveModulePosition(
-                (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
-                Rotation2d(modules[2].angle.asRadians)
-            ),
-            SwerveModulePosition(
-                (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
-                Rotation2d(modules[3].angle.asRadians)
-            )
-        ),
-        Pose2d(
-            Translation2d(0.0, 0.0), Rotation2d(0.0)
-        )
+        arrayOf(SwerveModulePosition(), SwerveModulePosition()),
+        Pose2d(Translation2d(0.0, 0.0), Rotation2d(0.0))
     )
 
     override var robotPivot = Vector2(0.0, 0.0)
@@ -375,25 +339,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 poseEstimator.update(
                     Rotation2d(heading.asRadians),
-                    arrayOf(
-                        SwerveModulePosition(
-                            (modules[0].currDistance/* - modules[0].prevDistance*/).feet.asMeters,
-                            Rotation2d(modules[0].angle.asRadians)
-                        ),
-                        SwerveModulePosition(
-                            (modules[1].currDistance/* - modules[1].prevDistance*/).feet.asMeters,
-                            Rotation2d(modules[1].angle.asRadians)
-                        ),
-                        SwerveModulePosition(
-                            (modules[2].currDistance /*- modules[2].prevDistance*/).feet.asMeters,
-                            Rotation2d(modules[2].angle.asRadians)
-                        ),
-                        SwerveModulePosition(
-                            (modules[3].currDistance /*- modules[3].prevDistance*/).feet.asMeters,
-                            Rotation2d(modules[3].angle.asRadians)
-                        )
-                    )
+                    arrayOf(SwerveModulePosition(), SwerveModulePosition())
                 )
+
+//                poseEstimator.addVisionMeasurement(Pose2d(Translation2d(position.x.feet.asMeters, position.y.feet.asMeters), Rotation2d(heading.asRadians)), Timer.getFPGATimestamp())
 
                 advantageTestPoseEntry.setDoubleArray(
                     doubleArrayOf(
