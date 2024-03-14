@@ -199,7 +199,17 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                     driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
                 }
 
+                if (Robot.isAutonomous && isBlueAlliance && notePos.x + Drive.position.x > 28.135) {
+                    stop()
+                } else if (Robot.isAutonomous && isRedAlliance && notePos.x + Drive.position.x < 24.135) {
+                    stop()
+                }
+
+                if (notePos.x < 0.0) {
+                    notePos.x = 0.0
+                }
                 val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
+
                 Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
 
                 println("using estimation: $noteFound")
