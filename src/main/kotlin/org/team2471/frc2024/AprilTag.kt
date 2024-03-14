@@ -233,7 +233,6 @@ private fun getEstimatedGlobalPose(camera: PhotonCamera, numTargets: Int, single
                 return null
             }
         } else {
-            println("Valid targets null")
             return null
         }
 
