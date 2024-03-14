@@ -53,7 +53,7 @@ suspend fun spit() = use(Intake) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun fire(duration: Double? = null) = use(Shooter){
+suspend fun fire() = use(Shooter){
     val t = Timer()
 //    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
     Intake.intakeState = Intake.IntakeState.SHOOTING
@@ -61,16 +61,8 @@ suspend fun fire(duration: Double? = null) = use(Shooter){
     t.start()
     periodic {
         Intake.intakeState = Intake.IntakeState.SHOOTING
-        if ((t.get() > 0.3 && Robot.isAutonomous) && duration == null) {
-            println("exiting shooting from autonomous")
-            this.stop()
-        }
-        if (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.1) && t.get() > 0.1 && duration == null) {
-            println("exiting shooting from released trigger")
-            this.stop()
-        }
-        if (duration != null && t.get() > duration) {
-            println("exiting shooting from exceeded set duration of $duration")
+        if ((t.get() > 0.3 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.1) && t.get() > 0.1)) {
+            println("exiting shooting")
             this.stop()
         }
     }
@@ -125,6 +117,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
         var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
         var notePosCount: Double = 0.0
 
+        val newMeasurementWeight : Double = 0.07
+
+        var noteFoundFlag = false
+
         var success = false
 
         val startTime = Timer.getFPGATimestamp()
@@ -142,11 +138,15 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
             val elapsedTime = Timer.getFPGATimestamp() - startTime
 
-            val estimatedFieldPos = noteEstimatedPosition / notePosCount
+            val estimatedFieldPos = noteEstimatedPosition
 
-            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
-            val expectedFieldPos = if (expectedPos != null) { expectedPos * expectedPosWeight + noteEstimatedPosition * (1.0 - expectedPosWeight) } else estimatedFieldPos
-            val notePosMaxError = 2.5 + (2/notePosCount).coerceIn(0.0, 3.0) // If we don't have many measurements then some more error is acceptable
+//            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
+            var expectedFieldPos : Vector2? = expectedPos
+            var notePosMaxError = 3.5
+            if (noteFoundFlag) {
+                expectedFieldPos = expectedPos ?: estimatedFieldPos
+//                notePosMaxError = 3.5 // If we don't have many measurements then some more error is acceptable
+            }
 
             var noteFound = false
 
@@ -154,32 +154,41 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 val latency = Timer.getFPGATimestamp() - note.timestampSeconds
                 val previousPose = Drive.lookupPose(note.timestampSeconds)!!
                 val poseDiff = Drive.poseDiff(latency)!! // Exclamation marks are probably fine
-                val timeAdjustedRobotPose = (note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
+//                println(previousPose)
+//                println(poseDiff)
+                val timeAdjustedRobotPose = note.robotCoords//(note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
 
-                val fieldPosition = note.fieldCoords + poseDiff.position
+                val fieldPosition = note.fieldCoords //+ poseDiff.position
 
-                if ((expectedFieldPos - fieldPosition).length < notePosMaxError) { // is it a different note
+//                if ((expectedFieldPos != null && (expectedFieldPos!! - fieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
+//                    println("note passed check")
                     notePos = timeAdjustedRobotPose
-                    headingError = note.yawOffset + poseDiff.heading.asDegrees
+                    headingError = note.yawOffset //+ poseDiff.heading.asDegrees
                     fieldPos = fieldPosition
                     noteFound = true
                     break
-                }
+//                }
             }
 
+            // Update estimated Position
             if (noteFound) {
-                val weight = 1.0
-                noteEstimatedPosition += fieldPos!! * weight
-                notePosCount += weight
+                noteEstimatedPosition *= (1 - newMeasurementWeight)
+                noteEstimatedPosition += (fieldPos!! * newMeasurementWeight)
+
+//                val weight = 1.0
+//                noteEstimatedPosition += weight * fieldPos
+//                notePosCount += weight
 
             }
 
-            if (!noteFound && notePosCount == 0.0) {
+            if (!noteFound && !noteFoundFlag) {
                 println("pick up seen note did not see any note to pickup")
                 stop() // we did not see any note
             }
 
-            if (!noteFound && notePosCount != 0.0) {
+            noteFoundFlag = true
+
+            if (!noteFound && noteFoundFlag) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
                 notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
             }
@@ -189,7 +198,7 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 val headingVelocity = (headingError - prevHeadingError) / 0.02
 
                 val feedForward = sign(headingError) * 0.001
-                val p = headingError * 0.05
+                val p = headingError * 0.005
                 val d = headingVelocity * 0.005
 
                 var driveSpeed = if (speed < 0.0) OI.driveLeftTrigger else speed
@@ -200,15 +209,18 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 }
 
                 val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
-                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
+                Drive.drive(driveDirection * driveSpeed * 0.0, turnSpeed, false)
 
-                println("using estimation: $noteFound")
+                println("note Found: $noteFound")
                 println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+                println("FIELD x: ${fieldPos!!.x}, y: ${fieldPos!!.y}")
                 println("Drive Speed $driveSpeed")
                 println("turn control: ${turnSpeed}, heading err: ${headingError}")
                 println("heading velocity ${headingVelocity}")
                 println("difference ${headingError - prevHeadingError}")
                 println("pcomponent: $p \nvcomponent: ${d}")
+
+                prevHeadingError = headingError
             }
 
             if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
@@ -229,41 +241,36 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
         return@use success
 
     } catch (exception: Exception) {
-        println("error in pickUpSeenNote: $exception")
+        println("error in pickUpSeenNote: \n$exception")
     }
 }
 
-suspend fun lockToAmp() /*= use(Drive)*/ {
-    Drive.aimAmp = true
+suspend fun lockToAmp() = use(Drive) {
+//    Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
-    suspendUntil(20) { !OI.driverController.b }
-    Drive.aimAmp = false
+//    suspendUntil(20) { !OI.driverController.b }
+//    Drive.aimAmp = false
 
     val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition)
     if (isBlueAlliance) {
-        newPath.addPoint(6.0, 25.0)  // coords??
+        newPath.addPoint(7.0, 25.0)  // coords??
 //        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)
     } else {
-        newPath.addPoint(48.0, 25.0)  // coords??
+        newPath.addPoint(47.0, 25.0)  // coords??
 //        newPath.addPointAndTangent(47.0, 25.0, 0.0, -4.0)
     }
     val distance = newPath.length
-    val rate = max(Drive.velocity.length, 15.0) // if we are stopped, use 5 fps
-    var time = distance / rate * 2.0
-    if (time < 0.5) {
-        time = 0.5
-    }
+    val rate = max(Drive.velocity.length, 5.0) // if we are stopped, use 5 fps
+    val time = distance / rate * 2.0
     newPath.duration = time
     newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
     newPath.addEasePoint(0.0, 0.0)
     newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(true)
     newPath.addEasePoint(time, 1.0)
     newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
-    newPath.addHeadingPoint(time * 0.5, 90.0)
     newPath.addHeadingPoint(time, 90.0)
-//    Drive.driveAlongPath(newPath, headingOverride = {90.0.degrees}) { !OI.driverController.b }
-    println("im at amp")
+    Drive.driveAlongPath(newPath) { OI.driverController.b }
 }
 
 suspend fun flipAmpShot() = use(Pivot) {
@@ -283,8 +290,9 @@ suspend fun flipAmpShot() = use(Pivot) {
     val timer = Timer()
     timer.start()
     parallel({
+        suspendUntil { Pivot.pivotEncoderAngle > shootingAngleThreshold }
         println("firing note at time: ${timer.get()}  angle: ${Pivot.pivotEncoderAngle}")
-        fire(1.0)
+        fire()
     }, {
         periodic {
             val t = timer.get()

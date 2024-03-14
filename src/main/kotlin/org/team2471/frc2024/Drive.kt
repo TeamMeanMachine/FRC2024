@@ -175,8 +175,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val headingRate: AngularVelocity
         get() = -gyro.rate.degrees.perSecond
 
-    override var velocity = Vector2 (0.0, 0.0)
-//        get() = velocityField
+    override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
     override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
@@ -345,9 +344,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 positionYEntry.setDouble(position.y)
                 distanceEntry.setDouble(distance)
 
-//                val time = t.get()
-//                val dt = time - prevTime
-//                velocity = (position - prevPosition) / dt //velocityField
+                val time = t.get()
+                val dt = time - prevTime
+                velocity = (position - prevPosition) / dt
 //                val speed = velocity.length
 //                speedEntry.setDouble(speed)
 //                val acceleration = (speed - prevSpeed) / dt
@@ -356,14 +355,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                rotationalSpeedEntry.setDouble(rotationalSpeed)
 //                val rotationalAcceleration = (rotationalSpeed - prevRotationalSpeed) / dt
 //                rotationalAccelerationEntry.setDouble(rotationalAcceleration)
-
 //                if (speed.round(2) != 0.0) println("t: ${time.round(2)}  position: ${position.round(2)}  speed: ${speed.round(2)}  accel: ${acceleration.round(2)}  heading ${heading.asDegrees.round(2)}  rSpeed: ${rotationalSpeed.round(2)}  rAccel: ${rotationalAcceleration.round(2)}")
-
-//                prevPosition = position
 //                prevSpeed = speed
 //                prevRotationalSpeed = rotationalSpeed
 //                prevHeading = heading.asDegrees
-//                prevTime = time
+                prevPosition = position
+                prevTime = time
 
                 var totalDriveCurrent = 0.0
                 for (i in modules) {

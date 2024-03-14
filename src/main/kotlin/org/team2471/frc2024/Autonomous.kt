@@ -85,7 +85,7 @@ object AutoChooser {
         addOption("4Close", "4Close")
         addOption("SubSide", "SubSide")
         addOption("SafeSubSide", "SafeSubSide")
-
+        addOption("testingARoundTheStageBlue", "CirclePathes")
     }
 
     init {
@@ -158,6 +158,7 @@ object AutoChooser {
             "4Close" -> fourClose()
             "SubSide" -> substationSide()
             "SafeSubSide" -> safeSubstationSide()
+            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -428,6 +429,16 @@ object AutoChooser {
             if (!NoteDetector.seesNote) delay(0.2)
         } finally {
 
+        }
+    }
+    private suspend fun testingARoundTheStageBlue() = use(Drive) {
+        val testAutonomous = autonomi["testingARoundTheStageBlue"]
+        val path = testAutonomous?.get("CirclePathes")
+        if (path != null) {
+            println("Path is not null")
+            Drive.driveAlongPath(path, true)
+        } else {
+            println("Path is null!!! :(")
         }
     }
 

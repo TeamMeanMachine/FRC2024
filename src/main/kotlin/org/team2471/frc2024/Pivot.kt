@@ -92,7 +92,7 @@ object Pivot: Subsystem("Pivot") {
             Shooter.manualShootState = Shooter.manualShootState
 //
         //            Uh oh
-            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
+//            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
         }
