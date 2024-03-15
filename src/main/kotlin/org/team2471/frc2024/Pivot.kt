@@ -90,8 +90,7 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             Shooter.manualShootState = Shooter.manualShootState
-//
-        //            Uh oh
+
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -108,7 +107,6 @@ object Pivot: Subsystem("Pivot") {
 
 
     init {
-//        ticksOffsetEntry.setDouble(3665.0)
         stageAngleEntry.setDouble(20.0)
 
         pivotMotor.config {
@@ -119,7 +117,6 @@ object Pivot: Subsystem("Pivot") {
 
             //                              ticks / gear ratio   fudge factor
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
-//            brakeMode()
             coastMode()
             inverted(true)
 
@@ -143,22 +140,13 @@ object Pivot: Subsystem("Pivot") {
                 advantagePivotPublisher.set(advantagePivotTransform)
 
 
-//                pivotErrorEntry.setDouble(pivotError)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
-//                if (pivotError > 0.25) {
-//                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
-////                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
-//                }
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-
-                    // Calculated. May change a lot with more data
-//                    val angle = (90.0 * (0.751492.pow(dist))).degrees
-
                     val angle = Shooter.pitchCurve.getValue(distFromSpeaker).degrees
 //                    println("Angle: ${angle}")
                     angleSetpoint = angle

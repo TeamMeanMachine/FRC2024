@@ -49,8 +49,6 @@ object PoseEstimator {
             apriltagsEnabledEntry.setBoolean(value)
             zeroOffset()
         }
-    // val heading
-    //   get() = (Drive.heading - headingOffset).wrap()
 
     init {
         apriltagHeadingEntry.setDouble(0.0)

@@ -14,8 +14,6 @@ class NavxWrapper {
     val rate: Double
         get() = navx.rawGyroZ.toDouble()
 
-//    fun calibrate() = Unit
-
     fun reset() = navx.reset()
 
     var deltaTime: Double = 1.0

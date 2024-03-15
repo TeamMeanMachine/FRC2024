@@ -174,7 +174,6 @@ object AutoChooser {
             var path: Path2D? = auto?.get("0.5-GrabSecond")
             val ti = Timer()
 
-//            Pivot.angleSetpoint = 48.0.degrees //Shooter.pitchCurve.getValue(Pivot.distFromSpeaker).degrees
             aimAndShoot() //preLoaded shot
 
             ti.start()
@@ -361,9 +360,7 @@ object AutoChooser {
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
-//            PoseEstimator.apriltagsEnabled = true
             aimAndShoot()
-//            PoseEstimator.apriltagsEnabled = false
             if (path != null) {
                 Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
@@ -375,9 +372,7 @@ object AutoChooser {
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
-//            PoseEstimator.apriltagsEnabled = true
             aimAndShoot()
-//            PoseEstimator.apriltagsEnabled = false
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
@@ -389,9 +384,7 @@ object AutoChooser {
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
-//            PoseEstimator.apriltagsEnabled = true
             aimAndShoot()
-//            PoseEstimator.apriltagsEnabled = false
             path = auto?.get("5-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {

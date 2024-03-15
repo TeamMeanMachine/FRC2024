@@ -147,7 +147,6 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notePosAdv = mutableListOf()
 
                 if (camera.isConnected) {
-                    //println("connected")
                     for (target in camera.latestResult.targets) {
                         val robotCoords = getTargetRobotCoords(target)
                         val fieldCoords = robotCoordsToFieldCoords(robotCoords)
@@ -178,16 +177,14 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notes = tempNotes.toList()
 
 
-//                if (Robot.isAutonomous) {
-                    for (s in noteList) {
-                        s.value.isPresent = false
-                        for (n in notes) {
-                            if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
-                                s.value.isPresent = true
-                            }
+                for (s in noteList) {
+                    s.value.isPresent = false
+                    for (n in notes) {
+                        if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
+                            s.value.isPresent = true
                         }
                     }
-//                }
+                }
                 noteList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
                 noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
                 noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }

@@ -55,9 +55,7 @@ suspend fun spit() = use(Intake) {
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun fire() = use(Shooter){
     val t = Timer()
-//    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
     Intake.intakeState = Intake.IntakeState.SHOOTING
-//    }
     t.start()
     periodic {
         Intake.intakeState = Intake.IntakeState.SHOOTING
