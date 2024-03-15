@@ -228,10 +228,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val isHumanDriving
         get() = OI.driveTranslation.length != 0.0 || OI.driveRotation != 0.0
 
-
-    val DRIVE_WHEEL_INERTIA = 25.0 //grams * m^2
-    val STEERING_WHEEL_INERTIA = 0.4096955
-
     val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
     val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
 
@@ -469,17 +465,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
                 }
             }
-//            if (aimAmp) {
-//                val xError = combinedPosition.x - if (isBlueAlliance) 75.5.inches.asFeet else 581.77.inches.asFeet
-//                println(xError)
-
-
-
-
-//                if (abs(xError) > 0.1) {
-//                    translation.y = xError * parameters.kpPosition
-//                }
-//            }
 
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
