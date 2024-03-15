@@ -9,7 +9,7 @@ import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.drive
-import org.team2471.frc.lib.motion.following.resetOdometry
+import org.team2471.frc.lib.motion.following.odometryReset
 import org.team2471.frc.lib.motion.following.tuneDrivePositionController
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
@@ -59,7 +59,7 @@ suspend fun Drive.tuneDrivePositionController(){  // = use(this) {
 }
 
 suspend fun Drive.rampTest() = use(Drive) {
-    Drive.resetOdometry()
+    Drive.odometryReset()
     val t = Timer()
     t.start()
     periodic {

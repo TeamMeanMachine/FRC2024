@@ -423,10 +423,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun frontSpeakerResetOdom() {
+
         if (isRedAlliance) {
-            position = Vector2(48.2, 18.25)
+            combinedPosition = Vector2(48.2, 18.25)
         } else {
-            position = Vector2(48.2, 18.25).reflectAcrossField()
+            combinedPosition = Vector2(48.2, 18.25).reflectAcrossField()
         }
         println("resetting to front speaker pos. $position")
     }
