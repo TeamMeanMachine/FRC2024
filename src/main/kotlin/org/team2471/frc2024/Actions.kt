@@ -111,7 +111,7 @@ suspend fun aimAndShoot(print: Boolean = false) {
 }
 
 suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, timeOut: Boolean = true, expectedPos : Vector2? = null) = use(Drive, name = "pick up note") {
-    try {
+//    try {
         println("picking up note")
 
         var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
@@ -150,21 +150,38 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 
             var noteFound = false
 
+            println(NoteDetector.notes)
             for (note in NoteDetector.notes) {
                 val latency = Timer.getFPGATimestamp() - note.timestampSeconds
-                val previousPose = Drive.lookupPose(note.timestampSeconds)!!
-                val poseDiff = Drive.poseDiff(latency)!! // Exclamation marks are probably fine
-//                println(previousPose)
-//                println(poseDiff)
-                val timeAdjustedRobotPose = note.robotCoords//(note.robotCoords.rotateDegrees(-previousPose.heading.asDegrees) + poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
+                val previousPose = Drive.lookupPose(note.timestampSeconds)
+                val poseDiff = Drive.poseDiff(latency) // Exclamation marks are probably fine
 
-                val fieldPosition = note.fieldCoords //+ poseDiff.position
+                // i hate this but
+                var tempNotePose = Vector2(0.0, 0.0)
+                var tempFieldPosition = Vector2(0.0, 0.0)
+                var tempHeadingErr = 0.0
 
-//                if ((expectedFieldPos != null && (expectedFieldPos!! - fieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
+                if (poseDiff != null && previousPose != null) {
+                    tempNotePose = (note.robotCoords.rotateDegrees(previousPose.heading.asDegrees) - poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
+                    tempFieldPosition = note.fieldCoords + poseDiff.position
+                    tempHeadingErr = note.yawOffset + poseDiff.heading.asDegrees
+                    println("latency: $latency")
+                    println("previous pose: $previousPose")
+                    println("poseDiff: $poseDiff")
+                    println("original note x: ")
+                } else {
+                    tempNotePose = note.robotCoords
+                    tempFieldPosition = note.fieldCoords
+                    tempHeadingErr = note.yawOffset
+                    println("NOT USING LATENCY ADJUSTMENT")
+                }
+
+
+//                if ((expectedFieldPos != null && (expectedFieldPos - tempFieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
 //                    println("note passed check")
-                    notePos = timeAdjustedRobotPose
-                    headingError = note.yawOffset //+ poseDiff.heading.asDegrees
-                    fieldPos = fieldPosition
+                    notePos = tempNotePose
+                    headingError = tempHeadingErr
+                    fieldPos = tempFieldPosition
                     noteFound = true
                     break
 //                }
@@ -191,9 +208,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
             if (!noteFound && noteFoundFlag) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
                 notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
+                fieldPos = estimatedFieldPos
             }
 
-            if (notePos != null && headingError != null) {
+            if (notePos != null && headingError != null && fieldPos != null) {
 
                 val headingVelocity = (headingError - prevHeadingError) / 0.02
 
@@ -202,23 +220,24 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
                 val d = headingVelocity * 0.005
 
                 var driveSpeed = if (speed < 0.0) OI.driveLeftTrigger else speed
-                val turnSpeed = feedForward + p + d
+                val turnSpeed = feedForward + p //+ d
 
                 if (cautious) {
-                    driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, (notePos.length - 2.5) / 5.0).coerceIn(0.0, 1.0)
+                    driveSpeed *= linearMap(0.0, 1.0, 0.2, 1.0, ((notePos.length - 3.5) / 5.5).coerceIn(0.0, 1.0))
                 }
 
-                val driveDirection = Vector2(-1.5 * notePos.y, notePos.x).normalize()
-                Drive.drive(driveDirection * driveSpeed * 0.0, turnSpeed, false)
+                val driveDirection = Vector2(-notePos.y, notePos.x).normalize()
+                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
 
-                println("note Found: $noteFound")
-                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
-                println("FIELD x: ${fieldPos!!.x}, y: ${fieldPos!!.y}")
-                println("Drive Speed $driveSpeed")
-                println("turn control: ${turnSpeed}, heading err: ${headingError}")
-                println("heading velocity ${headingVelocity}")
-                println("difference ${headingError - prevHeadingError}")
-                println("pcomponent: $p \nvcomponent: ${d}")
+//                println("note Found: $noteFound")
+//                println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+//                println("FIELD x: ${fieldPos!!.x}, y: ${fieldPos!!.y}")
+//                println("estimated pos x: ${estimatedFieldPos.x} y: ${estimatedFieldPos.y}")
+//                println("Drive Speed $driveSpeed")
+//                println("turn control: ${turnSpeed}, heading err: ${headingError}")
+//                println("heading velocity ${headingVelocity}")
+//                println("difference ${headingError - prevHeadingError}")
+//                println("pcomponent: $p \nvcomponent: ${d}")
 
                 prevHeadingError = headingError
             }
@@ -240,9 +259,9 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
         Drive.drive(Vector2(0.0, 0.0), 0.0, false)
         return@use success
 
-    } catch (exception: Exception) {
-        println("error in pickUpSeenNote: \n$exception")
-    }
+//    } catch (exception: Exception) {
+//        println("error in pickUpSeenNote: \n$exception")
+//    }
 }
 
 suspend fun lockToAmp() = use(Drive) {

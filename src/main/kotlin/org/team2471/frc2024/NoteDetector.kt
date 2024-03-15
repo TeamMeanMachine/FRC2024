@@ -156,7 +156,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 robotCoords,
                                 fieldCoords,
                                 target.yaw,
-                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis
+                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis/1000
                             )
                         )
 //                        println(("pitch: ${target.pitch}"))
