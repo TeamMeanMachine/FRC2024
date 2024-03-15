@@ -77,7 +77,7 @@ object OI : Subsystem("OI") {
             }
         }
         driverController::a.whenTrue { spit() }
-        driverController::rightTriggerFullPress.whenTrue { if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else fire() }
+        driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
         ({ driveLeftTrigger > 0.2 }).whenTrue { pickUpSeenNote() }

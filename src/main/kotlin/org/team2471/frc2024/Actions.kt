@@ -277,10 +277,10 @@ suspend fun pickUpSeenNote(speed: Double = -1.0, cautious: Boolean = false, time
 }
 
 suspend fun lockToAmp() = use(Drive) {
-//    Drive.aimAmp = true
+    Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
-//    suspendUntil(20) { !OI.driverController.b }
-//    Drive.aimAmp = false
+    suspendUntil(20) { !OI.driverController.b }
+    Drive.aimAmp = false
 
     val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition)
@@ -301,7 +301,7 @@ suspend fun lockToAmp() = use(Drive) {
     newPath.addEasePoint(time, 1.0)
     newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
     newPath.addHeadingPoint(time, 90.0)
-    Drive.driveAlongPath(newPath) { OI.driverController.b }
+//    Drive.driveAlongPath(newPath) { OI.driverController.b }
 }
 
 suspend fun flipAmpShot() = use(Pivot) {

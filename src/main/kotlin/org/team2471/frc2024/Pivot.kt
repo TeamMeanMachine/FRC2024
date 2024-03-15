@@ -50,11 +50,11 @@ object Pivot: Subsystem("Pivot") {
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
-    val AMPPOSE = 90.0.degrees//107.5.degrees
+    val AMPPOSE = /*90.0.degrees*/107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3515.0 else 2124.0
-    private val MAXTICKS = if (isCompBot) 2329.0 else 940.0
+    private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
 
     var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
