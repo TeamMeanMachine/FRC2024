@@ -238,7 +238,6 @@ object Shooter: Subsystem("Shooter") {
                 } else {
                     rpmTopSetpoint = rpmCurve.getValue(Drive.distance)
                     rpmBottomSetpoint = rpmCurve.getValue(Drive.distance)
-                    println("setting shooter rpm to ${rpmCurve.getValue(Drive.distance).round(1)}")
                 }
             }
         }

@@ -105,11 +105,11 @@ suspend fun aimAtSpeaker() {
     }
 }
 
-suspend fun aimAndShoot(print: Boolean = false) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75) {
     val t = Timer()
     aimAtSpeaker()
     t.start()
-    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > 0.75 }
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
     if (t.get() > 0.75) {
         println("Aiming max time")
         Pivot.speakerIsReady(debug = true)
@@ -180,7 +180,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
             var noteFound = false
 
-            println(NoteDetector.notes)
+//            println(NoteDetector.notes)
             for (note in NoteDetector.notes) {
                 val latency = Timer.getFPGATimestamp() - note.timestampSeconds
                 val previousPose = Drive.lookupPose(note.timestampSeconds)
@@ -206,11 +206,11 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                    println("NOT USING LATENCY ADJUSTMENT")
                 }
 
-                print("note field pos x: ${tempFieldPosition.x} y: ${tempFieldPosition.y}")
+//                println("note field pos x: ${tempFieldPosition.x} y: ${tempFieldPosition.y}")
 
 
                 if ((expectedFieldPos != null && (expectedFieldPos - tempFieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
-                    println("note passed check")
+//                    println("note passed check")
                     notePos = tempNotePose
                     headingError = tempHeadingErr
                     fieldPos = tempFieldPosition
@@ -276,12 +276,12 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                     val driveDirection = Vector2(-0.85 * notePos.y, notePos.x).normalize()
                     Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
 
-                    println("note Found: $noteFound")
-                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
-                    println("FIELD x: ${fieldPos.x}, y: ${fieldPos.y}")
-                    println("estimated pos x: ${estimatedFieldPos.x} y: ${estimatedFieldPos.y}")
-                    println("Note pos length: ${notePos.length} Pos velocity: ${driveVelocity}")
-                    println("Drive d: ${driveD}")
+//                    println("note Found: $noteFound")
+//                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
+//                    println("FIELD x: ${fieldPos.x}, y: ${fieldPos.y}")
+//                    println("estimated pos x: ${estimatedFieldPos.x} y: ${estimatedFieldPos.y}")
+//                    println("Note pos length: ${notePos.length} Pos velocity: ${driveVelocity}")
+//                    println("Drive d: ${driveD}")
 //                println("Drive Speed $driveSpeed")
 //                println("turn control: ${turnSpeed}, heading err: ${headingError}")
 //                println("heading velocity ${headingVelocity}")

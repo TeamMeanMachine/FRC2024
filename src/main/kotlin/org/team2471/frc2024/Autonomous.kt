@@ -84,6 +84,7 @@ object AutoChooser {
         addOption("SubSide", "SubSide")
         addOption("SafeSubSide", "SafeSubSide")
         addOption("testingARoundTheStageBlue", "CirclePathes")
+        addOption("MidPieces", "MidPieces")
     }
 
     init {
@@ -157,6 +158,7 @@ object AutoChooser {
             "SubSide" -> substationSide()
             "SafeSubSide" -> safeSubstationSide()
             "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
+            "MidPieces" -> midPieces()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -226,6 +228,90 @@ object AutoChooser {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
+    }
+
+    suspend fun midPieces() = use(Drive, Shooter) {
+        try {
+            grabFirstFour() //split because we want intake default for picking up middle pieces
+
+            val auto = autonomi["MidPieces"]
+            auto?.isReflected = isRedAlliance
+            var path: Path2D? = auto?.get("4-GrabFifth")
+
+
+            if (path != null) {
+                Drive.driveAlongPath(path/*, earlyExit = {
+                    it > 0.5 && NoteDetector.closestIsValid
+                }*/)
+            }
+            pickUpSeenNote()
+            path = auto?.get("5-ShootFifth")
+            if (path != null) {
+                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
+            }
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                aimAndShoot(true)
+            }
+            path = auto?.get("6-GrabSixth")
+            if (path != null) {
+                Drive.driveAlongPath(path/*, earlyExit = {
+                    it > 0.5 && NoteDetector.closestIsValid
+                }*/)
+            }
+            pickUpSeenNote()
+            path = auto?.get("7-ShootSixth")
+            if (path != null) {
+                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
+            }
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                aimAndShoot(true)
+            }
+
+
+
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+            delay(1.0)
+            Shooter.setRpms(0.0)
+            Intake.setIntakeMotorsPercent(0.0)
+        }
+    }
+
+    private suspend fun grabFirstFour() = use(Drive, Shooter, Intake) {
+        Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+//        Pivot.aimSpeaker = true
+
+        Drive.zeroGyro()
+        val auto = autonomi["MidPieces"]
+        auto?.isReflected = isRedAlliance
+        var path = auto?.get("1-GrabSecond")
+
+        if (path != null) {
+            parallel({
+                delay(0.1)
+                println("firing preloaded")
+                fire(0.5)
+                Pivot.aimSpeaker = true
+                Intake.setIntakeMotorsPercent(1.0)
+                path = auto?.get("2-GrabThird")
+            }, {
+                Drive.driveAlongPath(path!!, true)
+            })
+        }
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false)
+        }
+        path = auto?.get("3-GrabFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false/*, earlyExit = {
+                NoteDetector.closestIsValid
+            }*/)
+        }
+//        pickUpSeenNote()
+//        aimAndShoot()
+        println("finished first three")
     }
 
     suspend fun fourCloseSafe() = use(Drive, Shooter, Intake) {
