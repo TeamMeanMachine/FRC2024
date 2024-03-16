@@ -11,6 +11,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
@@ -209,6 +210,20 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     fun robotCoordsToFieldCoords(robotCoords : Vector2): Vector2 {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
+    }
+
+    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 2.0) : Boolean {
+        for (note in notes) {
+            val poseDiff = Drive.poseDiff(Timer.getFPGATimestamp() - note.timestampSeconds)
+            var noteFieldPos = note.fieldCoords
+            if (poseDiff != null) {
+                noteFieldPos += poseDiff.position
+            }
+            if ((expectedPos - noteFieldPos).length < maximumErr) { // is it a different note
+                return true
+            }
+        }
+        return false
     }
 }
 
