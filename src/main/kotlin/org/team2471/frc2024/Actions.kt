@@ -11,7 +11,6 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
-import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.Angle
@@ -141,7 +140,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos : Vector2? = null) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null) = use(Drive, name = "pick up note") {
 //    try {
         println("picking up note")
 

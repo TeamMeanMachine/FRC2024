@@ -181,7 +181,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
+            pickUpSeenNote()
             suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 0.4}
             aimAndShoot() //second note shot
 
@@ -192,7 +192,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
+            pickUpSeenNote()
             path = auto?.get("2-ShootThird")
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.0)
@@ -210,7 +210,7 @@ object AutoChooser {
                 })
             }
 
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
+            pickUpSeenNote(timeOut = false)
 
             if (closeFourToFiveEntry.getBoolean(false)) {
                 path = auto?.get("4-ShootFourth")
@@ -297,7 +297,7 @@ object AutoChooser {
             }
             println("finished path")
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -310,7 +310,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("4-ShootThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -323,7 +323,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("6-ShootFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -350,7 +350,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.8)
+            pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -362,7 +362,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(0.6)
+            pickUpSeenNote()
             path = auto?.get("4-ShootThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -374,7 +374,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(0.6)
+            pickUpSeenNote()
 //            PoseEstimator.apriltagsEnabled = true
 //            path = auto?.get("6-ShootFourth")
 //            if (path != null) {
