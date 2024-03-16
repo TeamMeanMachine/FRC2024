@@ -53,14 +53,24 @@ suspend fun spit() = use(Intake) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun fire() = use(Shooter){
+suspend fun fire(duration: Double? = null) = use(Shooter){
     val t = Timer()
+//    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
     Intake.intakeState = Intake.IntakeState.SHOOTING
+//    }
     t.start()
     periodic {
         Intake.intakeState = Intake.IntakeState.SHOOTING
-        if ((t.get() > 0.3 && Robot.isAutonomous) || (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.1) && t.get() > 0.1)) {
-            println("exiting shooting")
+        if ((t.get() > 0.3 && Robot.isAutonomous) && duration == null) {
+            println("exiting shooting from autonomous")
+            this.stop()
+        }
+        if (!Robot.isAutonomous && (OI.driverController.rightTrigger < 0.1) && t.get() > 0.1 && duration == null) {
+            println("exiting shooting from released trigger")
+            this.stop()
+        }
+        if (duration != null && t.get() > duration) {
+            println("exiting shooting from exceeded set duration of $duration")
             this.stop()
         }
     }
@@ -68,10 +78,10 @@ suspend fun fire() = use(Shooter){
     println("Shot note..  Distance ${Pivot.distFromSpeaker.round(2)}  Pivot Setpoint: ${Pivot.angleSetpoint.asDegrees.round(1)}  Pivot Encoder:  ${Pivot.pivotEncoderAngle.asDegrees.round(1)}  ShooterTSetpoint: ${Shooter.rpmTopSetpoint.round(1)}  ShooterTRpm:  ${Shooter.motorRpmTop.round(1)}  ShooterBSetpoint:  ${Shooter.rpmBottomSetpoint.round(1)}  ShooterBRpm:  ${Shooter.motorRpmBottom.round(1)}")
 
     Intake.intakeState = Intake.IntakeState.EMPTY
-    if (Robot.isAutonomous) {
-        Drive.aimSpeaker = false
-        Pivot.aimSpeaker = false
-    }
+//    if (Robot.isAutonomous) {
+//        Drive.aimSpeaker = false
+//        Pivot.aimSpeaker = false
+//    }
 }
 suspend fun aimAtSpeaker() {
     Pivot.revving = true //unsure if this variable necessary. Comment out in pivot if an issue

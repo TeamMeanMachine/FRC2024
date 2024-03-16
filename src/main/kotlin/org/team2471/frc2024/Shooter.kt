@@ -8,6 +8,8 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 
@@ -236,6 +238,7 @@ object Shooter: Subsystem("Shooter") {
                 } else {
                     rpmTopSetpoint = rpmCurve.getValue(Drive.distance)
                     rpmBottomSetpoint = rpmCurve.getValue(Drive.distance)
+                    println("setting shooter rpm to ${rpmCurve.getValue(Drive.distance).round(1)}")
                 }
             }
         }
@@ -263,5 +266,14 @@ object Shooter: Subsystem("Shooter") {
         rpmCurve.storeValue(9.0, RPM9Entry.getDouble(5000.0))
         rpmCurve.storeValue(13.7, RPM15Entry.getDouble(5000.0))
         rpmCurve.storeValue(17.0, RPM17Entry.getDouble(5000.0))
+    }
+
+    fun setRpms(rpm: Double) {
+        rpmTopSetpoint = rpm
+        rpmBottomSetpoint = rpm
+    }
+
+    fun getRpmFromPosition(point: Vector2): Double {
+        return rpmCurve.getValue(point.distance(Drive.speakerPos))
     }
 }
