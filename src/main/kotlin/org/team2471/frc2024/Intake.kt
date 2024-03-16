@@ -44,7 +44,8 @@ object Intake: Subsystem("Intake") {
     val topBreak: Boolean
         get() = !topBreakSensor.get()
 
-    var holdingCargo = false
+    val holdingCargo: Boolean
+        get() = intakeState != IntakeState.EMPTY
 
     init {
         intakingEntry.setBoolean(false)

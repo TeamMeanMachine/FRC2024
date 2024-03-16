@@ -12,6 +12,7 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asRadians
@@ -63,8 +64,10 @@ object Pivot: Subsystem("Pivot") {
         set(value) {
             field = value
             if (value) {
-                Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
-                Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                if (!Robot.isAutonomous) {
+                    Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
+                    Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                }
             } else {
                 Shooter.rpmTopSetpoint = 0.0
                 Shooter.rpmBottomSetpoint = 0.0
@@ -178,6 +181,10 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
+    }
+
+    fun getAngleFromPosition(point: Vector2): Angle {
+        return Shooter.pitchCurve.getValue(point.distance(speakerPos)).degrees
     }
 
 }

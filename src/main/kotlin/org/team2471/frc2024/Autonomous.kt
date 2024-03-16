@@ -8,15 +8,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.team2471.frc.lib.coroutines.MeanlibDispatcher
-import org.team2471.frc.lib.coroutines.delay
-import org.team2471.frc.lib.coroutines.periodic
-import org.team2471.frc.lib.coroutines.suspendUntil
+import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
@@ -82,10 +80,11 @@ object AutoChooser {
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
         addOption("2Far2CloseAmp", "2Far2CloseAmp")
-        addOption("4Close", "4Close")
+        addOption("4CloseSafe", "4CloseSafe")
         addOption("SubSide", "SubSide")
         addOption("SafeSubSide", "SafeSubSide")
         addOption("testingARoundTheStageBlue", "CirclePathes")
+        addOption("MidPieces", "MidPieces")
     }
 
     init {
@@ -155,10 +154,11 @@ object AutoChooser {
             "HIII" -> hiii()
             "Tests" -> testAuto()
             "2Far2CloseAmp" -> twoFarTwoCloseAmp()
-            "4Close" -> fourClose()
+            "4CloseSafe" -> fourCloseSafe()
             "SubSide" -> substationSide()
             "SafeSubSide" -> safeSubstationSide()
             "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
+            "MidPieces" -> midPieces()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -183,7 +183,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
+            pickUpSeenNote()
             suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 0.4}
             aimAndShoot() //second note shot
 
@@ -194,7 +194,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.8 else 0.3)
+            pickUpSeenNote()
             path = auto?.get("2-ShootThird")
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.0)
@@ -212,7 +212,7 @@ object AutoChooser {
                 })
             }
 
-            pickUpSeenNote(if (PoseEstimator.apriltagsEnabled) 0.4 else 0.3, timeOut = false)
+            pickUpSeenNote(timeOut = false)
 
             if (closeFourToFiveEntry.getBoolean(false)) {
                 path = auto?.get("4-ShootFourth")
@@ -230,71 +230,140 @@ object AutoChooser {
         }
     }
 
-    suspend fun fourClose() = use(Drive, Shooter) {
+    suspend fun midPieces() = use(Drive, Shooter) {
         try {
-            println("in 4close ${Robot.recentTimeTaken()}")
+            grabFirstFour() //split because we want intake default for picking up middle pieces
+
+            val auto = autonomi["MidPieces"]
+            auto?.isReflected = isRedAlliance
+            var path: Path2D? = auto?.get("4-GrabFifth")
+
+
+            if (path != null) {
+                Drive.driveAlongPath(path/*, earlyExit = {
+                    it > 0.5 && NoteDetector.closestIsValid
+                }*/)
+            }
+            pickUpSeenNote()
+            path = auto?.get("5-ShootFifth")
+            if (path != null) {
+                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
+            }
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                aimAndShoot(true)
+            }
+            path = auto?.get("6-GrabSixth")
+            if (path != null) {
+                Drive.driveAlongPath(path/*, earlyExit = {
+                    it > 0.5 && NoteDetector.closestIsValid
+                }*/)
+            }
+            pickUpSeenNote()
+            path = auto?.get("7-ShootSixth")
+            if (path != null) {
+                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
+            }
+            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+                aimAndShoot(true)
+            }
+
+
+
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+            delay(1.0)
+            Shooter.setRpms(0.0)
+            Intake.setIntakeMotorsPercent(0.0)
+        }
+    }
+
+    private suspend fun grabFirstFour() = use(Drive, Shooter, Intake) {
+        Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+//        Pivot.aimSpeaker = true
+
+        Drive.zeroGyro()
+        val auto = autonomi["MidPieces"]
+        auto?.isReflected = isRedAlliance
+        var path = auto?.get("1-GrabSecond")
+
+        if (path != null) {
+            parallel({
+                delay(0.1)
+                println("firing preloaded")
+                fire(0.5)
+                Pivot.aimSpeaker = true
+                Intake.setIntakeMotorsPercent(1.0)
+                path = auto?.get("2-GrabThird")
+            }, {
+                Drive.driveAlongPath(path!!, true)
+            })
+        }
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false)
+        }
+        path = auto?.get("3-GrabFourth")
+        if (path != null) {
+            Drive.driveAlongPath(path!!, false/*, earlyExit = {
+                NoteDetector.closestIsValid
+            }*/)
+        }
+//        pickUpSeenNote()
+//        aimAndShoot()
+        println("finished first three")
+    }
+
+    suspend fun fourCloseSafe() = use(Drive, Shooter, Intake) {
+        try {
+            println("in 4closeSafe ${Robot.recentTimeTaken()}")
+            Shooter.setRpms(5000.0)
+            Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE + 5.0.degrees
+
             Drive.zeroGyro()
-            Drive.combinedPosition =
-                if (isRedAlliance) Vector2(48.27, 13.16) else Vector2(48.27, 13.16).reflectAcrossField()
-            val auto = autonomi["4Close"]
-            auto?.isReflected = isBlueAlliance
+//            Drive.combinedPosition =
+//                if (isRedAlliance) Vector2(48.27, 13.16) else Vector2(48.27, 13.16).reflectAcrossField()
+            val auto = autonomi["4CloseSafe"]
+            auto?.isReflected = isRedAlliance
             var path = auto?.get("1-GrabSecond")
-            val t = Timer()
 
-            println("starting aim ${Robot.recentTimeTaken()}")
-            aimAndShoot()
-
+            delay(0.1)
+            fire(0.5) //fire preloaded
             if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle  /* && NoteDetector.closestIsValid*/
+                parallel({
+                    Shooter.setRpms(5000.0)
+                    Intake.setIntakeMotorsPercent(1.0)
+                    delay(0.1)
+                    path = auto?.get("2-GrabThird")
+                    Pivot.aimSpeaker = true
+                }, {
+                    Drive.driveAlongPath(path!!, true)
                 })
             }
-            t.start()
-            pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3}
-            path = auto?.get("1.5-ShootSecond")
             if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            aimAndShoot()
-
-            path = auto?.get("2-GrabThird")
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle /*&& NoteDetector.closestIsValid*/
+                parallel({
+                    Shooter.setRpms(5000.0)
+                    Intake.setIntakeMotorsPercent(1.0)
+                    delay(0.1)
+                    path = auto?.get("3-GrabFourth")
+                }, {
+                    Drive.driveAlongPath(path!!, false)
                 })
             }
-            pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3 }
-            aimAndShoot()
-
-            path = auto?.get("3-GrabFourth")
             if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && !NoteDetector.closestIsMiddle /*&& NoteDetector.closestIsValid*/
+                parallel({
+                    Shooter.setRpms(5000.0)
+                    Intake.setIntakeMotorsPercent(1.0)
+                }, {
+                    Drive.driveAlongPath(path!!, false)
                 })
-            }
-            pickUpSeenNote(1.0)
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.SLOWING || t.get() > 0.3 }
-            aimAndShoot()
-
-            if (closeFourToFiveEntry.getBoolean(false)) {
-                path = auto?.get("4-GrabFifth")
-                if (path != null) {
-                    Drive.driveAlongPath(path, false, earlyExit = {
-                        NoteDetector.seesNote && NoteDetector.closestIsValid
-                    })
-                }
-                pickUpSeenNote(0.75)
-                path = auto?.get("5-ShootFifth")
-                if (path != null) {
-                    Drive.driveAlongPath(path, false)
-                }
-                aimAndShoot()
             }
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
+            delay(1.0)
+            Shooter.setRpms(0.0)
+            Intake.setIntakeMotorsPercent(0.0)
         }
     }
 
@@ -314,7 +383,7 @@ object AutoChooser {
             }
             println("finished path")
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -327,7 +396,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("4-ShootThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -340,7 +409,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.5)
+            pickUpSeenNote()
             path = auto?.get("6-ShootFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -367,7 +436,7 @@ object AutoChooser {
                 })
             }
             if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote(0.8)
+            pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -379,7 +448,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(0.6)
+            pickUpSeenNote()
             path = auto?.get("4-ShootThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
@@ -391,7 +460,7 @@ object AutoChooser {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
             }
-            pickUpSeenNote(0.6)
+            pickUpSeenNote()
 //            PoseEstimator.apriltagsEnabled = true
 //            path = auto?.get("6-ShootFourth")
 //            if (path != null) {

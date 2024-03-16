@@ -350,27 +350,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
-                    if (aimSpeaker) {
-                        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-                        val dVector = combinedPosition - point
+                    val aimTurn = aimSpeakerAmpLogic()
 
-                        aimHeadingSetpoint = kotlin.math.atan2(dVector.y, dVector.x).radians
-
-                        val angleError = (heading - aimHeadingSetpoint).wrap()
-
-                        if (abs(angleError.asDegrees) > 2.0) {
-                            turn = aimPDController.update(angleError.asDegrees)
-
-//                            println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
-                        }
+                    if (aimTurn != null) {
+                        turn = aimTurn
                     }
 
                     if (!useGyroEntry.exists()) {
                         useGyroEntry.setBoolean(true)
                     }
                     val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
-
-
 
                     drive(
                         OI.driveTranslation * maxTranslation,
@@ -446,24 +435,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn = OI.driveRotation
             }
 
-            var translation = OI.driveTranslation
+            val translation = OI.driveTranslation
 
 
             if (aimSpeaker || aimAmp) {
-                if (aimSpeaker) {
-                    val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-                    val dVector = combinedPosition - point
-                    aimHeadingSetpoint = if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
-                } else {
-                    aimHeadingSetpoint = 90.0.degrees
-                }
-//                println("alkjdfhlsk $aimHeadingSetpoint")
-
-                val angleError = (heading - aimHeadingSetpoint).wrap()
-
-                if (abs(angleError.asDegrees) > 2.0) {
-                    turn = aimPDController.update(angleError.asDegrees)
-//                    println("headingSetpoint: ${headingSetpoint} heading: ${heading.asDegrees.round(2)} angleError: ${angleError.asDegrees.round(2)} turn: ${turn.round(3)}")
+                val aimTurn = aimSpeakerAmpLogic()
+                if (aimTurn != null) {
+                    turn = aimTurn
                 }
             }
 
@@ -646,6 +624,28 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             module.setAngleOffset()
         }
         initializeSteeringMotors()
+    }
+
+
+    fun aimSpeakerAmpLogic(): Double? {
+        if (aimSpeaker) {
+            aimHeadingSetpoint = getAngleToSpeaker()
+        } else {
+            aimHeadingSetpoint = 90.0.degrees
+        }
+
+        val angleError = (heading - aimHeadingSetpoint).wrap()
+
+        if (abs(angleError.asDegrees) > 2.0) {
+            return aimPDController.update(angleError.asDegrees)
+        }
+        return null
+    }
+
+    fun getAngleToSpeaker(): Angle {
+        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+        val dVector = combinedPosition - point
+        return if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
     }
 }
 
