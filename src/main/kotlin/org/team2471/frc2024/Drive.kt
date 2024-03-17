@@ -1,14 +1,7 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.math.estimator.KalmanFilter
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics
-import edu.wpi.first.math.kinematics.SwerveModulePosition
-import edu.wpi.first.math.kinematics.WheelPositions
-import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -32,9 +25,12 @@ import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.position
+import org.team2471.frc2024.Drive.prevTestPosition
+import org.team2471.frc2024.Drive.testPosition
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
+import kotlin.math.pow
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -178,6 +174,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
+
+    var prevVelocity = Vector2(0.0, 0.0)
+
     override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
         set(value) {
@@ -185,12 +184,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             PoseEstimator.zeroOffset()
         }
 
-    var poseEstimator = SwerveDrivePoseEstimator(
-        SwerveDriveKinematics(Translation2d(), Translation2d()),
-        Rotation2d(heading.asRadians),
-        arrayOf(SwerveModulePosition(), SwerveModulePosition()),
-        Pose2d(Translation2d(0.0, 0.0), Rotation2d(0.0))
-    )
+    var testPosition: Vector2L = position.feet
+    var prevTestPosition: Vector2L = position.feet
+//                   feet seconds fps
+    val driveStDevM = (2.5 / 30 / 50).feet.asMeters
+
 
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
@@ -307,6 +305,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val time = t.get()
                 val dt = time - prevTime
+                prevVelocity = velocity
                 velocity = (position - prevPosition) / dt
 //                val speed = velocity.length
 //                speedEntry.setDouble(speed)
@@ -334,20 +333,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 
-                poseEstimator.update(
-                    Rotation2d(heading.asRadians),
-                    arrayOf(SwerveModulePosition(), SwerveModulePosition())
-                )
+                updatePos(driveStDevM, *AprilTag2.getCurrentGlobalPoses())
 
-//                poseEstimator.addVisionMeasurement(Pose2d(Translation2d(position.x.feet.asMeters, position.y.feet.asMeters), Rotation2d(heading.asRadians)), Timer.getFPGATimestamp())
-
-                advantageTestPoseEntry.setDoubleArray(
-                    doubleArrayOf(
-                        poseEstimator.estimatedPosition.x,
-                        poseEstimator.estimatedPosition.y,
-                        heading.asDegrees
-                    )
-                )
+                advantageTestPoseEntry.setAdvantagePose(testPosition, heading)
 
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
@@ -688,6 +676,31 @@ suspend fun Drive.currentTest() = use(this) {
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
+}
+
+fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
+    val pos = testPosition
+//                                            measurement, stdev
+    val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
+
+//                    previous position +      loop time * previous velocity        +             loop time * velocity / 2
+    measurementsAndStDevs.add(Pair(prevTestPosition + Drive.prevVelocity.feet.times(0.02) + (Drive.velocity.feet.times(0.02) / 2.0), driveStDevMeters))
+
+    for (i in aprilPoses) {
+        measurementsAndStDevs.add(Pair(i.pose, i.stDev))
+    }
+
+    var a = Vector2L(0.0.inches, 0.0.inches)
+    var b = 0.0
+
+    for (i in measurementsAndStDevs) {
+        a += i.first.asMeters.times(i.second.pow(-2)).meters
+        b += i.second.pow(-2)
+    }
+
+    testPosition = a.asMeters.div(b).meters
+
+    prevTestPosition = pos
 }
 
 fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {

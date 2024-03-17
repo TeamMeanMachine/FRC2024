@@ -67,12 +67,28 @@ object AprilTag2 {
         }
     }
 
+    fun getCurrentGlobalPoses(): Array<GlobalPose> {
+        val out: MutableList<GlobalPose> = mutableListOf()
+
+        for (camera in cameras.values) {
+            val lastGlobalPose = camera.lastGlobalPose
+            if (lastGlobalPose != null) {
+                if (Timer.getFPGATimestamp() - lastGlobalPose.timestamp < 0.06) {
+                    out.add(lastGlobalPose)
+                }
+            }
+        }
+
+        return out.toTypedArray()
+    }
 
 }
 
 class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
 
     val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
+
+    var lastGlobalPose: GlobalPose? = null
 
     var photonCam: PhotonCamera = PhotonCamera(name)
 
@@ -172,13 +188,17 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             try {
                 estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
 
             }
 
+            estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(821.0.cm, 1654.0.cm))
+
             advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
 
-            return GlobalPose(estimatedPose, 0.0)
+            lastGlobalPose = GlobalPose(estimatedPose, 0.0, Timer.getFPGATimestamp())
+
+            return lastGlobalPose
         } else {
             return null
         }
@@ -187,6 +207,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
 data class GlobalPose (
     val pose: Vector2L,
-    val stDev: Double
+    val stDev: Double,
+    val timestamp: Double
 )
 
