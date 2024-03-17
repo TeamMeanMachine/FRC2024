@@ -175,7 +175,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
 
-    var prevVelocity = Vector2(0.0, 0.0)
+    // velocity over 0.02 seconds
+    var tickVelocity = Vector2(0.0, 0.0)
+    var prevTickVelocity = Vector2(0.0, 0.0)
 
     override var combinedPosition: Vector2
         get() = PoseEstimator.currentPose
@@ -305,8 +307,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val time = t.get()
                 val dt = time - prevTime
-                prevVelocity = velocity
                 velocity = (position - prevPosition) / dt
+
+                prevTickVelocity = tickVelocity
+                tickVelocity = position - prevPosition
+
+
 //                val speed = velocity.length
 //                speedEntry.setDouble(speed)
 //                val acceleration = (speed - prevSpeed) / dt
@@ -683,8 +689,8 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 //                                            measurement, stdev
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
-//                    previous position +      loop time * previous velocity        +             loop time * velocity / 2
-    measurementsAndStDevs.add(Pair(prevTestPosition + Drive.prevVelocity.feet.times(0.02) + (Drive.velocity.feet.times(0.02) / 2.0), driveStDevMeters))
+//                                previous position +      previous velocity      +          velocity / 2
+    measurementsAndStDevs.add(Pair(prevTestPosition + Drive.prevTickVelocity.feet + (Drive.tickVelocity.feet / 2.0), driveStDevMeters))
 
     for (i in aprilPoses) {
         measurementsAndStDevs.add(Pair(i.pose, i.stDev))
