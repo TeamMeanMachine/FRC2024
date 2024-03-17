@@ -55,6 +55,7 @@ object Robot : MeanlibRobot() {
         Pivot
         AutoChooser
         AprilTag
+        AprilTag2
         PoseEstimator
         NoteDetector
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")

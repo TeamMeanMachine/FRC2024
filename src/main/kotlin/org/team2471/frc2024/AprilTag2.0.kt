@@ -50,13 +50,13 @@ object AprilTag2 {
         resetCameras()
         GlobalScope.launch {
             periodic {
-                try {
+//                try {
                     for (camera in cameras.values) {
                         camera.getEstimatedGlobalPose(Drive.position.feet, Drive.heading )
                     }
-                } catch (ex: Exception) {
-                    println("WAAAAAAAAAAAAAA Error in apriltag: $ex")
-                }
+//                } catch (ex: Exception) {
+//                    println("WAAAAAAAAAAAAAA Error in apriltag: $ex")
+//                }
             }
         }
     }
@@ -154,25 +154,34 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             )
         }
 
-        val newPose = if (numTargets > 1) multiTagEstimator.update().get() else singleTagEstimator.update().get()
-        var estimatedPose = Vector2L(newPose.estimatedPose.x.meters, newPose.estimatedPose.y.meters)
+        var newPose = if (numTargets > 1) multiTagEstimator.update() else singleTagEstimator.update()
+        if (newPose.isPresent) {
 
-        var avgDist = 0.0.inches
+            var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
-        for (target in validTargets) {
-            val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
-            avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
+            var avgDist = 0.0.inches
+
+            for (target in validTargets) {
+                val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
+                avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
+            }
+
+            avgDist /= validTargets.size.toDouble()
+
+            //Todo: Get stdev from avgDist & validTargets.size
+
+            try {
+                estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
+            } catch (ex: Exception) {
+
+            }
+
+            advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
+
+            return GlobalPose(estimatedPose, 0.0)
+        } else {
+            return null
         }
-
-        avgDist /= validTargets.size.toDouble()
-
-        //Todo: Get stdev from avgDist & validTargets.size
-
-        estimatedPose = latencyAdjust(estimatedPose, Timer.getFPGATimestamp() - newPose.timestampSeconds) ?: estimatedPose
-
-        advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
-
-        return GlobalPose(estimatedPose, 0.0)
     }
 }
 

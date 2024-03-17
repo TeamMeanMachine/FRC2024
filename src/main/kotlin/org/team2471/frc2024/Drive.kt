@@ -31,6 +31,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.Drive.position
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -689,11 +690,21 @@ suspend fun Drive.currentTest() = use(this) {
     }
 }
 
-fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L? {
+fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
     val odomDiff = Drive.poseDiff(latencySeconds)
     return if (odomDiff != null) {
         vector + odomDiff.position.feet
     } else  {
-        null
+        vector
+    }
+}
+
+fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
+    val oldPose = Drive.lookupPose(timestampSeconds)
+    if (oldPose != null) {
+        val odomDiff = position - (Drive.lookupPose(timestampSeconds)?.position ?: position)
+        return vector + odomDiff.feet
+    } else {
+        return vector
     }
 }
