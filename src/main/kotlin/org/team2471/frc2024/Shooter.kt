@@ -157,11 +157,11 @@ object Shooter: Subsystem("Shooter") {
         bottomDEntry.setDouble(shooterMotorBottom.getD())
 
         if (isRedAlliance) {
-            topAmpRPMEntry.setDouble(900.0)
-            bottomAmpRPMEntry.setDouble(900.0)
+            topAmpRPMEntry.setDouble(3000.0)
+            bottomAmpRPMEntry.setDouble(3000.0)
         } else {
-            topAmpRPMEntry.setDouble(900.0)
-            bottomAmpRPMEntry.setDouble(900.0)
+            topAmpRPMEntry.setDouble(3000.0)
+            bottomAmpRPMEntry.setDouble(3000.0)
         }
 
 
@@ -230,8 +230,8 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                    rpmTopSetpoint = topAmpRPMEntry.getDouble(900.0)
-                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(900.0)
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(3000.0)
+                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(3000.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
