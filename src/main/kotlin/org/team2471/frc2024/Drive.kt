@@ -628,7 +628,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        if (aimSpeaker) {
+        if (aimSpeaker || Robot.isAutonomous) {
             aimHeadingSetpoint = getAngleToSpeaker()
         } else {
             aimHeadingSetpoint = 90.0.degrees
@@ -636,7 +636,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
 
-        if (abs(angleError.asDegrees) > 2.0) {
+        if (abs(angleError.asDegrees) > 2.0 || Robot.isAutonomous) {
             return aimPDController.update(angleError.asDegrees)
         }
         return null

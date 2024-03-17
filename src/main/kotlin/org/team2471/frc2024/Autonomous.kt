@@ -176,6 +176,7 @@ object AutoChooser {
 
             aimAndShoot() //preLoaded shot
 
+            Intake.intakeState = Intake.IntakeState.INTAKING
             ti.start()
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(0.2)
@@ -187,6 +188,7 @@ object AutoChooser {
             suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 0.4}
             aimAndShoot() //second note shot
 
+            Intake.intakeState = Intake.IntakeState.INTAKING
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
@@ -204,6 +206,7 @@ object AutoChooser {
             delay(0.3) //Waiting for AprilTag to catch up
             aimAndShoot() //third note shot
 
+            Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("3-GrabFourth")
             if (path != null) {
                 if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
@@ -234,36 +237,57 @@ object AutoChooser {
         try {
             grabFirstFour() //split because we want intake default for picking up middle pieces
 
+            Shooter.setRpms(0.0)
             val auto = autonomi["MidPieces"]
             auto?.isReflected = isRedAlliance
             var path: Path2D? = auto?.get("4-GrabFifth")
 
 
             if (path != null) {
-                Drive.driveAlongPath(path/*, earlyExit = {
-                    it > 0.5 && NoteDetector.closestIsValid
-                }*/)
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Drive.driveAlongPath(path, earlyExit = {
+                    it > 0.25 && NoteDetector.closestIsValid
+                })
             }
             pickUpSeenNote()
             path = auto?.get("5-ShootFifth")
-            if (path != null) {
-                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
-            }
-            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+            parallel({
+                delay(0.5)
+                Intake.setIntakeMotorsPercent(0.0)
+                Shooter.setRpms(5000.0)
+                Pivot.aimSpeaker = true
+            }, {
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, turnOverride = {Drive.aimSpeakerAmpLogic()})
+                }
+            })
+            if (Intake.holdingCargo) {
+                println("intake is holding, shooting")
                 aimAndShoot(true)
+            } else {
+                println("Intake is not holding, not shooting")
             }
+            Shooter.setRpms(0.0)
             path = auto?.get("6-GrabSixth")
             if (path != null) {
-                Drive.driveAlongPath(path/*, earlyExit = {
-                    it > 0.5 && NoteDetector.closestIsValid
-                }*/)
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Drive.driveAlongPath(path, earlyExit = {
+                    it > 0.25 && NoteDetector.closestIsValid
+                })
             }
             pickUpSeenNote()
             path = auto?.get("7-ShootSixth")
-            if (path != null) {
-                Drive.driveAlongPath(path, headingOverride = {Drive.getAngleToSpeaker()})
-            }
-            if (Intake.intakeState != Intake.IntakeState.EMPTY) {
+            parallel({
+                delay(0.5)
+                Intake.setIntakeMotorsPercent(0.0)
+                Shooter.setRpms(5000.0)
+                Pivot.aimSpeaker = true
+            }, {
+                if (path != null) {
+                    Drive.driveAlongPath(path, turnOverride = {Drive.aimSpeakerAmpLogic()})
+                }
+            })
+            if (Intake.holdingCargo) {
                 aimAndShoot(true)
             }
 
@@ -303,6 +327,7 @@ object AutoChooser {
         if (path != null) {
             Drive.driveAlongPath(path!!, false)
         }
+        Intake.intakeState = Intake.IntakeState.INTAKING
         path = auto?.get("3-GrabFourth")
         if (path != null) {
             Drive.driveAlongPath(path!!, false/*, earlyExit = {
@@ -376,6 +401,7 @@ object AutoChooser {
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             if (path != null) {
                 Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
                     /*Drive.combinedPosition.x > 23.0 &&*/ NoteDetector.seesNote && NoteDetector.closestIsValid
@@ -389,6 +415,7 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
@@ -402,6 +429,7 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("5-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
@@ -430,6 +458,7 @@ object AutoChooser {
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             if (path != null) {
                 Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
@@ -442,6 +471,7 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
@@ -454,6 +484,7 @@ object AutoChooser {
                 Drive.driveAlongPath(path, false)
             }
             aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("5-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
