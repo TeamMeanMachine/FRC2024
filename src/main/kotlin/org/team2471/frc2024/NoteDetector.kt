@@ -11,6 +11,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
@@ -147,7 +148,6 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notePosAdv = mutableListOf()
 
                 if (camera.isConnected) {
-                    //println("connected")
                     for (target in camera.latestResult.targets) {
                         val robotCoords = getTargetRobotCoords(target)
                         val fieldCoords = robotCoordsToFieldCoords(robotCoords)
@@ -156,7 +156,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                                 robotCoords,
                                 fieldCoords,
                                 target.yaw,
-                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis
+                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis/1000
                             )
                         )
 //                        println(("pitch: ${target.pitch}"))
@@ -178,16 +178,14 @@ object NoteDetector: Subsystem("NoteDetector") {
                 notes = tempNotes.toList()
 
 
-//                if (Robot.isAutonomous) {
-                    for (s in noteList) {
-                        s.value.isPresent = false
-                        for (n in notes) {
-                            if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
-                                s.value.isPresent = true
-                            }
+                for (s in noteList) {
+                    s.value.isPresent = false
+                    for (n in notes) {
+                        if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
+                            s.value.isPresent = true
                         }
                     }
-//                }
+                }
                 noteList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
                 noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
                 noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
@@ -212,6 +210,20 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     fun robotCoordsToFieldCoords(robotCoords : Vector2): Vector2 {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
+    }
+
+    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 2.0) : Boolean {
+        for (note in notes) {
+            val poseDiff = Drive.poseDiff(Timer.getFPGATimestamp() - note.timestampSeconds)
+            var noteFieldPos = note.fieldCoords
+            if (poseDiff != null) {
+                noteFieldPos += poseDiff.position
+            }
+            if ((expectedPos - noteFieldPos).length < maximumErr) { // is it a different note
+                return true
+            }
+        }
+        return false
     }
 }
 

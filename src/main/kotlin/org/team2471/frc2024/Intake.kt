@@ -44,7 +44,8 @@ object Intake: Subsystem("Intake") {
     val topBreak: Boolean
         get() = !topBreakSensor.get()
 
-    var holdingCargo = false
+    val holdingCargo: Boolean
+        get() = intakeState != IntakeState.EMPTY
 
     init {
         intakingEntry.setBoolean(false)
@@ -79,9 +80,6 @@ object Intake: Subsystem("Intake") {
             var stagedT= 0.0
 
             periodic {
-//                colorEntry.setString(colorSensor.color.toHexString())
-//                proximityEntry.setInteger(colorSensor.proximity.toLong())
-
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
@@ -154,7 +152,7 @@ object Intake: Subsystem("Intake") {
         feederMotor.setPercentOutput(value)
     }
 
-    enum class IntakeState() {
+    enum class IntakeState {
         EMPTY,
         INTAKING,
         SLOWING,

@@ -8,6 +8,8 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 
@@ -67,8 +69,8 @@ object Shooter: Subsystem("Shooter") {
     val pitchCurve = MotionCurve()
     val rpmCurve = MotionCurve()
 
-    private val topPDController = PDController(0.00015, 0.0006)
-    private val bottomPDController = PDController(0.00015, 0.0006)
+    private val topPDController = PDController(0.00015, 0.0002)
+    private val bottomPDController = PDController(0.00015, 0.0002)
 
     private var ffTopPower: Double = 0.0
     private var ffBottomPower: Double = 0.0
@@ -155,11 +157,11 @@ object Shooter: Subsystem("Shooter") {
         bottomDEntry.setDouble(shooterMotorBottom.getD())
 
         if (isRedAlliance) {
-            topAmpRPMEntry.setDouble(1150.0)
-            bottomAmpRPMEntry.setDouble(950.0)
+            topAmpRPMEntry.setDouble(900.0)
+            bottomAmpRPMEntry.setDouble(900.0)
         } else {
-            topAmpRPMEntry.setDouble(1175.0)
-            bottomAmpRPMEntry.setDouble(975.0)
+            topAmpRPMEntry.setDouble(900.0)
+            bottomAmpRPMEntry.setDouble(900.0)
         }
 
 
@@ -228,7 +230,7 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1100.0)
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(900.0)
                     rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(900.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
@@ -263,5 +265,14 @@ object Shooter: Subsystem("Shooter") {
         rpmCurve.storeValue(9.0, RPM9Entry.getDouble(5000.0))
         rpmCurve.storeValue(13.7, RPM15Entry.getDouble(5000.0))
         rpmCurve.storeValue(17.0, RPM17Entry.getDouble(5000.0))
+    }
+
+    fun setRpms(rpm: Double) {
+        rpmTopSetpoint = rpm
+        rpmBottomSetpoint = rpm
+    }
+
+    fun getRpmFromPosition(point: Vector2): Double {
+        return rpmCurve.getValue(point.distance(Drive.speakerPos))
     }
 }

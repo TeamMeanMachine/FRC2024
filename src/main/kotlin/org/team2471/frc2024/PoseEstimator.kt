@@ -49,8 +49,6 @@ object PoseEstimator {
             apriltagsEnabledEntry.setBoolean(value)
             zeroOffset()
         }
-    // val heading
-    //   get() = (Drive.heading - headingOffset).wrap()
 
     init {
         apriltagHeadingEntry.setDouble(0.0)
@@ -91,17 +89,23 @@ object PoseEstimator {
 //                    println(detection.ambiguity)
 //                val kHeading = if (kotlin.math.abs(currentPose.y) > 15.0) kHeadingEntry.getDouble(0.001) else 0.0
 //                    val latencyPose = Drive.lookupPose(detection.timestamp)
+                val apriltagPose = Vector2(detection.pose.x, detection.pose.y)// + odomDiff
+                //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
+                offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
                 if (DriverStation.isDisabled() && /*latencyPose == null && */beforeFirstEnable) {
-                    val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
-                    preEnableHadTarget = true
-                    Drive.position = apriltagPoseF
+
+                    if (Drive.position == Vector2(0.0,0.0)) {
+                        val apriltagPoseF = Vector2(detection.pose.x.meters.asFeet, detection.pose.y.meters.asFeet)
+                        preEnableHadTarget = true
+                        Drive.position = apriltagPoseF
+                    } else {
+                        Drive.position = Drive.combinedPosition
+                    }
+                    offset = Vector2(0.0,0.0)
 //                    Drive.heading = detection.pose.rotation.radians.radians
                 }
 //                    if (latencyPose != null) {
 //                        val odomDiff = robotPosM - latencyPose.position
-                val apriltagPose = Vector2(detection.pose.x, detection.pose.y)// + odomDiff
-                //val apriltagHeading = (-(detection.pose.rotation.degrees.degrees + headingDiff)).wrap180()
-                offset = offset * (1.0 - kAprilFinal) + (robotPosM - apriltagPose) * kAprilFinal
                 //apriltagHeadingEntry.setDouble(apriltagHeading.asDegrees)
                 //headingOffset = headingOffset * (1.0 - kHeading) + apriltagHeading.unWrap180(Drive.heading) * kHeading
                 //TODO: figure out coercing

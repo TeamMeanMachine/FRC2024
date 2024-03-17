@@ -12,6 +12,7 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asRadians
@@ -50,11 +51,11 @@ object Pivot: Subsystem("Pivot") {
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
-    val AMPPOSE = 90.0.degrees//107.5.degrees
+    val AMPPOSE = /*90.0.degrees*/107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3515.0 else 2124.0
-    private val MAXTICKS = if (isCompBot) 2329.0 else 940.0
+    private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
 
     var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
@@ -63,8 +64,10 @@ object Pivot: Subsystem("Pivot") {
         set(value) {
             field = value
             if (value) {
-                Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
-                Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                if (!Robot.isAutonomous) {
+                    Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
+                    Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                }
             } else {
                 Shooter.rpmTopSetpoint = 0.0
                 Shooter.rpmBottomSetpoint = 0.0
@@ -90,8 +93,7 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             Shooter.manualShootState = Shooter.manualShootState
-//
-        //            Uh oh
+
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -108,7 +110,6 @@ object Pivot: Subsystem("Pivot") {
 
 
     init {
-//        ticksOffsetEntry.setDouble(3665.0)
         stageAngleEntry.setDouble(20.0)
 
         pivotMotor.config {
@@ -119,7 +120,6 @@ object Pivot: Subsystem("Pivot") {
 
             //                              ticks / gear ratio   fudge factor
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
-//            brakeMode()
             coastMode()
             inverted(true)
 
@@ -143,22 +143,13 @@ object Pivot: Subsystem("Pivot") {
                 advantagePivotPublisher.set(advantagePivotTransform)
 
 
-//                pivotErrorEntry.setDouble(pivotError)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
-//                if (pivotError > 0.25) {
-//                    pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
-////                    println(0.025 * cos((pivotEncoderAngle - 20.0.degrees).asRadians))
-//                }
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-
-                    // Calculated. May change a lot with more data
-//                    val angle = (90.0 * (0.751492.pow(dist))).degrees
-
                     val angle = Shooter.pitchCurve.getValue(distFromSpeaker).degrees
 //                    println("Angle: ${angle}")
                     angleSetpoint = angle
@@ -190,6 +181,10 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
+    }
+
+    fun getAngleFromPosition(point: Vector2): Angle {
+        return Shooter.pitchCurve.getValue(point.distance(speakerPos)).degrees
     }
 
 }
