@@ -51,7 +51,7 @@ object Pivot: Subsystem("Pivot") {
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
-    val AMPPOSE = /*90.0.degrees*/107.5.degrees
+    val AMPPOSE = 107.5.degrees
 
     // Ticks
     private val MINTICKS = if (isCompBot) 3515.0 else 2325.0

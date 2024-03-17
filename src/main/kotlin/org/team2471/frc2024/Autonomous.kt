@@ -343,7 +343,7 @@ object AutoChooser {
         try {
             println("in 4closeSafe ${Robot.recentTimeTaken()}")
             Shooter.setRpms(5000.0)
-            Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE + 5.0.degrees
+            Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
             Drive.zeroGyro()
 //            Drive.combinedPosition =
@@ -364,6 +364,8 @@ object AutoChooser {
                 }, {
                     Drive.driveAlongPath(path!!, true)
                 })
+            } else {
+                println("PATH EQUALS NULL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             }
             if (path != null) {
                 parallel({
