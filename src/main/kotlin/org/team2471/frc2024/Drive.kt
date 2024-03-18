@@ -200,9 +200,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(-1.0, 0.0)
-    //    override val carpetFlow = Vector2(1.0, 0.0)
-//    override val carpetFlow = Vector2(0.0, 1.0)
+    override val carpetFlow = Vector2(1.0, 0.0) //STEM?
+    //    override val carpetFlow = Vector2(-1.0, 0.0) //Salem?
+//    override val carpetFlow = Vector2(0.0, 1.0) //2023 pre-wpi field x y swap?
     override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
@@ -330,7 +330,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 prevTickVelocity = tickVelocity
                 tickVelocity = position - prevPosition
-                if (position.x != prevPosition.x) println("position: $position prev: $prevPosition tickVel: $tickVelocity")
 
 
 //                val speed = velocity.length
@@ -426,16 +425,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun frontSpeakerResetOdom() {
-
-        if (isRedAlliance) {
-            combinedPosition = Vector2L(48.2.feet, 18.25.feet)
-            position = Vector2(48.2, 18.25)
-            prevPosition = Vector2(48.2, 18.25)
-        } else {
-            combinedPosition = Vector2L(48.2.feet, 18.25.feet).reflectAcrossField()
-            position = Vector2(48.2, 18.25).reflectAcrossField()
-            prevPosition = Vector2(48.2, 18.25).reflectAcrossField()
+        var resetPose = Vector2(48.2, 18.25)
+        if (isBlueAlliance) {
+            resetPose = resetPose.reflectAcrossField()
         }
+
+        combinedPosition = resetPose.feet
+        position = resetPose
+        prevPosition = resetPose
+        for (camera in AprilTag.cameras) camera.component2().lastGlobalPose = GlobalPose(resetPose.feet, 0.0, edu.wpi.first.wpilibj.Timer.getFPGATimestamp())
+        advantagePoseEntry.setAdvantagePose(resetPose.feet, heading)
         println("resetting to front speaker pos. $position")
     }
 
@@ -750,11 +749,5 @@ fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
 }
 
 fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
-    val oldPose = Drive.lookupPose(timestampSeconds)
-    if (oldPose != null) {
-        val odomDiff = position - (Drive.lookupPose(timestampSeconds)?.position ?: position)
-        return vector + odomDiff.feet
-    } else {
-        return vector
-    }
+    return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
 }
