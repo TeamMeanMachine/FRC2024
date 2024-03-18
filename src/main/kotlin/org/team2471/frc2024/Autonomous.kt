@@ -11,12 +11,16 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.feet
+import org.team2471.frc.lib.math.inches
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
+import org.team2471.frc2024.AprilTag.resetCameras
+import org.team2471.frc2024.Drive.isBlueAlliance
+import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
 import java.util.*
 
@@ -38,7 +42,7 @@ val selAuto
 
 object AutoChooser {
     private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
-    private val closeFourToFiveEntry = PoseEstimator.poseTable.getEntry("Auto, Go For It")
+    private val closeFourToFiveEntry = AprilTag.aprilTable.getEntry("Auto, Go For It")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
 
@@ -168,7 +172,7 @@ object AutoChooser {
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78) else Vector2(48.32, 21.78).reflectAcrossField() //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
+            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78).feet else Vector2(48.32, 21.78).reflectAcrossField().feet //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
             val auto = autonomi["2Far2CloseAmp"]
             auto?.isReflected = isBlueAlliance
             var path: Path2D? = auto?.get("0.5-GrabSecond")
@@ -179,7 +183,7 @@ object AutoChooser {
             Intake.intakeState = Intake.IntakeState.INTAKING
             ti.start()
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(0.2)
+                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(0.2)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -190,7 +194,7 @@ object AutoChooser {
 
             Intake.intakeState = Intake.IntakeState.INTAKING
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
+                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -199,7 +203,7 @@ object AutoChooser {
             pickUpSeenNote()
             path = auto?.get("2-ShootThird")
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.0)
+                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.0)
                 Drive.driveAlongPath(path, false)
             }
 
@@ -209,7 +213,7 @@ object AutoChooser {
             Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("3-GrabFourth")
             if (path != null) {
-                if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(3.5)
+                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -220,7 +224,7 @@ object AutoChooser {
             if (closeFourToFiveEntry.getBoolean(false)) {
                 path = auto?.get("4-ShootFourth")
                 if (path != null) {
-                    if (!PoseEstimator.apriltagsEnabled) path.scaleEasePoints(4.0)
+                    if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(4.0)
                     Drive.driveAlongPath(path, false)
                 }
 
@@ -398,7 +402,7 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(46.0, 11.95) else Vector2(46.0, 11.95).reflectAcrossField()
+                if (isRedAlliance) Vector2(46.0, 11.95).feet else Vector2(46.0, 11.95).reflectAcrossField().feet
             val auto = autonomi["SubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -455,7 +459,7 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(48.52, 11.62) else Vector2(48.52, 11.62).reflectAcrossField()
+                if (isRedAlliance) Vector2(48.52, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -510,7 +514,7 @@ object AutoChooser {
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(0.0, 0.0) else Vector2(0.0, 0.0).reflectAcrossField()
+                if (isRedAlliance) Vector2(0.0, 0.0).feet else Vector2(0.0, 0.0).reflectAcrossField().feet
             val auto = autonomi["Tests"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("8 Foot Straight")
