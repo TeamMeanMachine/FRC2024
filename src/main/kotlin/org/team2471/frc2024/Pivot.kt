@@ -141,8 +141,8 @@ object Pivot: Subsystem("Pivot") {
                 advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
                 advantagePivotPublisher.set(advantagePivotTransform)
 
-
-
+                // this call only sets the offset in meanlib, it does not tell the motor controller to go to the new combined setpoint.  Need to call setPositionSetpoint also.
+                // maybe not every frame.  Put it in an if? based on the two being different?
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
 

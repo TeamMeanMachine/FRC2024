@@ -352,8 +352,11 @@ object AutoChooser {
             auto?.isReflected = isRedAlliance
             var path = auto?.get("1-GrabSecond")
 
-            delay(0.1)
-            fire(0.5) //fire preloaded
+            delay(0.5)
+//            fire(0.5) //fire preloaded
+            Intake.setIntakeMotorsPercent(1.0)
+            delay(0.5)
+
             if (path != null) {
                 parallel({
                     Shooter.setRpms(5000.0)
