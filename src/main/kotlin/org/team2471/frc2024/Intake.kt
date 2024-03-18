@@ -45,7 +45,7 @@ object Intake: Subsystem("Intake") {
         get() = !topBreakSensor.get()
 
     val holdingCargo: Boolean
-        get() = intakeState != IntakeState.EMPTY && intakeState != IntakeState.INTAKING
+        get() = intakeState != IntakeState.EMPTY && intakeState != IntakeState.INTAKING && intakeState != IntakeState.SPITTING
 
     init {
         intakingEntry.setBoolean(false)

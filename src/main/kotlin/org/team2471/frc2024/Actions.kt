@@ -119,7 +119,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
 
     var seesNote = false
     periodic{
-        if (NoteDetector.seesNote) {
+        if (NoteDetector.notes.size > 0){
             seesNote = true
             stop()
         }
@@ -138,7 +138,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
 
 suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null) = use(Drive, name = "pick up note") {
 //    try {
-    println("picking up note")
+    println("inside \"pickUpSeenNote\"")
 
     var noteEstimatedPosition: Vector2 = Vector2(0.0, 0.0)
 
@@ -171,28 +171,27 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
 //            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
         var expectedFieldPos : Vector2? = expectedPos
-        var notePosMaxError = 3.0
+        var notePosMaxError = 3.5
         if (noteFoundFlag) {
-            expectedFieldPos = expectedPos ?: estimatedFieldPos
+//            expectedFieldPos = estimatedFieldPos
 //                notePosMaxError = 3.5 // If we don't have many measurements then some more error is acceptable
         }
 
         var noteFound = false
 
-//            println(NoteDetector.notes)
-        for (note in NoteDetector.notes) {
+        //checking if note is in expected range and setting its position
+        for (note in  NoteDetector.notes) {
             val latency = Timer.getFPGATimestamp() - note.timestampSeconds
             val previousPose = Drive.lookupPose(note.timestampSeconds)
-            val poseDiff = Drive.poseDiff(latency) // Exclamation marks are probably fine
+            val poseDiff = Drive.poseDiff(latency)
 
-            // i hate this but
             var tempNotePose: Vector2
             var tempFieldPosition: Vector2
             var tempHeadingErr: Double
 
             if (poseDiff != null && previousPose != null) {
                 tempNotePose = (note.robotCoords.rotateDegrees(previousPose.heading.asDegrees) - poseDiff.position).rotateDegrees(-Drive.heading.asDegrees)
-                tempFieldPosition = note.fieldCoords + poseDiff.position
+                tempFieldPosition = note.fieldCoords
                 tempHeadingErr = note.yawOffset + poseDiff.heading.asDegrees
 //                    println("latency: $latency")
 //                    println("previous pose: $previousPose")
@@ -207,6 +206,15 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
 //                println("note field pos x: ${tempFieldPosition.x} y: ${tempFieldPosition.y}")
 
+            if (!noteFoundFlag) {
+                println("Note found")
+                println("Field coord: x: ${tempFieldPosition.x} y: ${tempFieldPosition.y}")
+                println("Robot Coords: x ${tempNotePose.x} y: ${tempNotePose.y}")
+                if (expectedFieldPos != null) {
+                    println("Distance from expected: ${(expectedFieldPos - tempFieldPosition).length}")
+                }
+            }
+
 
             if ((expectedFieldPos != null && (expectedFieldPos - tempFieldPosition).length < notePosMaxError) || expectedFieldPos == null) { // is it a different note
 //                    println("note passed check")
@@ -215,6 +223,8 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 fieldPos = tempFieldPosition
                 noteFound = true
                 break
+            } else {
+                println("note too far from expected position. notePos: $notePos  expectedFieldPos $expectedFieldPos")
             }
         }
 
@@ -231,18 +241,23 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                noteEstimatedPosition += weight * fieldPos
 //                notePosCount += weight
 
+        } else {
+            println("did not find note")
         }
 
         if (!noteFound && !noteFoundFlag) {
             println("pick up seen note did not see any note to pickup")
+            println("notes: ${NoteDetector.notes}")
+
             stop() // we did not see any note
         } else {
 
+            //start driving
+
             noteFoundFlag = true
 
-            if (!noteFound && noteFoundFlag) {
-                headingError =
-                    0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
+            if (!noteFound) {
+                headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
                 notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
                 fieldPos = estimatedFieldPos
             }
@@ -290,8 +305,9 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 prevHeadingError = headingError
             }
 
-            if (Intake.intakeState != Intake.IntakeState.INTAKING && Intake.intakeState != Intake.IntakeState.EMPTY && Intake.intakeState != Intake.IntakeState.SPITTING) {
+            if (Intake.holdingCargo) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")
+                println("time to pick up note: $elapsedTime")
                 success = true
                 stop()
             } else if (OI.driveLeftTrigger < 0.2 && !Robot.isAutonomous) {
@@ -299,14 +315,11 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                     Intake.intakeState = Intake.IntakeState.EMPTY
                 }
                 stop()
-            } else if (Robot.isAutonomous && ((timeOut && elapsedTime > 3.0) || (!noteFound && notePos!!.length < 0.5))) {
+            } else if (Robot.isAutonomous && ((timeOut && elapsedTime > 5.0)/* || (!noteFound && notePos!!.length < 0.5)*/)) {
                 println("exiting pick up note, its been too long")
                 stop()
             }
         }
-
-
-
     }
     Drive.drive(Vector2(0.0, 0.0), 0.0, false)
     return@use success

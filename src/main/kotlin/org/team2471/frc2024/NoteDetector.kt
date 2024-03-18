@@ -24,7 +24,6 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val camera : PhotonCamera = PhotonCamera("notecam")
     private val noteAdvantagePosEntry = pvtable.getEntry("Advantage Note Pos")
 
-
     private val noteZeroPresentEntry = table.getEntry("NoteZeroPresent")
     private val noteOnePresentEntry = table.getEntry("NoteOnePresent")
     private val noteTwoPresentEntry = table.getEntry("NoteTwoPresent")
@@ -36,7 +35,20 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val camRobotCoords = Vector2(11.96.inches.asFeet, 0.0.inches.asFeet)
     private val cameraAngle = 15.0.degrees
 
-    val noteList: HashMap<Int, SchrodingerNote> = hashMapOf()
+    val middleNotesList: HashMap<Int, SchrodingerNote> = hashMapOf() // from closest to y=0 in wpi blue
+    val closeNotesRedList : HashMap<Int, SchrodingerNote> = hashMapOf() // close notes n=0 is note closest to center field, n++ further away
+    val closeNotesBlueList : HashMap<Int, SchrodingerNote> = hashMapOf()
+
+    fun closeNote(n : Int) : Vector2 {
+        if (isRedAlliance) {
+            return closeNotesRedList[n]!!.position
+        } else {
+            return closeNotesBlueList[n]!!.position
+        }
+    }
+    fun middleNote(n : Int) : Vector2 {
+        return middleNotesList[n]!!.position
+    }
 
     val seesNote: Boolean
         get() {
@@ -136,9 +148,15 @@ object NoteDetector: Subsystem("NoteDetector") {
                 4 -> Vector2(0.0, 0.0)
                 else -> Vector2(0.0, 0.0)
             }
-            val noteCoord = Vector2(27.216, (n * 66.0 + 29.64).inches.asFeet)
+            val noteCoord = Vector2(27.135, (n * 66.0 + 29.64).inches.asFeet)
             println("creating note with ID: $n  Vector: $noteCoord  Offset: $offset  Offset Vector: ${noteCoord + offset}")
-            noteList[n] = SchrodingerNote(noteCoord + offset)
+            middleNotesList[n] = SchrodingerNote(noteCoord + offset)
+        }
+
+        // Create close notes for red and blue
+        for (n in 0 until 2) {
+            closeNotesRedList[n] = SchrodingerNote(Vector2(114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Blue side notes, smaller is closer to center
+            closeNotesBlueList[n] = SchrodingerNote(Vector2(54.27 - 114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Red Side notes, smaller is closer to center
         }
 
 
@@ -147,10 +165,14 @@ object NoteDetector: Subsystem("NoteDetector") {
                 val tempNotes : ArrayList<Note> = arrayListOf()
                 notePosAdv = mutableListOf()
 
-                if (camera.isConnected) {
+                if (camera.isConnected && camera.latestResult != null) {
                     for (target in camera.latestResult.targets) {
                         val robotCoords = getTargetRobotCoords(target)
-                        val fieldCoords = robotCoordsToFieldCoords(robotCoords)
+                        val poseDiff = Drive.poseDiff(camera.latestResult.latencyMillis/1000)
+                        var fieldCoords = robotCoordsToFieldCoords(robotCoords)
+                        if (poseDiff != null) {
+                            fieldCoords -= poseDiff.position
+                        }
                         tempNotes.add(
                             Note(
                                 robotCoords,
@@ -174,11 +196,14 @@ object NoteDetector: Subsystem("NoteDetector") {
                 }
                 if (notePosAdv.isNotEmpty()) {
                     noteAdvantagePosEntry.setDoubleArray(notePosAdv.first())
+                } else {
+                    noteAdvantagePosEntry.setDoubleArray(doubleArrayOf(0.0, 0.0, 0.0))
                 }
+
                 notes = tempNotes.toList()
 
 
-                for (s in noteList) {
+                for (s in middleNotesList) {
                     s.value.isPresent = false
                     for (n in notes) {
                         if ((n.fieldCoords.x - s.value.position.x).absoluteValue < 6.0.inches.asFeet && (n.fieldCoords.y - s.value.position.y).absoluteValue < 6.0.inches.asFeet) {
@@ -186,22 +211,15 @@ object NoteDetector: Subsystem("NoteDetector") {
                         }
                     }
                 }
-                noteList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
-                noteList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
-                noteList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
-                noteList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
-                noteList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                middleNotesList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
+                middleNotesList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                middleNotesList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
+                middleNotesList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
+                middleNotesList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
                 SmartDashboard.putBoolean("NoteCameraIsConnected", camera.isConnected)
             }
         }
     }
-
-    override suspend fun default() {
-        periodic {
-
-        }
-    }
-
     fun getTargetRobotCoords(target : PhotonTrackedTarget): Vector2 {
         val distance = distanceCurve.getValue(target.pitch).feet
         val xOffset = distance * -tan(target.yaw.degrees)
@@ -212,14 +230,9 @@ object NoteDetector: Subsystem("NoteDetector") {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
     }
 
-    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 2.0) : Boolean {
+    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
         for (note in notes) {
-            val poseDiff = Drive.poseDiff(Timer.getFPGATimestamp() - note.timestampSeconds)
-            var noteFieldPos = note.fieldCoords
-            if (poseDiff != null) {
-                noteFieldPos += poseDiff.position
-            }
-            if ((expectedPos - noteFieldPos).length < maximumErr) { // is it a different note
+            if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
                 return true
             }
         }

@@ -459,25 +459,28 @@ object AutoChooser {
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
+            Shooter.setRpms(5000.0)
             aimAndShoot()
             Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
             if (path != null) {
                 Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.closestIsValid
                 })
             }
-            if (!NoteDetector.seesNote) delay(0.2)
             pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
+            Shooter.setRpms(5000.0)
             aimAndShoot()
             Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.closestIsValid
                 })
             }
             pickUpSeenNote()
@@ -485,12 +488,14 @@ object AutoChooser {
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
+            Shooter.setRpms(5000.0)
             aimAndShoot()
             Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
             path = auto?.get("5-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
+                    NoteDetector.closestIsValid
                 })
             }
             pickUpSeenNote()
