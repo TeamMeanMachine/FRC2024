@@ -260,7 +260,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
             if (!noteFound) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
-                notePos = (estimatedFieldPos - Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
+                notePos = (estimatedFieldPos) //- Drive.combinedPosition).rotateDegrees(-Drive.heading.asDegrees)
                 fieldPos = estimatedFieldPos
             }
 

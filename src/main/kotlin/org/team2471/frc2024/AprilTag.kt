@@ -198,6 +198,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
     val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
 
+    val targetPoseErrors = aprilTable.getEntry("April Target Pos Error $name")
     var lastGlobalPose: GlobalPose? = null
 
     var photonCam: PhotonCamera = PhotonCamera(name)
@@ -286,17 +287,21 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
             var avgDist = 0.0.inches
-            var targetPoses : Array<Vector2L> = arrayOf()
+            var targetPoses : ArrayList<Vector2L> = arrayListOf()
+            var targetPoseError : ArrayList<Vector2L> = arrayListOf()
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
-                val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
+                val targetRelativePose = (target.bestCameraToTarget.translation - robotToCamera.translation).toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
 
-                lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
-                    ?.let { targetPoses += it }
+              val targetTrackedFieldPose = lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)) ?: Vector2L(0.0.meters,0.0.meters)
+                targetPoses.add(targetTrackedFieldPose)
+                targetPoseError.add(Vector2L(tagPose.x.meters, tagPose.y.meters).minus(targetTrackedFieldPose))
+
             }
             targetPoseEntry.setAdvantagePoses(targetPoses)
+            targetPoseErrors.setAdvantagePoses(targetPoseError)
             avgDist /= validTargets.size.toDouble()
 
             var stDev = distCurve.getValue(avgDist.asMeters)

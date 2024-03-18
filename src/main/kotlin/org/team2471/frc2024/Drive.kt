@@ -296,7 +296,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     )
                 )
 
-                advantageCombinedPoseEntry.setAdvantagePose(combinedPosition)
+                advantageCombinedPoseEntry.setAdvantagePose(combinedPosition, heading)
 
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
