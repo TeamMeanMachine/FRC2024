@@ -195,6 +195,7 @@ object AprilTag {
 class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
 
     val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
+    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
 
     var lastGlobalPose: GlobalPose? = null
@@ -285,12 +286,17 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
             var avgDist = 0.0.inches
-
+            var targetPoses : Array<Vector2L> = arrayOf()
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
-            }
+                val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
+
+                lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
+                    ?.let { targetPoses += it }
+            }
+            targetPoseEntry.setAdvantagePoses(targetPoses)
             avgDist /= validTargets.size.toDouble()
 
             var stDev = distCurve.getValue(avgDist.asMeters)
