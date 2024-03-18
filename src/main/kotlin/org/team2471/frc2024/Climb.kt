@@ -66,7 +66,7 @@ object Climb: Subsystem("Climb") {
 
         GlobalScope.launch {
             periodic {
-                if (DriverStation.getMatchTime() < 1.0 && DriverStation.getMatchTime() > 0.0) {
+                if (DriverStation.getMatchTime() < 1.0 && DriverStation.getMatchTime() > 0.0 && !Robot.isAutonomous) {
                     println("locking climber!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Match Time ${DriverStation.getMatchTime()}")
                     relayOn = true
                 }
