@@ -17,8 +17,10 @@ import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import edu.wpi.first.wpilibj.Timer
+import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
+import org.team2471.frc2024.Drive.isBlueAlliance
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.sign
@@ -336,7 +338,7 @@ suspend fun lockToAmp() = use(Drive) {
     Drive.aimAmp = false
 
     val newPath = Path2D("newPath")
-    newPath.addVector2(Drive.combinedPosition)
+    newPath.addVector2(Drive.combinedPosition.asFeet)
     if (isBlueAlliance) {
         newPath.addPoint(7.0, 25.0)  // coords??
 //        newPath.addPointAndTangent(7.0, 25.0, 0.0, -4.0)

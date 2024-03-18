@@ -11,6 +11,8 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.AprilTag.resetCameras
+import org.team2471.frc2024.Drive.isBlueAlliance
 import kotlin.math.absoluteValue
 
 object OI : Subsystem("OI") {

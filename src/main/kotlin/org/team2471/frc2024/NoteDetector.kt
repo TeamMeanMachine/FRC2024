@@ -11,10 +11,12 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle.Companion.tan
+import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
 
 object NoteDetector: Subsystem("NoteDetector") {
@@ -96,7 +98,7 @@ object NoteDetector: Subsystem("NoteDetector") {
                 var closest: Note? = null
                 for (n in notes) {
                     if (closest != null) {
-                        if (n.fieldCoords.distance(Drive.combinedPosition) > closest.fieldCoords.distance(Drive.combinedPosition)) {
+                        if (n.fieldCoords.distance(Drive.combinedPosition.asFeet) > closest.fieldCoords.distance(Drive.combinedPosition.asFeet)) {
                             closest = n
                         }
                     } else {
@@ -227,7 +229,7 @@ object NoteDetector: Subsystem("NoteDetector") {
     }
 
     fun robotCoordsToFieldCoords(robotCoords : Vector2): Vector2 {
-        return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition
+        return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition.asFeet
     }
 
     fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {

@@ -9,9 +9,9 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.Drive.isRedAlliance
 
 object Shooter: Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
@@ -249,7 +249,6 @@ object Shooter: Subsystem("Shooter") {
     }
 
     fun rebuildCurves() {
-        println("Rebuilding curves. Hi.")
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
         pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(61.0))
