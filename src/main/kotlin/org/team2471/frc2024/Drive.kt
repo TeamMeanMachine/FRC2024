@@ -30,6 +30,7 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
+import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -180,7 +181,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
         set(value) {
-            prevPosition = value
             field = value
         }
 
@@ -193,8 +193,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     var testWheelPosition: Vector2L = position.feet
-//                   feet seconds fps
-    val driveStDevM = (2.5 / 30 / 50).feet.asMeters * 10
+//                   feet seconds fps fudge
+    val driveStDevM = (2.5 / 30 / 50 * 15).feet.asMeters
 
 
     override var robotPivot = Vector2(0.0, 0.0)
@@ -330,6 +330,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 prevTickVelocity = tickVelocity
                 tickVelocity = position - prevPosition
+                if (position.x != prevPosition.x) println("position: $position prev: $prevPosition tickVel: $tickVelocity")
 
 
 //                val speed = velocity.length
@@ -428,8 +429,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         if (isRedAlliance) {
             combinedPosition = Vector2L(48.2.feet, 18.25.feet)
+            position = Vector2(48.2, 18.25)
+            prevPosition = Vector2(48.2, 18.25)
         } else {
             combinedPosition = Vector2L(48.2.feet, 18.25.feet).reflectAcrossField()
+            position = Vector2(48.2, 18.25).reflectAcrossField()
+            prevPosition = Vector2(48.2, 18.25).reflectAcrossField()
         }
         println("resetting to front speaker pos. $position")
     }
@@ -590,7 +595,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (14.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
@@ -708,11 +713,12 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
 
-    testWheelPosition = prevCombinedPosition + Drive.tickVelocity.feet //  + 0.5 * Drive.acceleration * dt * dt
-    advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
+    if (combinedPosition != Vector2L(0.0.inches, 0.0.inches) && DriverStation.isEnabled()) {
 
-    if (combinedPosition != Vector2L(0.0.inches, 0.0.inches)) {
-        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
+        testWheelPosition = prevCombinedPosition + Drive.tickVelocity.feet //  + 0.5 * Drive.acceleration * dt * dt
+        advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
+
+            measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
     }
 
     for (i in aprilPoses) {
@@ -727,7 +733,9 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         b += i.second.pow(-2)
     }
 
-    combinedPosition = a.asMeters.div(b).meters
+    if (b != 0.0) {
+        combinedPosition = a.asMeters.div(b).meters
+    }
 
     prevCombinedPosition = pos
 }

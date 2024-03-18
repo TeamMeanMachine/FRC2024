@@ -12,6 +12,7 @@ import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
 import org.photonvision.targeting.MultiTargetPNPResult
+import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
@@ -106,7 +107,7 @@ object AprilTag {
         for (camera in cameras.values) {
             val lastGlobalPose = camera.lastGlobalPose
             if (lastGlobalPose != null) {
-                if (Timer.getFPGATimestamp() - lastGlobalPose.timestamp < 0.06) {
+                if (Timer.getFPGATimestamp() - lastGlobalPose.timestamp < 0.03) {
                     out.add(lastGlobalPose)
                 }
             }
@@ -119,7 +120,7 @@ object AprilTag {
         try {
             if (cameras["CamSL"] == null || cameras["CamSR"] == null) {
                 return null
-            } else if (!cameras["CamSL"]?.photonCam?.isConnected!! || !cameras["CamSR"]?.photonCam?.isConnected!!) {
+            } else if (!(cameras["CamSL"]?.photonCam?.isConnected ?: false) || !(cameras["CamSR"]?.photonCam?.isConnected ?: false)) {
                 return null
             } else {
                 var slDist = 0.0.feet
@@ -128,12 +129,12 @@ object AprilTag {
                 var srRot = 0.0.degrees
                 var numCams = 0.0
 
-                val camSL = cameras["CamSL"]?.photonCam ?: null
-                val camSR = cameras["CamSR"]?.photonCam ?: null
+                val camSL = cameras["CamSL"]?.photonCam
+                val camSR = cameras["CamSR"]?.photonCam
 
                 if (camSL != null) {
-                    if (camSL!!.isConnected) {
-                        val validSLTargets = camSL!!.latestResult.targets
+                    if (camSL.isConnected) {
+                        val validSLTargets = camSL.latestResult.targets
                         for (target in validSLTargets) {
                             if (target.fiducialId == if (isRedAlliance) 4 else 7) {
                                 if (target.area > 5.0){
@@ -149,9 +150,9 @@ object AprilTag {
                     }
 
                 }
-                if (camSL != null) {
-                    if (camSL!!.isConnected) {
-                        val validSRTargets = camSR!!.latestResult.targets
+                if (camSR != null) {
+                    if (camSR.isConnected) {
+                        val validSRTargets = camSR.latestResult.targets
                         for (target in validSRTargets) {
                             if (target.fiducialId == if (isRedAlliance) 4 else 7) {
                                 if (target.area > 5.0) {
