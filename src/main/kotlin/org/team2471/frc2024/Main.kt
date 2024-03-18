@@ -10,7 +10,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
-import org.team2471.frc2024.testing.*
 import java.net.NetworkInterface
 
 
@@ -55,8 +54,6 @@ object Robot : MeanlibRobot() {
         Pivot
         AutoChooser
         AprilTag
-        AprilTag2
-        PoseEstimator
         NoteDetector
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
 

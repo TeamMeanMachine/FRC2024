@@ -24,9 +24,12 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.Drive.advantageWheelPoseEntry
+import org.team2471.frc2024.Drive.combinedPosition
+import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
-import org.team2471.frc2024.Drive.prevTestPosition
-import org.team2471.frc2024.Drive.testPosition
+import org.team2471.frc2024.Drive.prevCombinedPosition
+import org.team2471.frc2024.Drive.testWheelPosition
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -89,7 +92,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
-    private val advantageTestPoseEntry = table.getEntry("Test Advantage Pose")
+    val advantageWheelPoseEntry = table.getEntry("Test Wheel Advantage Pose")
+
+    private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
 
 
     val rateCurve = MotionCurve()
@@ -174,22 +179,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
+        set(value) {
+            prevPosition = value
+            field = value
+        }
 
     // velocity over 0.02 seconds
     var tickVelocity = Vector2(0.0, 0.0)
     var prevTickVelocity = Vector2(0.0, 0.0)
 
-    override var combinedPosition: Vector2
-        get() = PoseEstimator.currentPose
-        set(value) {
-            position = value
-            PoseEstimator.zeroOffset()
-        }
+    override var combinedPosition: Vector2L = position.feet
+    var prevCombinedPosition: Vector2L = position.feet
 
-    var testPosition: Vector2L = position.feet
-    var prevTestPosition: Vector2L = position.feet
+
+    var testWheelPosition: Vector2L = position.feet
 //                   feet seconds fps
-    val driveStDevM = (2.5 / 30 / 50).feet.asMeters
+    val driveStDevM = (2.5 / 30 / 50).feet.asMeters * 10
 
 
     override var robotPivot = Vector2(0.0, 0.0)
@@ -219,7 +224,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimHeadingSetpoint = 0.0.radians
     val distance: Double
-        get() = (combinedPosition - speakerPos).length
+        get() = (combinedPosition.asFeet - speakerPos).length
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -231,6 +236,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
     val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
+
+    val isRedAlliance: Boolean
+        get() {
+            if (DriverStation.getAlliance().isEmpty) {
+                return true
+            } else {
+                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+            }
+        }
+
+    val isBlueAlliance: Boolean
+        get() = !isRedAlliance
 
     init {
         println("drive init")
@@ -278,6 +295,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
+
+                advantageCombinedPoseEntry.setAdvantagePose(combinedPosition)
 
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
@@ -339,9 +358,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 
-                updatePos(driveStDevM, *AprilTag2.getCurrentGlobalPoses())
+                updatePos(driveStDevM, *AprilTag.getCurrentGlobalPoses())
 
-                advantageTestPoseEntry.setAdvantagePose(testPosition, heading)
 
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
@@ -409,9 +427,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun frontSpeakerResetOdom() {
 
         if (isRedAlliance) {
-            combinedPosition = Vector2(48.2, 18.25)
+            combinedPosition = Vector2L(48.2.feet, 18.25.feet)
         } else {
-            combinedPosition = Vector2(48.2, 18.25).reflectAcrossField()
+            combinedPosition = Vector2L(48.2.feet, 18.25.feet).reflectAcrossField()
         }
         println("resetting to front speaker pos. $position")
     }
@@ -639,8 +657,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun getAngleToSpeaker(): Angle {
         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
-        val dVector = combinedPosition - point
-        return if (PoseEstimator.apriltagsEnabled) kotlin.math.atan2(dVector.y, dVector.x).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+        val dVector = combinedPosition - point.feet
+        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
     }
 }
 
@@ -685,12 +703,17 @@ suspend fun Drive.currentTest() = use(this) {
 }
 
 fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
-    val pos = testPosition
+    val pos = combinedPosition
 //                                            measurement, stdev
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
-//                                previous position +      previous velocity      +          velocity / 2
-    measurementsAndStDevs.add(Pair(prevTestPosition + Drive.prevTickVelocity.feet + (Drive.tickVelocity.feet / 2.0), driveStDevMeters))
+
+    testWheelPosition = prevCombinedPosition + Drive.tickVelocity.feet //  + 0.5 * Drive.acceleration * dt * dt
+    advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
+
+    if (combinedPosition != Vector2L(0.0.inches, 0.0.inches)) {
+        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
+    }
 
     for (i in aprilPoses) {
         measurementsAndStDevs.add(Pair(i.pose, i.stDev))
@@ -704,9 +727,9 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         b += i.second.pow(-2)
     }
 
-    testPosition = a.asMeters.div(b).meters
+    combinedPosition = a.asMeters.div(b).meters
 
-    prevTestPosition = pos
+    prevCombinedPosition = pos
 }
 
 fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
