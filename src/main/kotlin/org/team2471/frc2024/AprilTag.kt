@@ -22,6 +22,7 @@ import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
 import org.team2471.frc2024.AprilTag.distCurve
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
+import kotlin.math.abs
 
 object AprilTag {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
@@ -52,7 +53,7 @@ object AprilTag {
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, -58.0.degrees.asRadians, 0.0.degrees.asRadians)
+        Rotation3d(0.0.degrees.asRadians, 58.0.degrees.asRadians, 0.0.degrees.asRadians)
     )
 
     val cameras: Map<String, Camera> = mapOf(
@@ -85,7 +86,7 @@ object AprilTag {
                 try {
                     for (camera in cameras.values) {
                         if (camera.photonCam.isConnected) {
-                            camera.getEstimatedGlobalPose(Drive.position.feet, Drive.heading )
+                            camera.getEstimatedGlobalPose()
                         }
                     }
                 } catch (ex: Exception) {
@@ -107,9 +108,8 @@ object AprilTag {
         for (camera in cameras.values) {
             val lastGlobalPose = camera.lastGlobalPose
             if (lastGlobalPose != null) {
-                if (Timer.getFPGATimestamp() - lastGlobalPose.timestamp < 0.03) {
                     out.add(lastGlobalPose)
-                }
+                    camera.lastGlobalPose = null
             }
         }
 
@@ -148,7 +148,6 @@ object AprilTag {
                             }
                         }
                     }
-
                 }
                 if (camSR != null) {
                     if (camSR.isConnected) {
@@ -187,9 +186,9 @@ object AprilTag {
         distCurve.storeValue(3.0, 0.0065)
         distCurve.storeValue(3.5, 0.0023)
         distCurve.storeValue(4.0, 0.014)
-        distCurve.storeValue(4.5, 0.0165)
-        distCurve.storeValue(5.0, 0.02)
-        distCurve.storeValue(6.0, 0.03)
+        distCurve.storeValue(4.5, 0.025) //photonvision says not to trust after 15 feet  old: 0.0165
+        distCurve.storeValue(5.0, 0.03) // 0.02
+        distCurve.storeValue(6.0, 0.04) // 0.03
     }
 }
 
@@ -205,13 +204,13 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
     var singleTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
         aprilTagFieldLayout,
-        multiTagStrategy,
+        singleTagStrategy,
         photonCam,
         robotToCamera
     )
     var multiTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
         aprilTagFieldLayout,
-        singleTagStrategy,
+        multiTagStrategy,
         photonCam,
         robotToCamera
     )
@@ -245,41 +244,41 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         }
     }
 
-    fun getEstimatedGlobalPose(currentPos: Vector2L, currentHeading: Angle): GlobalPose? {
+    fun getEstimatedGlobalPose(): GlobalPose? {
         if (!photonCam.isConnected) {
             return null
         }
 
         val multiTagCameraResult: MultiTargetPNPResult = photonCam.latestResult.multiTagResult
 
-        val validTargets = photonCam.latestResult.targets
+        val targets = photonCam.latestResult.targets
+        var validTargets: ArrayList<PhotonTrackedTarget> = arrayListOf()
 
-        validTargets ?: return null
+        targets ?: return null
 
-        val numTargets = validTargets.count()
-
-        for (target in validTargets) {
-            if (target.fiducialId > 16) {
-                println("AprilTag: Invalid Tag")
-                return null
+        for (target in targets) {
+            if (target.fiducialId < 16 || target.poseAmbiguity < 0.2 || target.area > 0.1 || abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
+                validTargets.add(target)
             }
         }
+
+        val numTargets = validTargets.count()
 
         if (numTargets > 1) {
             multiTagEstimator.setReferencePose(
                 Pose2d(
-                    Translation2d(currentPos.asMeters.x, currentPos.asMeters.y),
-                    Rotation2d(currentHeading.asRadians)
+                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
+                    Rotation2d(Drive.heading.asRadians)
                 )
             )
-        } else {
+        } else if (numTargets == 1) {
             singleTagEstimator.setReferencePose(
                 Pose2d(
-                    Translation2d(currentPos.asMeters.x, currentPos.asMeters.y),
-                    Rotation2d(currentHeading.asRadians)
+                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
+                    Rotation2d(Drive.heading.asRadians)
                 )
             )
-        }
+        } else return null
 
         var newPose = if (numTargets > 1) multiTagEstimator.update() else singleTagEstimator.update()
         if (newPose.isPresent) {
@@ -293,17 +292,17 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
                 val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
-
                 lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
                     ?.let { targetPoses += it }
             }
             targetPoseEntry.setAdvantagePoses(targetPoses)
             avgDist /= validTargets.size.toDouble()
 
+            if (avgDist > 5.0.meters) return null
+
             var stDev = distCurve.getValue(avgDist.asMeters)
 
             if (numTargets < 2) stDev *= 10.0
-            if (name == "CamSL") stDev *= 5.0
 
             try {
                 estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
