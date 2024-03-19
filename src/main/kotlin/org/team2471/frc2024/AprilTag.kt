@@ -24,6 +24,7 @@ import org.team2471.frc2024.AprilTag.distCurve
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
+import kotlin.math.pow
 
 object AprilTag {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
@@ -295,10 +296,12 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
             var avgDist = 0.0.inches
+            var avgAmbiguity = 0.0
             var targetPoses : Array<Vector2L> = arrayOf()
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
+                avgAmbiguity += target.poseAmbiguity
                 val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
                 lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
@@ -306,10 +309,13 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             }
             targetPoseEntry.setAdvantagePoses(targetPoses)
             avgDist /= validTargets.size.toDouble()
+            avgAmbiguity /= validTargets.size.toDouble()
 
             if (avgDist > 5.0.meters) return null
 
             var stDev = distCurve.getValue(avgDist.asMeters)
+
+            val stDevMultiplier = 100000.0.pow(avgAmbiguity)
 
             if (numTargets < 2) stDev *= 10.0
 
@@ -325,7 +331,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
 //            println("cam: ${photonCam.name} avgDist: ${avgDist.asMeters}   stDev: $stDev")
 
-            lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
+            lastGlobalPose = GlobalPose(estimatedPose, stDev * stDevMultiplier, Timer.getFPGATimestamp())
 
             stDevEntry.setDouble(stDev)
 
