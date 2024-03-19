@@ -434,8 +434,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         combinedPosition = resetPose.feet
         position = resetPose
         prevPosition = resetPose
-        for (camera in AprilTag.cameras) camera.component2().lastGlobalPose = GlobalPose(resetPose.feet, 0.0, edu.wpi.first.wpilibj.Timer.getFPGATimestamp())
-        advantagePoseEntry.setAdvantagePose(resetPose.feet, heading)
         println("resetting to front speaker pos. $position")
     }
 
@@ -709,13 +707,14 @@ suspend fun Drive.currentTest() = use(this) {
 
 fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     val pos = combinedPosition
+    prevCombinedPosition = pos
 //                                            measurement, stdev
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
 
-    if (combinedPosition != Vector2L(0.0.inches, 0.0.inches) && DriverStation.isEnabled()) {
+    if (/*combinedPosition != Vector2L(0.0.inches, 0.0.inches) &&*/ DriverStation.isEnabled()) {
 
-        testWheelPosition = prevCombinedPosition + deltaPos //  + 0.5 * Drive.acceleration * dt * dt
+        testWheelPosition = combinedPosition + deltaPos //  + 0.5 * Drive.acceleration * dt * dt
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))

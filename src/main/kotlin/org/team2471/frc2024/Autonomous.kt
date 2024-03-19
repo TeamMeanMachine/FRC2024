@@ -500,12 +500,11 @@ object AutoChooser {
                 })
             }
             pickUpSeenNote()
-//            PoseEstimator.apriltagsEnabled = true
-//            path = auto?.get("6-ShootFourth")
-//            if (path != null) {
-//                Drive.driveAlongPath(path, false)
-//            }
-//            aimAndShoot()
+            path = auto?.get("6-ShootFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            aimAndShoot()
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false

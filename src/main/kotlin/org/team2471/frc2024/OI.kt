@@ -99,6 +99,8 @@ object OI : Subsystem("OI") {
 
         operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
 
+
+
         GlobalScope.launch {
             periodic {
                 // Driver Rumble
@@ -109,7 +111,6 @@ object OI : Subsystem("OI") {
                 } else {
                     driverController.rumble = 0.0
                 }
-
 
                 // Operator Rumble
                 if (Shooter.manualShootState && Robot.isTeleopEnabled) {

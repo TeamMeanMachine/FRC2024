@@ -112,8 +112,8 @@ object AprilTag {
         for (camera in cameras.values) {
             val lastGlobalPose = camera.lastGlobalPose
             if (lastGlobalPose != null) {
-                    out.add(lastGlobalPose)
-                    camera.lastGlobalPose = null
+                out.add(lastGlobalPose)
+                camera.lastGlobalPose = null
             }
         }
 
@@ -313,7 +313,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             avgDist /= validTargets.size.toDouble()
             avgAmbiguity /= validTargets.size.toDouble()
 
-            if (avgDist > 5.0.meters) return null
+            if (avgDist > 6.0.meters) return null
 
             var stDev = distCurve.getValue(avgDist.asMeters)
 
