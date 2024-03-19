@@ -26,6 +26,7 @@ import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.combinedPosition
+import org.team2471.frc2024.Drive.deltaPos
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
@@ -183,6 +184,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         set(value) {
             field = value
         }
+    override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
 
     // velocity over 0.02 seconds
     var tickVelocity = Vector2(0.0, 0.0)
@@ -714,7 +716,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 
     if (combinedPosition != Vector2L(0.0.inches, 0.0.inches) && DriverStation.isEnabled()) {
 
-        testWheelPosition = prevCombinedPosition + Drive.tickVelocity.feet //  + 0.5 * Drive.acceleration * dt * dt
+        testWheelPosition = prevCombinedPosition + deltaPos //  + 0.5 * Drive.acceleration * dt * dt
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
