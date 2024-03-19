@@ -66,6 +66,7 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun enable() {
+        initTimeMeasurement()
         beforeFirstEnable = false
         println("starting enable")
         Drive.enable()
@@ -74,7 +75,7 @@ object Robot : MeanlibRobot() {
         Pivot.enable()
         Shooter.enable()
         println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
-        println("ending enable")
+        println("ending enable ${totalTimeTaken()}")
     }
 
     override suspend fun autonomous() {
@@ -123,12 +124,16 @@ object Robot : MeanlibRobot() {
         OI.operatorController.rumble = 0.0
     }
 
+    fun getSystemTimeSeconds(): Long {
+        return System.nanoTime() * 1000000
+    }
+
     private fun initTimeMeasurement() {
         startMeasureTime = getSystemTimeSeconds()
         lastMeasureTime = startMeasureTime
     }
 
-    private fun updateNanosTaken() {
+    private fun updateSecondsTaken() {
         lastMeasureTime = getSystemTimeSeconds()
     }
 
@@ -138,12 +143,8 @@ object Robot : MeanlibRobot() {
 
     fun recentTimeTaken(): Double {
         val timeTaken = getSystemTimeSeconds() - lastMeasureTime
-        updateNanosTaken()
+        updateSecondsTaken()
         return timeTaken.toDouble()
-    }
-
-    fun getSystemTimeSeconds(): Long {
-        return System.nanoTime() * 1000000
     }
 }
 

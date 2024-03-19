@@ -16,6 +16,7 @@ import org.team2471.frc.lib.math.inches
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc2024.AprilTag.resetCameras
@@ -348,51 +349,47 @@ object AutoChooser {
             println("in 4closeSafe ${Robot.recentTimeTaken()}")
             Shooter.setRpms(5000.0)
             Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
-
             Drive.zeroGyro()
-//            Drive.combinedPosition =
-//                if (isRedAlliance) Vector2(48.27, 13.16) else Vector2(48.27, 13.16).reflectAcrossField()
+
             val auto = autonomi["4CloseSafe"]
             auto?.isReflected = isRedAlliance
             var path = auto?.get("1-GrabSecond")
+            var finishedPaths = false
 
             delay(0.1)
-            fire(0.5) //fire preloaded
-            if (path != null) {
-                parallel({
-                    Shooter.setRpms(5000.0)
-                    Intake.setIntakeMotorsPercent(1.0)
-                    delay(0.1)
-                    path = auto?.get("2-GrabThird")
-                    Pivot.aimSpeaker = true
-                }, {
-                    Drive.driveAlongPath(path!!, true)
-                })
-            } else {
-                println("PATH EQUALS NULL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            }
-            if (path != null) {
-                parallel({
-                    Shooter.setRpms(5000.0)
-                    Intake.setIntakeMotorsPercent(1.0)
-                    delay(0.1)
-                    path = auto?.get("3-GrabFourth")
-                }, {
-                    Drive.driveAlongPath(path!!, false)
-                })
-            }
-            if (path != null) {
-                parallel({
-                    Shooter.setRpms(5000.0)
-                    Intake.setIntakeMotorsPercent(1.0)
-                }, {
-                    Drive.driveAlongPath(path!!, false)
-                })
-            }
+            fire(0.6) //fire preloaded
+            Intake.setIntakeMotorsPercent(1.0) //run intake throughout auto
+            delay(1.0)
+            parallel({ //drive do driving
+                if (path != null) {
+                    Pivot.angleSetpoint = if (isRedAlliance) 40.0.degrees else 40.0.degrees
+                    Drive.driveAlongPath(path!!, true, useCombinedPosition = false)
+                } else {
+                    println("PATH EQUALS NULL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                }
+                path = auto?.get("2-GrabThird")
+                if (path != null) {
+                    Pivot.angleSetpoint = if (isRedAlliance) 37.0.degrees else 40.0.degrees
+                    Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
+                }
+                path = auto?.get("3-GrabFourth")
+                if (path != null) {
+                    Pivot.angleSetpoint = if (isRedAlliance) 34.0.degrees else 36.0.degrees
+                    Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
+                }
+                delay(1.0)
+                finishedPaths = true
+            }, { //set pivot angle and shooter rpm based on drive pos
+                delay(0.2)
+                periodic {
+                    if (finishedPaths) this.stop()
+//                    Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Drive.distanceFromSpeakerDrivePos).degrees
+//                    Shooter.setRpms(Shooter.rpmCurve.getValue(Drive.distanceFromSpeakerDrivePos))
+                }
+            })
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
-            delay(1.0)
             Shooter.setRpms(0.0)
             Intake.setIntakeMotorsPercent(0.0)
         }

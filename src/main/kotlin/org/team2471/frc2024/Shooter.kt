@@ -236,8 +236,8 @@ object Shooter: Subsystem("Shooter") {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
                 } else {
-                    rpmTopSetpoint = rpmCurve.getValue(Drive.distance)
-                    rpmBottomSetpoint = rpmCurve.getValue(Drive.distance)
+                    rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                    rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                 }
             }
         }

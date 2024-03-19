@@ -31,7 +31,6 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -90,7 +89,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
-    val distanceEntry = table.getEntry("Distance")
+    val distanceEntry = table.getEntry("Distance From Speaker Drive")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
@@ -225,8 +224,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val ampPos = Vector2(0.0, 0.0) //TODO
 
     var aimHeadingSetpoint = 0.0.radians
-    val distance: Double
-        get() = (combinedPosition.asFeet - speakerPos).length
+    val distanceFromSpeakerDrivePos: Double
+        get() = (position - speakerPos).length
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -324,7 +323,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
-                distanceEntry.setDouble(distance)
+                distanceEntry.setDouble(distanceFromSpeakerDrivePos)
 
                 val time = t.get()
                 val dt = time - prevTime
