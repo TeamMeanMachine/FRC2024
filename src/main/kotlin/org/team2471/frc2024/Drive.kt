@@ -717,7 +717,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         testWheelPosition = prevCombinedPosition + Drive.tickVelocity.feet //  + 0.5 * Drive.acceleration * dt * dt
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
-            measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
+        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
     }
 
     for (i in aprilPoses) {

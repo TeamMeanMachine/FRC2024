@@ -12,6 +12,7 @@ import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
 import org.photonvision.targeting.MultiTargetPNPResult
+import org.photonvision.targeting.PhotonPipelineResult
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.math.*
@@ -202,32 +203,37 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
     var photonCam: PhotonCamera = PhotonCamera(name)
 
-    var singleTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
+    var closestReferenceEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
         aprilTagFieldLayout,
         singleTagStrategy,
         photonCam,
         robotToCamera
     )
-    var multiTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
+    var coProcessorEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
         aprilTagFieldLayout,
         multiTagStrategy,
         photonCam,
         robotToCamera
     )
-
+    var filterMultiTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
+        aprilTagFieldLayout,
+        singleTagStrategy,
+        photonCam,
+        robotToCamera
+    )
 
     fun reset() {
         if (!photonCam.isConnected) {
             try {
                 if (pvTable.containsSubTable(name)) {
                     photonCam = PhotonCamera(name)
-                    multiTagEstimator = PhotonPoseEstimator(
+                    coProcessorEstimator = PhotonPoseEstimator(
                         aprilTagFieldLayout,
                         multiTagStrategy,
                         photonCam,
                         robotToCamera
                     )
-                    singleTagEstimator = PhotonPoseEstimator(
+                    closestReferenceEstimator = PhotonPoseEstimator(
                         aprilTagFieldLayout,
                         singleTagStrategy,
                         photonCam,
@@ -257,30 +263,33 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 || target.poseAmbiguity < 0.2 || target.area > 0.1 || abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.2 && target.area > 0.1 && abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
                 validTargets.add(target)
             }
         }
 
         val numTargets = validTargets.count()
 
-        if (numTargets > 1) {
-            multiTagEstimator.setReferencePose(
-                Pose2d(
-                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
-                    Rotation2d(Drive.heading.asRadians)
-                )
-            )
-        } else if (numTargets == 1) {
-            singleTagEstimator.setReferencePose(
-                Pose2d(
-                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
-                    Rotation2d(Drive.heading.asRadians)
-                )
-            )
-        } else return null
+        val newPose = if (targets.size == validTargets.size) {
 
-        var newPose = if (numTargets > 1) multiTagEstimator.update() else singleTagEstimator.update()
+            coProcessorEstimator.setReferencePose(
+                Pose2d(
+                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
+                    Rotation2d(Drive.heading.asRadians)
+                )
+            )
+            coProcessorEstimator.update()
+        } else {
+            closestReferenceEstimator.setReferencePose(
+                Pose2d(
+                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
+                    Rotation2d(Drive.heading.asRadians)
+                )
+            )
+            closestReferenceEstimator.update(PhotonPipelineResult(photonCam.latestResult.latencyMillis,validTargets))
+        }
+
+
         if (newPose.isPresent) {
 
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
