@@ -75,6 +75,8 @@ object AprilTag {
         last2DSpeakerAngle.calculate(0.0)
         last2DSpeakerDist.calculate(0.0)
 
+        aprilTagsEnabledEntry.setBoolean(true)
+
         GlobalScope.launch {
             periodic {
 
