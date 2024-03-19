@@ -19,6 +19,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
+import org.team2471.frc2024.AprilTag.aprilTagsEnabled
 import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -184,7 +185,6 @@ object AutoChooser {
             Intake.intakeState = Intake.IntakeState.INTAKING
             ti.start()
             if (path != null) {
-                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(0.2)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -195,7 +195,6 @@ object AutoChooser {
 
             Intake.intakeState = Intake.IntakeState.INTAKING
             if (path != null) {
-                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -204,7 +203,6 @@ object AutoChooser {
             pickUpSeenNote()
             path = auto?.get("2-ShootThird")
             if (path != null) {
-                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.0)
                 Drive.driveAlongPath(path, false)
             }
 
@@ -214,7 +212,6 @@ object AutoChooser {
             Intake.intakeState = Intake.IntakeState.INTAKING
             path = auto?.get("3-GrabFourth")
             if (path != null) {
-                if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(3.5)
                 Drive.driveAlongPath(path,  false, earlyExit = {
                     NoteDetector.seesNote && NoteDetector.closestIsValid
                 })
@@ -225,7 +222,6 @@ object AutoChooser {
             if (closeFourToFiveEntry.getBoolean(false)) {
                 path = auto?.get("4-ShootFourth")
                 if (path != null) {
-                    if (!AprilTag.aprilTagsEnabled) path.scaleEasePoints(4.0)
                     Drive.driveAlongPath(path, false)
                 }
 
@@ -317,30 +313,29 @@ object AutoChooser {
         auto?.isReflected = isRedAlliance
         var path = auto?.get("1-GrabSecond")
 
-        if (path != null) {
-            parallel({
-                delay(0.1)
-                println("firing preloaded")
-                fire(0.5)
-                Pivot.aimSpeaker = true
-                Intake.setIntakeMotorsPercent(1.0)
-                path = auto?.get("2-GrabThird")
-            }, {
+        parallel({
+            if (path != null) {
                 Drive.driveAlongPath(path!!, true)
-            })
-        }
-        if (path != null) {
-            Drive.driveAlongPath(path!!, false)
-        }
-        Intake.intakeState = Intake.IntakeState.INTAKING
-        path = auto?.get("3-GrabFourth")
-        if (path != null) {
-            Drive.driveAlongPath(path!!, false/*, earlyExit = {
+            }
+            path = auto?.get("2-GrabThird")
+            if (path != null) {
+                Drive.driveAlongPath(path!!, false)
+            }
+            path = auto?.get("3-GrabFourth")
+            if (path != null) {
+                Drive.driveAlongPath(path!!, false/*, earlyExit = {
                 NoteDetector.closestIsValid
             }*/)
-        }
-//        pickUpSeenNote()
-//        aimAndShoot()
+//                pickUpSeenNote(true)
+            }
+        }, {
+            delay(0.1)
+            println("firing preloaded")
+            Intake.setIntakeMotorsPercent(1.0)
+            aprilTagsEnabled = false
+            Pivot.aimSpeaker = true
+        })
+        aprilTagsEnabled = true
         println("finished first three")
     }
 
