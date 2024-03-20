@@ -475,7 +475,7 @@ object AutoChooser {
             Shooter.setRpms(0.0)
             if (path != null) {
                 Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
-                    NoteDetector.closestIsValid
+                    NoteDetector.closestIsMiddle
                 })
             }
             pickUpSeenNote()
@@ -490,7 +490,7 @@ object AutoChooser {
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestIsValid
+                    NoteDetector.closestIsMiddle
                 })
             }
             pickUpSeenNote()
@@ -505,7 +505,7 @@ object AutoChooser {
             path = auto?.get("5-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestIsValid
+                    NoteDetector.closestIsMiddle
                 })
             }
             pickUpSeenNote()
@@ -513,6 +513,7 @@ object AutoChooser {
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
+            Shooter.setRpms(5000.0)
             aimAndShoot()
         } finally {
             Drive.aimSpeaker = false

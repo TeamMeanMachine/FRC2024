@@ -25,6 +25,7 @@ import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.time.times
 
 object AprilTag {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
@@ -279,7 +280,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.5 && /*target.area > 0.1 &&*/ abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.5 && abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
                 validTargets.add(target)
             }
         }
@@ -333,8 +334,10 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
             targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
-            avgDist /= validTargets.size.toDouble()
-            avgAmbiguity /= validTargets.size.toDouble()
+            if (validTargets.size.toDouble() > 0) {
+                avgDist /= validTargets.size.toDouble()
+                avgAmbiguity /= validTargets.size.toDouble()
+            }
 
             if (avgDist > 6.0.meters) return null
 

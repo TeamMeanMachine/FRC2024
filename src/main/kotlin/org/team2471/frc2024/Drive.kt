@@ -97,7 +97,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
 
-
     val rateCurve = MotionCurve()
 
 
@@ -190,6 +189,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var prevTickVelocity = Vector2(0.0, 0.0)
 
     override var combinedPosition: Vector2L = position.feet
+        set(value) {
+            field = value
+            println("combinedPosition $value")
+        }
     var prevCombinedPosition: Vector2L = position.feet
 
 
@@ -201,9 +204,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(1.0, 0.0) //STEM?
-    //    override val carpetFlow = Vector2(-1.0, 0.0) //Salem?
-//    override val carpetFlow = Vector2(0.0, 1.0) //2023 pre-wpi field x y swap?
+    override val carpetFlow = Vector2(1.0, 0.0)
     override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
@@ -663,6 +664,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun getAngleToSpeaker(): Angle {
         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
         val dVector = combinedPosition - point.feet
+        println("getAngle to speaker. AprilTags? ${AprilTag.aprilTagsEnabled}")
         return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
@@ -733,11 +735,18 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     var b = 0.0
 
     for (i in measurementsAndStDevs) {
-        a += i.first.asMeters.times(i.second.pow(-2)).meters
-        b += i.second.pow(-2)
+        var c = i.second.pow(-2)
+        if (c < 0.000000000001 || c > 100000000000.0) {
+            println("stdev to -2: $c  on $i")
+            c.coerceIn(0.00000001, 100000000000.0)
+        }
+
+        a += i.first.asMeters.times(c).meters
+        b += c
     }
 
-    if (b != 0.0) {
+    if (b != 0.0 && b < 1000000000.0) {
+        println("a: ${a.asMeters} b: $b")
         combinedPosition = a.asMeters.div(b).meters
     }
 
