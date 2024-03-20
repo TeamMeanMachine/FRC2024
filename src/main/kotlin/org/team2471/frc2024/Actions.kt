@@ -331,7 +331,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //    }
 }
 
-suspend fun lockToAmp() = use(Drive) {
+suspend fun lockToAmp() {
     Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
     suspendUntil(20) { !OI.driverController.b }
