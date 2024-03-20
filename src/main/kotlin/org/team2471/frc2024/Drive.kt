@@ -646,7 +646,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun aimSpeakerAmpLogic(): Double? {
         if (aimSpeaker || Robot.isAutonomous) {
             aimHeadingSetpoint = getAngleToSpeaker()
-        } else {
+        } else if (aimAmp) {
             aimHeadingSetpoint = 90.0.degrees
         }
 

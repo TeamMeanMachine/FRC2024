@@ -138,7 +138,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -273,7 +273,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 val d = headingVelocity * 0.005
 
                 var driveSpeed = if (!Robot.isAutonomous) OI.driveLeftTrigger else 1.0
-                val turnSpeed = feedForward + p //+ d
+                val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
                 val driveVelocity = Drive.velocity.length
                 val driveD = (driveVelocity / notePos.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
@@ -290,7 +290,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 driveSpeed.coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2(-0.85 * notePos.y, notePos.x).normalize()
-                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
+                Drive.drive(driveDirection * driveSpeed, turnSpeed, false, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
 //                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
@@ -337,7 +337,7 @@ suspend fun lockToAmp() = use(Drive) {
     suspendUntil(20) { !OI.driverController.b }
     Drive.aimAmp = false
 
-    val newPath = Path2D("newPath")
+/*    val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition.asFeet)
     if (isBlueAlliance) {
         newPath.addPoint(7.0, 25.0)  // coords??
@@ -356,7 +356,7 @@ suspend fun lockToAmp() = use(Drive) {
     newPath.addEasePoint(time, 1.0)
     newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
     newPath.addHeadingPoint(time, 90.0)
-//    Drive.driveAlongPath(newPath) { OI.driverController.b }
+    Drive.driveAlongPath(newPath) { OI.driverController.b }*/
 }
 
 suspend fun flipAmpShot() = use(Pivot) {

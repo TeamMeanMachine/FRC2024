@@ -313,27 +313,41 @@ object AutoChooser {
         auto?.isReflected = isRedAlliance
         var path = auto?.get("1-GrabSecond")
 
+        var finishedPath = false
+
         parallel({
             if (path != null) {
-                Drive.driveAlongPath(path!!, true)
+                Drive.driveAlongPath(path!!, true/*, earlyExit = {
+                NoteDetector.closestIsValid
+            }*/)
             }
+//            pickUpSeenNote(true, doTurn = false)
             path = auto?.get("2-GrabThird")
             if (path != null) {
-                Drive.driveAlongPath(path!!, false)
+                Drive.driveAlongPath(path!!, false/*, earlyExit = {
+                NoteDetector.closestIsValid
+            }*/)
             }
+//            pickUpSeenNote(true, doTurn = false)
             path = auto?.get("3-GrabFourth")
             if (path != null) {
                 Drive.driveAlongPath(path!!, false/*, earlyExit = {
                 NoteDetector.closestIsValid
             }*/)
-//                pickUpSeenNote(true)
+//                pickUpSeenNote(true, doTurn = false)
             }
+            finishedPath = true
         }, {
             delay(0.1)
             println("firing preloaded")
             Intake.setIntakeMotorsPercent(1.0)
             aprilTagsEnabled = false
             Pivot.aimSpeaker = true
+
+//            periodic {
+//                if (finishedPath) this.stop()
+//                Drive.headingSetpoint = Drive.getAngleToSpeaker()
+//            }
         })
         aprilTagsEnabled = true
         println("finished first three")
