@@ -64,6 +64,9 @@ object AprilTag {
         Pair("CamIB", Camera("CamIB", robotToCamIB))
     )
 
+    val backCamsConnected: Boolean
+        get() = cameras["CamSL"]?.isConnected == true && cameras["CamSR"]?.isConnected == true
+
     val distCurve = MotionCurve()
 
     init {

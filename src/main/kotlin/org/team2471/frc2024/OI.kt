@@ -88,7 +88,7 @@ object OI : Subsystem("OI") {
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
+        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.PODIUMPOSE }
 
         operatorController::leftTriggerFullPress.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }

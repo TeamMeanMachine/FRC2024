@@ -51,6 +51,7 @@ object Pivot: Subsystem("Pivot") {
     private const val GEARRATIO = 1 / 61.71
 
     val TESTPOSE = 30.5.degrees //18 //32
+    val PODIUMPOSE = 37.0.degrees
     val CLOSESPEAKERPOSE = 59.0.degrees
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
