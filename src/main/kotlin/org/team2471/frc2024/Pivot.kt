@@ -52,6 +52,7 @@ object Pivot: Subsystem("Pivot") {
 
     val TESTPOSE = 30.5.degrees //18 //32
     val PODIUMPOSE = 37.0.degrees
+    val FARSTAGELEG = 29.0.degrees
     val CLOSESPEAKERPOSE = 59.0.degrees
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
@@ -109,10 +110,6 @@ object Pivot: Subsystem("Pivot") {
     val distFromSpeaker: Double
         get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else AprilTag.last2DSpeakerDist.lastValue()
 
-
-
-
-
     init {
         stageAngleEntry.setDouble(20.0)
 
@@ -147,10 +144,9 @@ object Pivot: Subsystem("Pivot") {
                 advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
                 advantagePivotPublisher.set(advantagePivotTransform)
 
-
-
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
+//                angleSetpoint = angleSetpoint
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
