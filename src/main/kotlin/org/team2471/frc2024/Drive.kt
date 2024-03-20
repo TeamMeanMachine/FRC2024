@@ -644,10 +644,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        if (aimSpeaker || Robot.isAutonomous) {
+        if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
             aimHeadingSetpoint = getAngleToSpeaker()
-        } else {
+        } else if (aimAmp) {
             aimHeadingSetpoint = 90.0.degrees
+        } else if (!AprilTag.backCamsConnected) {
+            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()

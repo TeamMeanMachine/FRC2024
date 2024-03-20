@@ -66,6 +66,9 @@ object AprilTag {
         Pair("CamIB", Camera("CamIB", robotToCamIB))
     )
 
+    val backCamsConnected: Boolean
+        get() = cameras["CamSL"]?.isConnected == true && cameras["CamSR"]?.isConnected == true
+
     val distCurve = MotionCurve()
 
     init {
@@ -97,6 +100,11 @@ object AprilTag {
                     }
                 } catch (ex: Exception) {
                     println("Error in apriltag: $ex")
+                }
+
+                for (c in cameras) {
+                    val camera = c.value
+                    camera.isConnectedEntry.setBoolean(camera.isConnected)
                 }
             }
         }
@@ -204,7 +212,10 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
     val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
     val stDevMultiplierEntry = aprilTable.getEntry("stDev Multiplier $name")
+    val isConnectedEntry = aprilTable.getEntry("isConnected $name")
 
+    val isConnected: Boolean
+        get() = photonCam.isConnected
 
     var lastGlobalPose: GlobalPose? = null
 
@@ -302,7 +313,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var avgDist = 0.0.inches
             var avgAmbiguity = 0.0
             var avgArea = 0.0
-            var targetPoses : Array<Vector2L> = arrayOf()
+            var targetPoses : ArrayList<Vector2L> = arrayListOf()
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
@@ -312,8 +323,16 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
                 lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
                     ?.let { targetPoses += it }
+                val robotPose = Pose3d(
+                    Translation3d(Drive.combinedPosition.x.asMeters, Drive.combinedPosition.y.asMeters, 0.0),
+                    Rotation3d(0.0, 0.0, Drive.heading.asRadians)
+                )
+                //val targetRelativePose = (target.bestCameraToTarget.translation - robotToCamera.translation).toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians + robotToCamera.rotation.angle))
+                val visionTargetPosition = robotPose.transformBy(robotToCamera).transformBy(target.bestCameraToTarget)
+                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
+                //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
-            targetPoseEntry.setAdvantagePoses(targetPoses)
+            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
             avgDist /= validTargets.size.toDouble()
             avgAmbiguity /= validTargets.size.toDouble()
 
