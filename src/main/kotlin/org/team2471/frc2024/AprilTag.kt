@@ -214,6 +214,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
     val stDevEntry = aprilTable.getEntry("stDev $name")
     val stDevMultiplierEntry = aprilTable.getEntry("stDev Multiplier $name")
     val isConnectedEntry = aprilTable.getEntry("isConnected $name")
+    val poseAmbiguityHistory: ArrayList<Double> = arrayListOf()
 
     val isConnected: Boolean
         get() = photonCam.isConnected
@@ -315,6 +316,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var avgAmbiguity = 0.0
             var avgArea = 0.0
             var targetPoses : ArrayList<Vector2L> = arrayListOf()
+
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
@@ -332,6 +334,11 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 val visionTargetPosition = robotPose.transformBy(robotToCamera).transformBy(target.bestCameraToTarget)
                 targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
                 //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
+            }
+            poseAmbiguityHistory.add(avgAmbiguity)
+            if (poseAmbiguityHistory.size>4 ) {
+                poseAmbiguityHistory.removeAt(0)
+//                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
             }
             targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
             if (validTargets.size.toDouble() > 0) {
