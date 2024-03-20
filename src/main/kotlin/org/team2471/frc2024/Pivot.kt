@@ -155,7 +155,7 @@ object Pivot: Subsystem("Pivot") {
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-                    val angle = Shooter.pitchCurve.getValue(distFromSpeaker).degrees
+                    val angle = if (AprilTag.backCamsConnected) Shooter.pitchCurve.getValue(distFromSpeaker).degrees else PODIUMPOSE
 //                    println("Angle: ${angle}")
                     angleSetpoint = angle
                 }
