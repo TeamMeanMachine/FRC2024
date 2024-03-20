@@ -35,8 +35,10 @@ object AprilTag {
 
     val speakerTagHeight = 57.13.inches
 
-    var last2DSpeakerDist = LinearFilter.movingAverage(5)
-    var last2DSpeakerAngle = LinearFilter.movingAverage(5)
+    var last2DSpeakerDistFilter = LinearFilter.movingAverage(5)
+    var last2DSpeakerDist = 0.0
+    var last2DSpeakerAngleFilter = LinearFilter.movingAverage(5)
+    var last2DSpeakerAngle = 0.0
 
     var aprilTagsEnabled: Boolean
         get() = aprilTagsEnabledEntry.getBoolean(true)
@@ -70,10 +72,10 @@ object AprilTag {
         resetCameras()
         rebuildCurves()
 
-        last2DSpeakerDist.reset()
-        last2DSpeakerAngle.reset()
-        last2DSpeakerAngle.calculate(0.0)
-        last2DSpeakerDist.calculate(0.0)
+        last2DSpeakerDistFilter.reset()
+        last2DSpeakerAngleFilter.reset()
+        last2DSpeakerAngleFilter.calculate(0.0)
+        last2DSpeakerDistFilter.calculate(0.0)
 
         aprilTagsEnabledEntry.setBoolean(true)
 
@@ -83,8 +85,8 @@ object AprilTag {
                 val temp2DOffset = get2DSpeakerOffset()
                 if (temp2DOffset != null) {
 //                    println("Setting angle to ${temp2DOffset.second}")
-                    last2DSpeakerDist.calculate(temp2DOffset.first.asFeet)
-                    last2DSpeakerAngle.calculate(-temp2DOffset.second.asDegrees)
+                    last2DSpeakerDist = last2DSpeakerDistFilter.calculate(temp2DOffset.first.asFeet)
+                    last2DSpeakerAngle = last2DSpeakerDistFilter.calculate(-temp2DOffset.second.asDegrees)
                 }
 
                 try {

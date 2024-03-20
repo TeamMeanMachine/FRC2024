@@ -332,10 +332,10 @@ object AutoChooser {
             delay(0.1)
             println("firing preloaded")
             Intake.setIntakeMotorsPercent(1.0)
-            aprilTagsEnabled = false
+//            aprilTagsEnabled = false
             Pivot.aimSpeaker = true
         })
-        aprilTagsEnabled = true
+//        aprilTagsEnabled = true
         println("finished first three")
     }
 

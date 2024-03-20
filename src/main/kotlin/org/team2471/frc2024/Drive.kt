@@ -661,7 +661,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun getAngleToSpeaker(): Angle {
         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
         val dVector = combinedPosition - point.feet
-        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
 
@@ -720,8 +720,11 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
     }
 
-    for (i in aprilPoses) {
-        measurementsAndStDevs.add(Pair(i.pose, i.stDev))
+
+    if (AprilTag.aprilTagsEnabled) {
+        for (i in aprilPoses) {
+            measurementsAndStDevs.add(Pair(i.pose, i.stDev))
+        }
     }
 
     var a = Vector2L(0.0.inches, 0.0.inches)
