@@ -80,6 +80,8 @@ object Pivot: Subsystem("Pivot") {
             }
         }
 
+    var aimSpeakerDistanceOffset: Double = 0.0 //feet
+
     val pivotTicks: Int
         get() = pivotEncoder.value
 
@@ -97,7 +99,7 @@ object Pivot: Subsystem("Pivot") {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
 
             // For amp shot edge case
-            Shooter.manualShootState = Shooter.manualShootState
+            if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
 
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
@@ -151,7 +153,7 @@ object Pivot: Subsystem("Pivot") {
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-                    val angle = if (AprilTag.backCamsConnected) Shooter.pitchCurve.getValue(distFromSpeaker).degrees else PODIUMPOSE
+                    val angle = if (AprilTag.backCamsConnected) Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees else PODIUMPOSE
 //                    println("Angle: ${angle}")
                     angleSetpoint = angle
                 }

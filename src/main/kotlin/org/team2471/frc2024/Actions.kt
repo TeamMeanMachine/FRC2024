@@ -182,6 +182,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
         var noteFound = false
 
+        if (NoteDetector.notes.isEmpty()) {
+            println("there are no notes inside the note list")
+        }
+
         //checking if note is in expected range and setting its position
         for (note in  NoteDetector.notes) {
             val latency = Timer.getFPGATimestamp() - note.timestampSeconds

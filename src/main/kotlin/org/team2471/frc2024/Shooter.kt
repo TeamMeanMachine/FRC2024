@@ -25,10 +25,6 @@ object Shooter: Subsystem("Shooter") {
     private val rpmBottomEntry = table.getEntry("rpm bottom setpoint")
     private val shootingRpmTopEntry = table.getEntry("Shooting RPM Top")
     private val shootingRpmBottomEntry = table.getEntry("Shooting RPM Bottom")
-    private val topPEntry = table.getEntry("top P")
-    private val topDEntry = table.getEntry("top D")
-    private val bottomDEntry = table.getEntry("bottom D")
-    private val bottomPEntry = table.getEntry("bottom P")
     private val shootingEntry = table.getEntry("shooting")
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
     val topAmpRPMEntry = table.getEntry("Top Amp RPM")
@@ -151,10 +147,6 @@ object Shooter: Subsystem("Shooter") {
             inverted(true)
             followersInverted(true)
         }
-        topDEntry.setDouble(shooterMotorTop.getD())
-        topPEntry.setDouble(shooterMotorTop.getP())
-        bottomPEntry.setDouble(shooterMotorBottom.getP())
-        bottomDEntry.setDouble(shooterMotorBottom.getD())
 
         if (isRedAlliance) {
             topAmpRPMEntry.setDouble(3000.0)
@@ -174,6 +166,8 @@ object Shooter: Subsystem("Shooter") {
                 motorRpmBottomEntry.setDouble(motorRpmBottom)
                 motorRpmTopEntry.setDouble(motorRpmTop)
                 shootingEntry.setBoolean(manualShootState)
+                rpmTopEntry.setDouble(rpmTopSetpoint)
+                rpmBottomEntry.setDouble(rpmBottomSetpoint)
 
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
                 if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
@@ -223,9 +217,6 @@ object Shooter: Subsystem("Shooter") {
 
     override suspend fun default() {
         periodic {
-            rpmTopEntry.setDouble(rpmTopSetpoint)
-            rpmBottomEntry.setDouble(rpmBottomSetpoint)
-
             if (manualShootState) {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32

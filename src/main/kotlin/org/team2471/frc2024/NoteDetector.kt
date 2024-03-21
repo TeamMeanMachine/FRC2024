@@ -115,6 +115,7 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     init {
         println("init note detector")
+        PhotonCamera.setVersionCheckEnabled(false)
 
         distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false) // IDK IF THIS GOES BFORE OR AFTER
         distanceCurve.storeValue(-14.7, 14.0.inches.asFeet)

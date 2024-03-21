@@ -21,6 +21,7 @@ import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc2024.AprilTag.aprilTagsEnabled
 import org.team2471.frc2024.AprilTag.resetCameras
+import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
@@ -239,6 +240,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     suspend fun midPieces() = use(Drive, Shooter) {
         try {
             grabFirstFour() //split because we want intake default for picking up middle pieces
+            println("DONE GRABBING FIRST FOUR. GOING TO MIDDLE")
 
             Shooter.setRpms(0.0)
             val auto = autonomi["MidPieces"]
@@ -249,7 +251,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             if (path != null) {
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Drive.driveAlongPath(path, earlyExit = {
-                    it > 0.25 && NoteDetector.closestIsValid
+                    it > 0.5 && NoteDetector.closestIsValid
                 })
             }
             pickUpSeenNote()
@@ -275,7 +277,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             if (path != null) {
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Drive.driveAlongPath(path, earlyExit = {
-                    it > 0.25 && NoteDetector.closestIsValid
+                    it > 0.3 && NoteDetector.closestIsValid
                 })
             }
             pickUpSeenNote()
@@ -307,52 +309,71 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     private suspend fun grabFirstFour() = use(Drive, Shooter, Intake) {
         Shooter.setRpms(5000.0)
-        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
-//        Pivot.aimSpeaker = true
 
         Drive.zeroGyro()
         val auto = autonomi["MidPieces"]
         auto?.isReflected = isRedAlliance
         var path = auto?.get("1-GrabSecond")
 
+        if (path != null) combinedPosition = path.getPosition(0.0).feet
+
+        aimAndShoot(true)
+
         var finishedPath = false
 
         parallel({
             if (path != null) {
-                Drive.driveAlongPath(path!!, true, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
-                NoteDetector.closestIsValid
-            })
+                parallel({
+                    Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
+                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
+            }*/)
+                }, {
+                    delay(0.6)
+                    Pivot.aimSpeaker = false
+                    Shooter.setRpms(5000.0)
+                    Pivot.angleSetpoint = Pivot.getAngleFromPosition(path!!.getPosition(path!!.durationWithSpeed)) - 4.0.degrees
+                    println("setting the pivot angle setpoint. path duration: ${path!!.durationWithSpeed}  angle setpoint: ${Pivot.angleSetpoint}")
+                })
             }
 //            pickUpSeenNote(true, doTurn = false)
-            path = auto?.get("2-GrabThird")
-            if (path != null) {
-                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
-                NoteDetector.closestIsValid
+            parallel({
+                path = auto?.get("2-GrabThird")
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
+                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
+            }*/)
+                }
+            }, {
+                delay(0.8)
+                Pivot.aimSpeaker = true
+                Pivot.aimSpeakerDistanceOffset = 2.0
             })
-            }
+
 //            pickUpSeenNote(true, doTurn = false)
             path = auto?.get("3-GrabFourth")
             if (path != null) {
-                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
-                NoteDetector.closestIsValid
-            })
-                pickUpSeenNote(true, doTurn = false)
+                Pivot.aimSpeakerDistanceOffset = 2.0
+                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
+                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
+            }*/)
+//                pickUpSeenNote(true, doTurn = false)
             }
             finishedPath = true
         }, {
-            delay(0.1)
-            println("firing preloaded")
-            Intake.setIntakeMotorsPercent(1.0)
-            delay(0.4)
-//            aprilTagsEnabled = false
             Pivot.aimSpeaker = true
+//            delay(0.4)
+//            println("firing preloaded")
+            Intake.setIntakeMotorsPercent(1.0)
+//            delay(0.6)
+//            aprilTagsEnabled = false
 
-            periodic {
-                if (finishedPath) this.stop()
-                Drive.headingSetpoint = Drive.getAngleToSpeaker()
-            }
+//            periodic {
+//                if (finishedPath) this.stop()
+//                Drive.headingSetpoint = Drive.getAngleToSpeaker()
+//            }
         })
 //        aprilTagsEnabled = true
+        Pivot.aimSpeakerDistanceOffset = 0.0
         println("finished first three")
     }
 
