@@ -91,6 +91,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("SafeSubSide", "SafeSubSide")
         addOption("testingARoundTheStageBlue", "CirclePathes")
         addOption("MidPieces", "MidPieces")
+        addOption("Pile", "Pile")
     }
 
     init {
@@ -165,6 +166,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             "SafeSubSide" -> safeSubstationSide()
             "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
             "MidPieces" -> midPieces()
+            "Pile" -> pileAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -528,6 +530,43 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
             Shooter.setRpms(5000.0)
             aimAndShoot()
+        } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+        }
+    }
+
+    suspend fun pileAuto() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition = //edit to actual startPos
+                if (isRedAlliance) Vector2(48.52, 4.62).feet else Vector2(48.52, 4.62).reflectAcrossField().feet
+            val auto = autonomi["Pile"]
+            auto?.isReflected = isBlueAlliance
+//            Intake.intakeState = Intake.IntakeState.INTAKING
+//            var path: Path2D? = auto?.get("1-SpitFirst")
+//            var t = Timer()
+//            t.start()
+//            parallel({
+//                if (path != null) Drive.driveAlongPath(path as Path2D, true)
+//            }, {
+//                suspendUntil { Intake.intakeState == Intake.IntakeState.HOLDING || t.get() + 0.1 > (path?.duration ?: 10.0) }
+//                Shooter.setRpms(1000.0)
+//                suspendUntil { Shooter.motorRpmTop > 800.0 || t.get() + 0.1 > (path?.duration ?: 10.0)}
+//                fire()
+//            })
+
+            var path = auto?.get("1-KnockNotes")
+            if (path != null) Drive.driveAlongPath(path, false)
+            path = auto?.get("3-GrabSecond")
+            if (path != null) Drive.driveAlongPath(path, false, extraTime = 0.5)
+            pickUpSeenNote()
+
+            path = auto?.get("4-ShootSecond")
+            if (path != null) Drive.driveAlongPath(path, false)
+            aimAndShoot()
+
+            pickUpSeenNote()
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
