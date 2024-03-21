@@ -233,8 +233,9 @@ object NoteDetector: Subsystem("NoteDetector") {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition.asFeet
     }
 
-    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
-        for (note in notes) {
+    fun closestNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
+        var note = closestNote
+        if (note != null) {
             if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
                 return true
             }

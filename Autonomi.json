@@ -3667,13 +3667,13 @@
 									},
 									"m_timeAndValue": {
 										"x": 3.0,
-										"y": 160.0
+										"y": 150.0
 									}
 								},
 								"m_nextSlopeMethod": "SLOPE_SMOOTH",
 								"m_nextTangent": {
 									"x": 2.5,
-									"y": -50.0
+									"y": -58.33333333333333
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": 0.0,
@@ -3682,7 +3682,7 @@
 								"m_prevSlopeMethod": "SLOPE_SMOOTH",
 								"m_prevTangent": {
 									"x": 0.5,
-									"y": -10.0
+									"y": -11.666666666666666
 								},
 								"m_timeAndValue": {
 									"x": 0.5,

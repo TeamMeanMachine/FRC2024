@@ -86,11 +86,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
-        addOption("2Far2CloseAmp", "2Far2CloseAmp")
+//        addOption("2Far2CloseAmp", "2Far2CloseAmp")
         addOption("4CloseSafe", "4CloseSafe")
-        addOption("SubSide", "SubSide")
+//        addOption("SubSide", "SubSide")
         addOption("SafeSubSide", "SafeSubSide")
-        addOption("testingARoundTheStageBlue", "CirclePathes")
+//        addOption("testingARoundTheStageBlue", "CirclePathes")
         addOption("MidPieces", "MidPieces")
         addOption("Pile", "Pile")
     }
@@ -140,6 +140,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                     if (cacheFile != null) {
                         println("CacheFile != null. Hi.")
                         cacheFile!!.writeText(json)
+
                     } else {
                         println("cacheFile == null. Hi.")
                     }
@@ -161,11 +162,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         println("reset cams ${Robot.recentTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
-            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
+//            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4CloseSafe" -> fourCloseSafe()
-            "SubSide" -> substationSide()
+//            "SubSide" -> substationSide()
             "SafeSubSide" -> safeSubstationSide()
-            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
+//            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
             "MidPieces" -> midPieces()
             "Pile" -> pileAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
@@ -504,7 +505,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             parallel({
                 if (path != null) {
                     Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        NoteDetector.closestIsMiddle
+                        NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4))
                     })
                 }
             }, {

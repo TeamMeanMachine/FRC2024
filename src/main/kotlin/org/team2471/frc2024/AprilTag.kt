@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
-import org.photonvision.targeting.MultiTargetPNPResult
 import org.photonvision.targeting.PhotonPipelineResult
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
@@ -25,7 +24,6 @@ import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.time.times
 
 object AprilTag {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
@@ -293,7 +291,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.5 && abs(target.bestCameraToTarget.z - 90.0) > 5.0 && target.fiducialId > 2)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3 && abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
                 validTargets.add(target)
             }
         }
