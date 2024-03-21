@@ -319,37 +319,38 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
         parallel({
             if (path != null) {
-                Drive.driveAlongPath(path!!, true/*, earlyExit = {
+                Drive.driveAlongPath(path!!, true, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
                 NoteDetector.closestIsValid
-            }*/)
+            })
             }
 //            pickUpSeenNote(true, doTurn = false)
             path = auto?.get("2-GrabThird")
             if (path != null) {
-                Drive.driveAlongPath(path!!, false/*, earlyExit = {
+                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
                 NoteDetector.closestIsValid
-            }*/)
+            })
             }
 //            pickUpSeenNote(true, doTurn = false)
             path = auto?.get("3-GrabFourth")
             if (path != null) {
-                Drive.driveAlongPath(path!!, false/*, earlyExit = {
+                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }, earlyExit = {
                 NoteDetector.closestIsValid
-            }*/)
-//                pickUpSeenNote(true, doTurn = false)
+            })
+                pickUpSeenNote(true, doTurn = false)
             }
             finishedPath = true
         }, {
             delay(0.1)
             println("firing preloaded")
             Intake.setIntakeMotorsPercent(1.0)
+            delay(0.4)
 //            aprilTagsEnabled = false
             Pivot.aimSpeaker = true
 
-//            periodic {
-//                if (finishedPath) this.stop()
-//                Drive.headingSetpoint = Drive.getAngleToSpeaker()
-//            }
+            periodic {
+                if (finishedPath) this.stop()
+                Drive.headingSetpoint = Drive.getAngleToSpeaker()
+            }
         })
 //        aprilTagsEnabled = true
         println("finished first three")
@@ -472,14 +473,24 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
             Shooter.setRpms(5000.0)
-            aimAndShoot()
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            Shooter.setRpms(0.0)
-            if (path != null) {
-                Drive.driveAlongPath(path, false, inResetGyro = false, earlyExit = {
-                    NoteDetector.closestIsMiddle
-                })
+            if (shootFirstEntry.getBoolean(true)) {
+                aimAndShoot()
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Shooter.setRpms(0.0)
             }
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
+                        NoteDetector.closestIsMiddle
+                    })
+                }
+            }, {
+                if (!shootFirstEntry.getBoolean(true)) {
+                    fire(0.5)
+                    Intake.intakeState = Intake.IntakeState.INTAKING
+                    Shooter.setRpms(0.0)
+                }
+            })
             pickUpSeenNote()
             path = auto?.get("2-ShootSecond")
             if (path != null) {
