@@ -157,7 +157,6 @@ object AutoChooser {
         resetCameras()
         println("reset cams ${Robot.recentTimeTaken()}")
         when (selAuto) {
-            "HIII" -> hiii()
             "Tests" -> testAuto()
             "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4CloseSafe" -> fourCloseSafe()
@@ -565,9 +564,6 @@ object AutoChooser {
                 println("Path is null!!! :(")
             }
         }
-    }
-    fun hiii() {
-        println("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
     }
 }
 

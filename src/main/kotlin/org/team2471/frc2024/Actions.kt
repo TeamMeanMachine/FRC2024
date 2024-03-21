@@ -21,6 +21,7 @@ import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc2024.Drive.isBlueAlliance
+import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.sign
@@ -307,6 +308,8 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 prevHeadingError = headingError
             }
 
+            var fieldCoords = NoteDetector.robotCoordsToFieldCoords(notePos ?: Vector2(2.0, 0.0))
+
             if (Intake.holdingCargo) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")
                 println("time to pick up note: $elapsedTime")
@@ -318,7 +321,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 }
                 stop()
             } else if (Robot.isAutonomous && ((timeOut && elapsedTime > 5.0)/* || (!noteFound && notePos!!.length < 0.5)*/)) {
-                println("exiting pick up note, its been too long")
+                println("exiting pick up note, it's been too long")
+                stop()
+            } else if (Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
+                println("exiting pick up note, it's on the wrong side")
                 stop()
             }
         }

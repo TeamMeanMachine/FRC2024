@@ -122,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-137.6).degrees,
+            Preferences.getDouble("Angle Offset 0",-141.55).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -140,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",37.1).degrees,
+            Preferences.getDouble("Angle Offset 2",36.5).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -149,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",165.6).degrees,
+            Preferences.getDouble("Angle Offset 3",165.2).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -191,7 +191,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var combinedPosition: Vector2L = position.feet
         set(value) {
             field = value
-            println("combinedPosition $value")
         }
     var prevCombinedPosition: Vector2L = position.feet
 
@@ -204,7 +203,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(1.0, 0.0)
+    override val carpetFlow = Vector2(-1.0, 0.0)
     override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
@@ -664,7 +663,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun getAngleToSpeaker(): Angle {
         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
         val dVector = combinedPosition - point.feet
-        println("getAngle to speaker. AprilTags? ${AprilTag.aprilTagsEnabled}")
         return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
@@ -716,9 +714,9 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
 
-    if (/*combinedPosition != Vector2L(0.0.inches, 0.0.inches) &&*/ DriverStation.isEnabled()) {
+    if (DriverStation.isEnabled()) {
 
-        testWheelPosition = combinedPosition + deltaPos //  + 0.5 * Drive.acceleration * dt * dt
+        testWheelPosition = combinedPosition + deltaPos
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
@@ -731,23 +729,17 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         }
     }
 
-    var a = Vector2L(0.0.inches, 0.0.inches)
-    var b = 0.0
+    var totalPos = Vector2L(0.0.inches, 0.0.inches)
+    var totalStDev = 0.0
 
-    for (i in measurementsAndStDevs) {
-        var c = i.second.pow(-2)
-        if (c < 0.000000000001 || c > 100000000000.0) {
-            println("stdev to -2: $c  on $i")
-            c.coerceIn(0.00000001, 100000000000.0)
-        }
-
-        a += i.first.asMeters.times(c).meters
-        b += c
+    for (posAndStDev in measurementsAndStDevs) {
+        val editedStDev = posAndStDev.second.pow(-2)
+        totalPos += posAndStDev.first.asMeters.times(editedStDev).meters
+        totalStDev += editedStDev
     }
 
-    if (b != 0.0 && b < 1000000000.0) {
-        println("a: ${a.asMeters} b: $b")
-        combinedPosition = a.asMeters.div(b).meters
+    if (totalStDev != 0.0 && totalStDev < 1000000000.0) {
+        combinedPosition = totalPos.asMeters.div(totalStDev).meters
     }
 
     prevCombinedPosition = pos

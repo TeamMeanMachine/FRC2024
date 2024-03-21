@@ -242,6 +242,17 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         robotToCamera
     )
 
+    val ambiguityRange: Double
+        get() {
+            var min = 10.0
+            var max = 0.0
+            for (ambi in poseAmbiguityHistory) {
+                if (ambi < min) min = ambi
+                if (ambi > max) max = ambi
+            }
+            return max - min
+        }
+
     fun reset() {
         if (!photonCam.isConnected) {
             try {
@@ -308,7 +319,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         }
 
 
-        if (newPose.isPresent) {
+        if (newPose.isPresent && validTargets.size > 0) {
 
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
@@ -335,13 +346,14 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
                 //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
-            poseAmbiguityHistory.add(avgAmbiguity)
+            if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
             if (poseAmbiguityHistory.size>4 ) {
                 poseAmbiguityHistory.removeAt(0)
 //                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
             }
+
             targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
-            if (validTargets.size.toDouble() > 0) {
+            if (validTargets.size.toDouble() > 0.0) {
                 avgDist /= validTargets.size.toDouble()
                 avgAmbiguity /= validTargets.size.toDouble()
             }
@@ -350,9 +362,13 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             var stDev = distCurve.getValue(avgDist.asMeters)
 
-            var stDevMultiplier = (100000.0.pow(avgAmbiguity)) * (1 / 2 * avgArea)
+            if (validTargets.size == 1) stDev *= 10000.0.pow(avgAmbiguity) * 1000.0.pow(ambiguityRange)
 
-            if (numTargets < 2) stDevMultiplier *= 10.0
+            stDev *= 5 * avgArea
+
+            if (numTargets < 2) stDev *= 8.0
+
+            stDev.coerceIn(0.000001, 1000.0)
 
             try {
                 estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
@@ -364,12 +380,9 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
 
-//            println("cam: ${photonCam.name} avgDist: ${avgDist.asMeters}   stDev: $stDev")
+            lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
 
-            lastGlobalPose = GlobalPose(estimatedPose, stDev * stDevMultiplier, Timer.getFPGATimestamp())
-
-            stDevEntry.setDouble(stDev * stDevMultiplier)
-            stDevMultiplierEntry.setDouble(stDevMultiplier)
+            stDevEntry.setDouble(stDev)
 
             return lastGlobalPose
         } else {
