@@ -112,6 +112,7 @@ object AprilTag {
     }
 
     fun resetCameras() {
+        PhotonCamera.setVersionCheckEnabled(false)
         for (camera in cameras.values) {
             camera.reset()
         }
