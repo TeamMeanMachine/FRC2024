@@ -47,7 +47,7 @@ object AutoChooser {
     private val closeFourToFiveEntry = AprilTag.aprilTable.getEntry("Auto, Go For It")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
-
+private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
     var cacheFile: File? = null
     var redSide: Boolean = true
         get() {
@@ -98,6 +98,7 @@ object AutoChooser {
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
         closeFourToFiveEntry.setBoolean(false)
+        shootFirstEntry.setBoolean(true)
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
@@ -179,9 +180,11 @@ object AutoChooser {
             auto?.isReflected = isBlueAlliance
             var path: Path2D? = auto?.get("0.5-GrabSecond")
             val ti = Timer()
-
-            aimAndShoot() //preLoaded shot
-
+            if (shootFirstEntry.getBoolean(true)) {
+                println("shooter ramp in Preload ")
+                aimAndShoot() //preLoaded shot
+            }
+            println(" shooter after preload")
             Intake.intakeState = Intake.IntakeState.INTAKING
             ti.start()
             if (path != null) {
