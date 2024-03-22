@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -70,7 +71,10 @@ object Pivot: Subsystem("Pivot") {
         set(value) {
             field = value
             if (value) {
-                if (!Robot.isAutonomous) {
+                if (OI.driverController.x && !DriverStation.isAutonomous()) {
+                    Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(10.9)
+                    Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                } else if (!Robot.isAutonomous) {
                     Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
                     Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
                 }
@@ -100,7 +104,6 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
-
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -153,9 +156,14 @@ object Pivot: Subsystem("Pivot") {
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-                    val angle = if (AprilTag.backCamsConnected) Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees else PODIUMPOSE
+                    angleSetpoint = if (OI.driverController.x) {
+                        39.0.degrees
+                    } else if (AprilTag.aprilTagsEnabled) {
+                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees
+                    } else {
+                        PODIUMPOSE
+                    }
 //                    println("Angle: ${angle}")
-                    angleSetpoint = angle
                 }
             }
         }

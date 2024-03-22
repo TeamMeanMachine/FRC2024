@@ -89,10 +89,8 @@ suspend fun aimAtSpeaker() {
     Drive.aimSpeaker = true
     Pivot.aimSpeaker = true
 
-    val t = Timer()
-    t.start()
     if (!DriverStation.isAutonomous()) {
-        suspendUntil(20) { !OI.driverController.y }
+        suspendUntil(20) { !OI.driverController.y && !OI.driverController.x}
 
         Drive.aimSpeaker = false
         Pivot.aimSpeaker = false
@@ -104,6 +102,9 @@ suspend fun aimAtSpeaker() {
 }
 
 suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75) {
+
+    println("Aiming...")
+
     val t = Timer()
     aimAtSpeaker()
     t.start()

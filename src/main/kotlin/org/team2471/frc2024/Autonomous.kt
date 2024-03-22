@@ -26,6 +26,7 @@ import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
 import java.util.*
+import kotlin.math.absoluteValue
 
 private lateinit var autonomi: Autonomi
 
@@ -497,6 +498,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
             Shooter.setRpms(5000.0)
+            var t = Timer()
+            t.start()
+            suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
             if (shootFirstEntry.getBoolean(true)) {
                 aimAndShoot()
                 Intake.intakeState = Intake.IntakeState.INTAKING
@@ -505,7 +509,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             parallel({
                 if (path != null) {
                     Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4))
+                        NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4), 5.0)
                     })
                 }
             }, {
@@ -527,7 +531,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             path = auto?.get("3-GrabThird")
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestIsMiddle
+                    NoteDetector.closestIsMiddleAdjust(4.5)
                 })
             }
             pickUpSeenNote()

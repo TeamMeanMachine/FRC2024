@@ -647,7 +647,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
+        if (OI.driverController.x) {
+            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+        } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
             aimHeadingSetpoint = getAngleToSpeaker()
         } else if (aimAmp) {
             aimHeadingSetpoint = 90.0.degrees

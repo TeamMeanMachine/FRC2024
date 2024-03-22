@@ -98,12 +98,12 @@ object Shooter: Subsystem("Shooter") {
 
     init {
 
-        if (!Robot.inComp) {
+//        if (!Robot.inComp) {
             if (!Pitch17Entry.exists()) {
-                Pitch3Entry.setDouble(59.0)
-                Pitch6Entry.setDouble(47.0)
-                Pitch9Entry.setDouble(37.5)
-                Pitch15Entry.setDouble(30.5)
+                Pitch3Entry.setDouble(70.0)
+                Pitch6Entry.setDouble(49.0)
+                Pitch9Entry.setDouble(40.0)
+                Pitch15Entry.setDouble(31.0)
                 Pitch17Entry.setDouble(27.6)
 
                 RPM3Entry.setDouble(3500.0)
@@ -136,13 +136,13 @@ object Shooter: Subsystem("Shooter") {
             }
 
             if (isRedAlliance) {
-                topAmpRPMEntry.setDouble(3000.0)
-                bottomAmpRPMEntry.setDouble(3000.0)
+                topAmpRPMEntry.setDouble(1200.0)
+                bottomAmpRPMEntry.setDouble(1200.0)
             } else {
-                topAmpRPMEntry.setDouble(3000.0)
-                bottomAmpRPMEntry.setDouble(3000.0)
+                topAmpRPMEntry.setDouble(1200.0)
+                bottomAmpRPMEntry.setDouble(1200.0)
             }
-        }
+//        }
 
         shooterMotorBottom.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
@@ -174,7 +174,7 @@ object Shooter: Subsystem("Shooter") {
 
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
 
-                if (!inComp) {
+//                if (!inComp) {
                     if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
                     if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
                     if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
@@ -185,7 +185,7 @@ object Shooter: Subsystem("Shooter") {
                     if (RPM9Entry.getDouble(9.0)!=rpmCurve.getValue(9.0)) { rebuildCurves() }
                     if (RPM15Entry.getDouble(13.7)!=rpmCurve.getValue(13.7)) { rebuildCurves() }
                     if (RPM17Entry.getDouble(17.0)!=rpmCurve.getValue(17.0)) { rebuildCurves() }
-                }
+//                }
 
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
@@ -227,8 +227,8 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                    rpmTopSetpoint = topAmpRPMEntry.getDouble(3000.0)
-                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(3000.0)
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
+                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
@@ -253,10 +253,10 @@ object Shooter: Subsystem("Shooter") {
     fun rebuildCurves() {
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-        pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(59.0))
-        pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(47.0))
-        pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(37.5))
-        pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(30.5))
+        pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(70.0))
+        pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(49.0))
+        pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(40.0))
+        pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(31.0))
         pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(27.6))
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
