@@ -233,8 +233,13 @@ object Shooter: Subsystem("Shooter") {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
                 } else {
-                    rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
-                    rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                    if (AprilTag.aprilTagsEnabled) {
+                        rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                        rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                    } else {
+                        rpmTopSetpoint = 5000.0
+                        rpmBottomSetpoint = 5000.0
+                    }
                 }
             }
         }

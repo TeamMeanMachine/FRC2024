@@ -60,8 +60,8 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
-    private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
+    private val MINTICKS = if (isCompBot) 3551.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2374.0 else 1139.0
 
 //    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
@@ -110,7 +110,7 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else AprilTag.last2DSpeakerDist
+        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else Drive.position.distance(speakerPos)
 
     init {
         stageAngleEntry.setDouble(20.0)
