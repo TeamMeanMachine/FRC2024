@@ -12,8 +12,10 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Robot.inComp
 
 object Shooter: Subsystem("Shooter") {
+
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
 
     private val shooterPercentEntry = table.getEntry("Shooter Percent")
@@ -96,40 +98,50 @@ object Shooter: Subsystem("Shooter") {
 
     init {
 
-        if (!Pitch17Entry.exists()) {
-            Pitch3Entry.setDouble(59.0)
-            Pitch6Entry.setDouble(47.0)
-            Pitch9Entry.setDouble(37.5)
-            Pitch15Entry.setDouble(30.5)
-            Pitch17Entry.setDouble(27.6)
+        if (!Robot.inComp) {
+            if (!Pitch17Entry.exists()) {
+                Pitch3Entry.setDouble(59.0)
+                Pitch6Entry.setDouble(47.0)
+                Pitch9Entry.setDouble(37.5)
+                Pitch15Entry.setDouble(30.5)
+                Pitch17Entry.setDouble(27.6)
 
-            RPM3Entry.setDouble(3500.0)
-            RPM6Entry.setDouble(3750.0)
-            RPM9Entry.setDouble(5000.0)
-            RPM15Entry.setDouble(5000.0)
-            RPM17Entry.setDouble(5000.0)
+                RPM3Entry.setDouble(3500.0)
+                RPM6Entry.setDouble(3750.0)
+                RPM9Entry.setDouble(5000.0)
+                RPM15Entry.setDouble(5000.0)
+                RPM17Entry.setDouble(5000.0)
 
-            Pitch3Entry.setPersistent()
-            Pitch6Entry.setPersistent()
-            Pitch9Entry.setPersistent()
-            Pitch15Entry.setPersistent()
-            Pitch17Entry.setPersistent()
-            RPM3Entry.setPersistent()
-            RPM6Entry.setPersistent()
-            RPM9Entry.setPersistent()
-            RPM15Entry.setPersistent()
-            RPM17Entry.setPersistent()
-        }
+                Pitch3Entry.setPersistent()
+                Pitch6Entry.setPersistent()
+                Pitch9Entry.setPersistent()
+                Pitch15Entry.setPersistent()
+                Pitch17Entry.setPersistent()
+                RPM3Entry.setPersistent()
+                RPM6Entry.setPersistent()
+                RPM9Entry.setPersistent()
+                RPM15Entry.setPersistent()
+                RPM17Entry.setPersistent()
+            }
 
-        shooterPercentEntry.setDouble(1.0)
-        if (!shootingRpmTopEntry.exists()) {
-            shootingRpmTopEntry.setDouble(5000.0)
-            shootingRpmTopEntry.setPersistent()
-        }
+            shooterPercentEntry.setDouble(1.0)
+            if (!shootingRpmTopEntry.exists()) {
+                shootingRpmTopEntry.setDouble(5000.0)
+                shootingRpmTopEntry.setPersistent()
+            }
 
-        if (!shootingRpmBottomEntry.exists()) {
-            shootingRpmBottomEntry.setDouble(5000.0)
-            shootingRpmBottomEntry.setPersistent()
+            if (!shootingRpmBottomEntry.exists()) {
+                shootingRpmBottomEntry.setDouble(5000.0)
+                shootingRpmBottomEntry.setPersistent()
+            }
+
+            if (isRedAlliance) {
+                topAmpRPMEntry.setDouble(3000.0)
+                bottomAmpRPMEntry.setDouble(3000.0)
+            } else {
+                topAmpRPMEntry.setDouble(3000.0)
+                bottomAmpRPMEntry.setDouble(3000.0)
+            }
         }
 
         shooterMotorBottom.config {
@@ -148,18 +160,9 @@ object Shooter: Subsystem("Shooter") {
             followersInverted(true)
         }
 
-        if (isRedAlliance) {
-            topAmpRPMEntry.setDouble(3000.0)
-            bottomAmpRPMEntry.setDouble(3000.0)
-        } else {
-            topAmpRPMEntry.setDouble(3000.0)
-            bottomAmpRPMEntry.setDouble(3000.0)
-        }
-
 
         GlobalScope.launch {
             periodic {
-                shooterCurrentEntry.setDouble(shooterMotorBottom.current)
 //                if (rpmOne > 20.0) println("rpmOne = $rpmOne rpmTwo = $rpmTwo")
                 shooterCurrentEntry.setDouble(shooterMotorBottom.current)
                 shooterTwoCurrentEntry.setDouble(shooterMotorTop.current)
@@ -170,16 +173,19 @@ object Shooter: Subsystem("Shooter") {
                 rpmBottomEntry.setDouble(rpmBottomSetpoint)
 
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
-                if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
-                if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
-                if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
-                if (Pitch15Entry.getDouble(13.7)!=pitchCurve.getValue(13.7)) { rebuildCurves() }
-                if (Pitch17Entry.getDouble(17.0)!=pitchCurve.getValue(17.0)) { rebuildCurves() }
-                if (RPM3Entry.getDouble(5.0)!=rpmCurve.getValue(3.0)) { rebuildCurves() }
-                if (RPM6Entry.getDouble(6.0)!=rpmCurve.getValue(6.0)) { rebuildCurves() }
-                if (RPM9Entry.getDouble(9.0)!=rpmCurve.getValue(9.0)) { rebuildCurves() }
-                if (RPM15Entry.getDouble(13.7)!=rpmCurve.getValue(13.7)) { rebuildCurves() }
-                if (RPM17Entry.getDouble(17.0)!=rpmCurve.getValue(17.0)) { rebuildCurves() }
+
+                if (!inComp) {
+                    if (Pitch3Entry.getDouble(3.0)!=pitchCurve.getValue(3.0)) { rebuildCurves() }
+                    if (Pitch6Entry.getDouble(6.0)!=pitchCurve.getValue(6.0)) { rebuildCurves() }
+                    if (Pitch9Entry.getDouble(9.0)!=pitchCurve.getValue(9.0)) { rebuildCurves() }
+                    if (Pitch15Entry.getDouble(13.7)!=pitchCurve.getValue(13.7)) { rebuildCurves() }
+                    if (Pitch17Entry.getDouble(17.0)!=pitchCurve.getValue(17.0)) { rebuildCurves() }
+                    if (RPM3Entry.getDouble(5.0)!=rpmCurve.getValue(3.0)) { rebuildCurves() }
+                    if (RPM6Entry.getDouble(6.0)!=rpmCurve.getValue(6.0)) { rebuildCurves() }
+                    if (RPM9Entry.getDouble(9.0)!=rpmCurve.getValue(9.0)) { rebuildCurves() }
+                    if (RPM15Entry.getDouble(13.7)!=rpmCurve.getValue(13.7)) { rebuildCurves() }
+                    if (RPM17Entry.getDouble(17.0)!=rpmCurve.getValue(17.0)) { rebuildCurves() }
+                }
 
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     if (rpmTopSetpoint == 0.0) {
@@ -242,11 +248,11 @@ object Shooter: Subsystem("Shooter") {
     fun rebuildCurves() {
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-        pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(61.0))
-        pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(50.0))
-        pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(42.0))
-        pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(30.0))
-        pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(28.0))
+        pitchCurve.storeValue(3.0, Pitch3Entry.getDouble(59.0))
+        pitchCurve.storeValue(6.0, Pitch6Entry.getDouble(47.0))
+        pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(37.5))
+        pitchCurve.storeValue(13.7, Pitch15Entry.getDouble(30.5))
+        pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(27.6))
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 

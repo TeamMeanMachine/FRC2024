@@ -309,17 +309,20 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
-                turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
-                turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.current)
-                turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.current)
-                turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.current)
+                if (!Robot.inComp) {
+                    turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
+                    turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.current)
+                    turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.current)
+                    turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.current)
 
-                driveMotor0CurrentEntry.setDouble((modules[0] as Module).driveCurrent)
-                driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
-                driveMotor2CurrentEntry.setDouble((modules[2] as Module).driveCurrent)
-                driveMotor3CurrentEntry.setDouble((modules[3] as Module).driveCurrent)
+                    driveMotor0CurrentEntry.setDouble((modules[0] as Module).driveCurrent)
+                    driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
+                    driveMotor2CurrentEntry.setDouble((modules[2] as Module).driveCurrent)
+                    driveMotor3CurrentEntry.setDouble((modules[3] as Module).driveCurrent)
 
-                drivePowerEntry.setDouble((modules[0] as Module).power)
+                    drivePowerEntry.setDouble((modules[0] as Module).power)
+                }
+
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)

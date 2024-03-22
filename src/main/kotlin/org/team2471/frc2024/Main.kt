@@ -19,6 +19,9 @@ object Robot : MeanlibRobot() {
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
     var beforeFirstEnable = true
+
+    val inComp = true
+
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")

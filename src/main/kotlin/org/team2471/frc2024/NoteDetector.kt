@@ -32,10 +32,7 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val noteThreePresentEntry = table.getEntry("NoteThreePresent")
     private val noteFourPresentEntry = table.getEntry("NoteFourPresent")
 
-    private val noteHalfHeight = 1.0.inches
-    private val camHeight = 9.796.inches
     private val camRobotCoords = Vector2(11.96.inches.asFeet, 0.0.inches.asFeet)
-    private val cameraAngle = 15.0.degrees
 
     val middleNotesList: HashMap<Int, SchrodingerNote> = hashMapOf() // from closest to y=0 in wpi blue
     val closeNotesRedList : HashMap<Int, SchrodingerNote> = hashMapOf() // close notes n=0 is note closest to center field, n++ further away
@@ -214,11 +211,13 @@ object NoteDetector: Subsystem("NoteDetector") {
                         }
                     }
                 }
-                middleNotesList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                if (!Robot.inComp) {
+                    middleNotesList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                }
                 SmartDashboard.putBoolean("NoteCameraIsConnected", camera.isConnected)
             }
         }

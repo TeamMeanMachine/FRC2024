@@ -37,11 +37,11 @@ object Pivot: Subsystem("Pivot") {
     private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
-    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+//    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
-    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
+//    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
 
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
@@ -63,7 +63,7 @@ object Pivot: Subsystem("Pivot") {
     private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
     private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
 
-    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
+//    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
     var aimSpeaker = false
@@ -139,12 +139,12 @@ object Pivot: Subsystem("Pivot") {
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
-                encoderVoltageEntry.setDouble(encoderVoltage)
+//                encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
-                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
-                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
-                advantagePivotPublisher.set(advantagePivotTransform)
+//                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
+//                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
+//                advantagePivotPublisher.set(advantagePivotTransform)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 

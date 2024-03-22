@@ -18,14 +18,10 @@ object Intake: Subsystem("Intake") {
 
     private val intakingEntry = table.getEntry("Intaking")
     private val holdingNoteEntry = table.getEntry("Holding Note")
-
     private val manualIntake = table.getEntry("Manual Intake")
-
     private val bottomBreakEntry = table.getEntry("Bottom Break")
     private val topBreakEntry = table.getEntry("Top Break")
-
     private val intakeCurrentEntry = table.getEntry("Intake Current")
-
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
     val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP))
