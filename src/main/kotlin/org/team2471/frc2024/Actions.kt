@@ -101,7 +101,7 @@ suspend fun aimAtSpeaker() {
     }
 }
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFudge: Angle = 0.0.degrees) {
 
     println("Aiming...")
 
@@ -156,6 +156,8 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
     val startTime = Timer.getFPGATimestamp()
 
     var prevHeadingError = 0.0
+    var noNoteCounter = 0
+
 
     if (!Robot.isAutonomous) {
         // Start intaking
@@ -257,7 +259,12 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
             println("pick up seen note did not see any note to pickup")
             println("notes: ${NoteDetector.notes}")
 
-            stop() // we did not see any note
+            noNoteCounter += 1
+
+            if (noNoteCounter > 10) {
+                println("No notes > 10")
+                stop() // we did not see any note
+            }
         } else {
 
             //start driving

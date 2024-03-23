@@ -95,8 +95,14 @@ object OI : Subsystem("OI") {
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.0.degrees}
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.0.degrees}
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue {
+            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
+            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
+        }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
+            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
+            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
+        }
 
         operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
 
