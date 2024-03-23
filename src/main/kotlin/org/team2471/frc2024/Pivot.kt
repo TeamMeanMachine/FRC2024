@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -37,11 +38,11 @@ object Pivot: Subsystem("Pivot") {
     private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
-    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+//    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
-    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
+//    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
 
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
@@ -51,6 +52,8 @@ object Pivot: Subsystem("Pivot") {
     private const val GEARRATIO = 1 / 61.71
 
     val TESTPOSE = 30.5.degrees //18 //32
+    val PODIUMPOSE = 37.0.degrees
+    val FARSTAGELEG = 29.0.degrees
     val CLOSESPEAKERPOSE = 59.0.degrees
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
@@ -58,17 +61,20 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
-    private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
+    private val MINTICKS = if (isCompBot) 3551.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2374.0 else 1139.0
 
-    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
+//    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
     var aimSpeaker = false
         set(value) {
             field = value
             if (value) {
-                if (!Robot.isAutonomous) {
+                if (OI.driverController.x && !DriverStation.isAutonomous()) {
+                    Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(10.9)
+                    Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                } else if (!Robot.isAutonomous) {
                     Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
                     Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
                 }
@@ -77,6 +83,8 @@ object Pivot: Subsystem("Pivot") {
                 Shooter.rpmBottomSetpoint = 0.0
             }
         }
+
+    var aimSpeakerDistanceOffset: Double = 0.0 //feet
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -95,8 +103,7 @@ object Pivot: Subsystem("Pivot") {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
 
             // For amp shot edge case
-            Shooter.manualShootState = Shooter.manualShootState
-
+            if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
             pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
@@ -106,11 +113,7 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else AprilTag.last2DSpeakerDist.lastValue()
-
-
-
-
+        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else Drive.position.distance(speakerPos)
 
     init {
         stageAngleEntry.setDouble(20.0)
@@ -139,24 +142,28 @@ object Pivot: Subsystem("Pivot") {
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
-                encoderVoltageEntry.setDouble(encoderVoltage)
+//                encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
-                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
-                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
-                advantagePivotPublisher.set(advantagePivotTransform)
-
-
+//                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
+//                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
+//                advantagePivotPublisher.set(advantagePivotTransform)
 
                 pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
 
+//                angleSetpoint = angleSetpoint
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-                    val angle = Shooter.pitchCurve.getValue(distFromSpeaker).degrees
+                    angleSetpoint = if (OI.driverController.x) {
+                        39.0.degrees
+                    } else if (AprilTag.aprilTagsEnabled) {
+                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees
+                    } else {
+                        PODIUMPOSE
+                    }
 //                    println("Angle: ${angle}")
-                    angleSetpoint = angle
                 }
             }
         }

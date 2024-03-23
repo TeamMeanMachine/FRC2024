@@ -31,7 +31,6 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -90,14 +89,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
-    val distanceEntry = table.getEntry("Distance")
+    val distanceEntry = table.getEntry("Distance From Speaker Drive")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
 
     val advantageWheelPoseEntry = table.getEntry("Test Wheel Advantage Pose")
 
     private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
-
 
     val rateCurve = MotionCurve()
 
@@ -124,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-137.6).degrees,
+            Preferences.getDouble("Angle Offset 0",-141.55).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -142,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",37.1).degrees,
+            Preferences.getDouble("Angle Offset 2",36.5).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -151,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",165.6).degrees,
+            Preferences.getDouble("Angle Offset 3",165.2).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -191,6 +189,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var prevTickVelocity = Vector2(0.0, 0.0)
 
     override var combinedPosition: Vector2L = position.feet
+        set(value) {
+            field = value
+        }
     var prevCombinedPosition: Vector2L = position.feet
 
 
@@ -202,9 +203,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(1.0, 0.0) //STEM?
-    //    override val carpetFlow = Vector2(-1.0, 0.0) //Salem?
-//    override val carpetFlow = Vector2(0.0, 1.0) //2023 pre-wpi field x y swap?
+    override val carpetFlow = Vector2(-1.0, 0.0)
     override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
@@ -225,8 +224,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val ampPos = Vector2(0.0, 0.0) //TODO
 
     var aimHeadingSetpoint = 0.0.radians
-    val distance: Double
-        get() = (combinedPosition.asFeet - speakerPos).length
+    val distanceFromSpeakerDrivePos: Double
+        get() = (position - speakerPos).length
 
     var maxTranslation = 1.0
         get() =  if (demoMode) min(field, demoSpeed) else field
@@ -310,21 +309,24 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
-                turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
-                turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.current)
-                turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.current)
-                turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.current)
+                if (!Robot.inComp) {
+                    turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
+                    turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.current)
+                    turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.current)
+                    turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.current)
 
-                driveMotor0CurrentEntry.setDouble((modules[0] as Module).driveCurrent)
-                driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
-                driveMotor2CurrentEntry.setDouble((modules[2] as Module).driveCurrent)
-                driveMotor3CurrentEntry.setDouble((modules[3] as Module).driveCurrent)
+                    driveMotor0CurrentEntry.setDouble((modules[0] as Module).driveCurrent)
+                    driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
+                    driveMotor2CurrentEntry.setDouble((modules[2] as Module).driveCurrent)
+                    driveMotor3CurrentEntry.setDouble((modules[3] as Module).driveCurrent)
 
-                drivePowerEntry.setDouble((modules[0] as Module).power)
+                    drivePowerEntry.setDouble((modules[0] as Module).power)
+                }
+
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
-                distanceEntry.setDouble(distance)
+                distanceEntry.setDouble(distanceFromSpeakerDrivePos)
 
                 val time = t.get()
                 val dt = time - prevTime
@@ -435,8 +437,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         combinedPosition = resetPose.feet
         position = resetPose
         prevPosition = resetPose
-        for (camera in AprilTag.cameras) camera.component2().lastGlobalPose = GlobalPose(resetPose.feet, 0.0, edu.wpi.first.wpilibj.Timer.getFPGATimestamp())
-        advantagePoseEntry.setAdvantagePose(resetPose.feet, heading)
         println("resetting to front speaker pos. $position")
     }
 
@@ -647,10 +647,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        if (aimSpeaker || Robot.isAutonomous) {
+        if (OI.driverController.x) {
+            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+        } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
             aimHeadingSetpoint = getAngleToSpeaker()
-        } else {
+        } else if (aimAmp) {
             aimHeadingSetpoint = 90.0.degrees
+        } else {
+            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -664,7 +668,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun getAngleToSpeaker(): Angle {
         val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
         val dVector = combinedPosition - point.feet
-        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.lastValue().degrees else AprilTag.last2DSpeakerAngle.lastValue().degrees
+        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
 
@@ -710,32 +714,37 @@ suspend fun Drive.currentTest() = use(this) {
 
 fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     val pos = combinedPosition
+    prevCombinedPosition = pos
 //                                            measurement, stdev
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
 
-    if (combinedPosition != Vector2L(0.0.inches, 0.0.inches) && DriverStation.isEnabled()) {
+    if (DriverStation.isEnabled()) {
 
-        testWheelPosition = prevCombinedPosition + deltaPos //  + 0.5 * Drive.acceleration * dt * dt
+        testWheelPosition = combinedPosition + deltaPos
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
     }
 
-    for (i in aprilPoses) {
-        measurementsAndStDevs.add(Pair(i.pose, i.stDev))
+
+    if (AprilTag.aprilTagsEnabled) {
+        for (i in aprilPoses) {
+            measurementsAndStDevs.add(Pair(i.pose, i.stDev))
+        }
     }
 
-    var a = Vector2L(0.0.inches, 0.0.inches)
-    var b = 0.0
+    var totalPos = Vector2L(0.0.inches, 0.0.inches)
+    var totalStDev = 0.0
 
-    for (i in measurementsAndStDevs) {
-        a += i.first.asMeters.times(i.second.pow(-2)).meters
-        b += i.second.pow(-2)
+    for (posAndStDev in measurementsAndStDevs) {
+        val editedStDev = posAndStDev.second.pow(-2)
+        totalPos += posAndStDev.first.asMeters.times(editedStDev).meters
+        totalStDev += editedStDev
     }
 
-    if (b != 0.0) {
-        combinedPosition = a.asMeters.div(b).meters
+    if (totalStDev != 0.0 && totalStDev < 1000000000.0) {
+        combinedPosition = totalPos.asMeters.div(totalStDev).meters
     }
 
     prevCombinedPosition = pos

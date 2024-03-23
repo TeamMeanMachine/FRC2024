@@ -21,6 +21,7 @@ import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc2024.Drive.isBlueAlliance
+import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.sign
@@ -88,10 +89,8 @@ suspend fun aimAtSpeaker() {
     Drive.aimSpeaker = true
     Pivot.aimSpeaker = true
 
-    val t = Timer()
-    t.start()
     if (!DriverStation.isAutonomous()) {
-        suspendUntil(20) { !OI.driverController.y }
+        suspendUntil(20) { !OI.driverController.y && !OI.driverController.x}
 
         Drive.aimSpeaker = false
         Pivot.aimSpeaker = false
@@ -103,6 +102,9 @@ suspend fun aimAtSpeaker() {
 }
 
 suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75) {
+
+    println("Aiming...")
+
     val t = Timer()
     aimAtSpeaker()
     t.start()
@@ -138,7 +140,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -180,6 +182,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
         }
 
         var noteFound = false
+
+        if (NoteDetector.notes.isEmpty()) {
+            println("there are no notes inside the note list")
+        }
 
         //checking if note is in expected range and setting its position
         for (note in  NoteDetector.notes) {
@@ -273,7 +279,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 val d = headingVelocity * 0.005
 
                 var driveSpeed = if (!Robot.isAutonomous) OI.driveLeftTrigger else 1.0
-                val turnSpeed = feedForward + p //+ d
+                val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
                 val driveVelocity = Drive.velocity.length
                 val driveD = (driveVelocity / notePos.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
@@ -290,7 +296,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 driveSpeed.coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2(-0.85 * notePos.y, notePos.x).normalize()
-                Drive.drive(driveDirection * driveSpeed, turnSpeed, false)
+                Drive.drive(driveDirection * driveSpeed, turnSpeed, false, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
 //                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
@@ -307,6 +313,8 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 prevHeadingError = headingError
             }
 
+            var fieldCoords = NoteDetector.robotCoordsToFieldCoords(notePos ?: Vector2(2.0, 0.0))
+
             if (Intake.holdingCargo) {
                 println("stopped because intake is done, state: ${Intake.intakeState.name}")
                 println("time to pick up note: $elapsedTime")
@@ -318,7 +326,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 }
                 stop()
             } else if (Robot.isAutonomous && ((timeOut && elapsedTime > 5.0)/* || (!noteFound && notePos!!.length < 0.5)*/)) {
-                println("exiting pick up note, its been too long")
+                println("exiting pick up note, it's been too long")
+                stop()
+            } else if (Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
+                println("exiting pick up note, it's on the wrong side")
                 stop()
             }
         }
@@ -331,13 +342,13 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //    }
 }
 
-suspend fun lockToAmp() = use(Drive) {
+suspend fun lockToAmp() {
     Drive.aimAmp = true
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
     suspendUntil(20) { !OI.driverController.b }
     Drive.aimAmp = false
 
-    val newPath = Path2D("newPath")
+/*    val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition.asFeet)
     if (isBlueAlliance) {
         newPath.addPoint(7.0, 25.0)  // coords??
@@ -356,7 +367,7 @@ suspend fun lockToAmp() = use(Drive) {
     newPath.addEasePoint(time, 1.0)
     newPath.addHeadingPoint(0.0, Drive.heading.asDegrees)
     newPath.addHeadingPoint(time, 90.0)
-//    Drive.driveAlongPath(newPath) { OI.driverController.b }
+    Drive.driveAlongPath(newPath) { OI.driverController.b }*/
 }
 
 suspend fun flipAmpShot() = use(Pivot) {

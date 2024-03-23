@@ -82,22 +82,25 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
+        driverController::x.whenTrue { aimAtSpeaker() }
         ({ driveLeftTrigger > 0.2 }).whenTrue { seeAndPickUpSeenNote(cancelWithTrigger = true) }
         driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.TESTPOSE }
+        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.FARSTAGELEG }
 
         operatorController::leftTriggerFullPress.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) + 25.0); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) + 25) }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1150.0) - 25.0); Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(950.0) - 25) }
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.0.degrees}
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.0.degrees}
 
         operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
+
+
 
         GlobalScope.launch {
             periodic {
@@ -109,7 +112,6 @@ object OI : Subsystem("OI") {
                 } else {
                     driverController.rumble = 0.0
                 }
-
 
                 // Operator Rumble
                 if (Shooter.manualShootState && Robot.isTeleopEnabled) {

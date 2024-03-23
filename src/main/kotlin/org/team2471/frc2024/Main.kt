@@ -10,6 +10,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.steeringTests
 import java.net.NetworkInterface
 
 
@@ -19,6 +21,9 @@ object Robot : MeanlibRobot() {
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
     var beforeFirstEnable = true
+
+    val inComp = true
+
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
@@ -66,6 +71,7 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun enable() {
+        initTimeMeasurement()
         beforeFirstEnable = false
         println("starting enable")
         Drive.enable()
@@ -74,7 +80,7 @@ object Robot : MeanlibRobot() {
         Pivot.enable()
         Shooter.enable()
         println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
-        println("ending enable")
+        println("ending enable ${totalTimeTaken()}")
     }
 
     override suspend fun autonomous() {
@@ -100,10 +106,8 @@ object Robot : MeanlibRobot() {
     override suspend fun test() {
         println("test mode begin. Hi.")
 
-
-        Drive.setAngleOffsets()
-//        Drive.driveTests()
-//        Drive.steeringTests()
+        Drive.driveTests()
+        Drive.steeringTests()
 
 
 
@@ -123,12 +127,16 @@ object Robot : MeanlibRobot() {
         OI.operatorController.rumble = 0.0
     }
 
+    fun getSystemTimeSeconds(): Long {
+        return System.nanoTime() * 1000000
+    }
+
     private fun initTimeMeasurement() {
         startMeasureTime = getSystemTimeSeconds()
         lastMeasureTime = startMeasureTime
     }
 
-    private fun updateNanosTaken() {
+    private fun updateSecondsTaken() {
         lastMeasureTime = getSystemTimeSeconds()
     }
 
@@ -138,12 +146,8 @@ object Robot : MeanlibRobot() {
 
     fun recentTimeTaken(): Double {
         val timeTaken = getSystemTimeSeconds() - lastMeasureTime
-        updateNanosTaken()
+        updateSecondsTaken()
         return timeTaken.toDouble()
-    }
-
-    fun getSystemTimeSeconds(): Long {
-        return System.nanoTime() * 1000000
     }
 }
 

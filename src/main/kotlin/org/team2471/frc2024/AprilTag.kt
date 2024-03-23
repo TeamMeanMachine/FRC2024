@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
-import org.photonvision.targeting.MultiTargetPNPResult
 import org.photonvision.targeting.PhotonPipelineResult
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
@@ -35,8 +34,10 @@ object AprilTag {
 
     val speakerTagHeight = 57.13.inches
 
-    var last2DSpeakerDist = LinearFilter.movingAverage(5)
-    var last2DSpeakerAngle = LinearFilter.movingAverage(5)
+    var last2DSpeakerDistFilter = LinearFilter.movingAverage(5)
+    var last2DSpeakerDist = 0.0
+    var last2DSpeakerAngleFilter = LinearFilter.movingAverage(5)
+    var last2DSpeakerAngle = 0.0
 
     var aprilTagsEnabled: Boolean
         get() = aprilTagsEnabledEntry.getBoolean(true)
@@ -64,16 +65,19 @@ object AprilTag {
         Pair("CamIB", Camera("CamIB", robotToCamIB))
     )
 
+    val backCamsConnected: Boolean
+        get() = cameras["CamSL"]?.isConnected == true && cameras["CamSR"]?.isConnected == true
+
     val distCurve = MotionCurve()
 
     init {
         resetCameras()
         rebuildCurves()
 
-        last2DSpeakerDist.reset()
-        last2DSpeakerAngle.reset()
-        last2DSpeakerAngle.calculate(0.0)
-        last2DSpeakerDist.calculate(0.0)
+        last2DSpeakerDistFilter.reset()
+        last2DSpeakerAngleFilter.reset()
+        last2DSpeakerAngleFilter.calculate(0.0)
+        last2DSpeakerDistFilter.calculate(0.0)
 
         aprilTagsEnabledEntry.setBoolean(true)
 
@@ -83,8 +87,8 @@ object AprilTag {
                 val temp2DOffset = get2DSpeakerOffset()
                 if (temp2DOffset != null) {
 //                    println("Setting angle to ${temp2DOffset.second}")
-                    last2DSpeakerDist.calculate(temp2DOffset.first.asFeet)
-                    last2DSpeakerAngle.calculate(-temp2DOffset.second.asDegrees)
+                    last2DSpeakerDist = last2DSpeakerDistFilter.calculate(temp2DOffset.first.asFeet)
+                    last2DSpeakerAngle = last2DSpeakerDistFilter.calculate(-temp2DOffset.second.asDegrees)
                 }
 
                 try {
@@ -96,11 +100,17 @@ object AprilTag {
                 } catch (ex: Exception) {
                     println("Error in apriltag: $ex")
                 }
+
+                for (c in cameras) {
+                    val camera = c.value
+                    camera.isConnectedEntry.setBoolean(camera.isConnected)
+                }
             }
         }
     }
 
     fun resetCameras() {
+        PhotonCamera.setVersionCheckEnabled(false)
         for (camera in cameras.values) {
             camera.reset()
         }
@@ -112,8 +122,8 @@ object AprilTag {
         for (camera in cameras.values) {
             val lastGlobalPose = camera.lastGlobalPose
             if (lastGlobalPose != null) {
-                    out.add(lastGlobalPose)
-                    camera.lastGlobalPose = null
+                out.add(lastGlobalPose)
+                camera.lastGlobalPose = null
             }
         }
 
@@ -199,8 +209,14 @@ object AprilTag {
 class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
 
     val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
-    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
+//    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
+//    val stDevMultiplierEntry = aprilTable.getEntry("stDev Multiplier $name")
+    val isConnectedEntry = aprilTable.getEntry("isConnected $name")
+    val poseAmbiguityHistory: ArrayList<Double> = arrayListOf()
+
+    val isConnected: Boolean
+        get() = photonCam.isConnected
 
     var lastGlobalPose: GlobalPose? = null
 
@@ -224,6 +240,17 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         photonCam,
         robotToCamera
     )
+
+    val ambiguityRange: Double
+        get() {
+            var min = 10.0
+            var max = 0.0
+            for (ambi in poseAmbiguityHistory) {
+                if (ambi < min) min = ambi
+                if (ambi > max) max = ambi
+            }
+            return max - min
+        }
 
     fun reset() {
         if (!photonCam.isConnected) {
@@ -258,15 +285,13 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             return null
         }
 
-        val multiTagCameraResult: MultiTargetPNPResult = photonCam.latestResult.multiTagResult
-
         val targets = photonCam.latestResult.targets
         var validTargets: ArrayList<PhotonTrackedTarget> = arrayListOf()
 
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.2 && target.area > 0.1 && abs(target.bestCameraToTarget.z - 90.0) > 5.0)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3 && abs(target.bestCameraToTarget.z - 90.0) > 5.0 && target.fiducialId != 6)  {
                 validTargets.add(target)
             }
         }
@@ -293,33 +318,56 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         }
 
 
-        if (newPose.isPresent) {
+        if (newPose.isPresent && validTargets.size > 0) {
 
             var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
 
             var avgDist = 0.0.inches
             var avgAmbiguity = 0.0
-            var targetPoses : Array<Vector2L> = arrayOf()
+            var avgArea = 0.0
+//            var targetPoses : ArrayList<Vector2L> = arrayListOf()
+
             for (target in validTargets) {
                 val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
                 avgAmbiguity += target.poseAmbiguity
+                avgArea += target.area
                 val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
-                lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
-                    ?.let { targetPoses += it }
+//                lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
+//                    ?.let { targetPoses += it }
+                val robotPose = Pose3d(
+                    Translation3d(Drive.combinedPosition.x.asMeters, Drive.combinedPosition.y.asMeters, 0.0),
+                    Rotation3d(0.0, 0.0, Drive.heading.asRadians)
+                )
+                //val targetRelativePose = (target.bestCameraToTarget.translation - robotToCamera.translation).toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians + robotToCamera.rotation.angle))
+                val visionTargetPosition = robotPose.transformBy(robotToCamera).transformBy(target.bestCameraToTarget)
+//                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
+                //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
-            targetPoseEntry.setAdvantagePoses(targetPoses)
-            avgDist /= validTargets.size.toDouble()
-            avgAmbiguity /= validTargets.size.toDouble()
+            if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
+            if (poseAmbiguityHistory.size>4 ) {
+                poseAmbiguityHistory.removeAt(0)
+//                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
+            }
 
-            if (avgDist > 5.0.meters) return null
+//            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
+            if (validTargets.size.toDouble() > 0.0) {
+                avgDist /= validTargets.size.toDouble()
+                avgAmbiguity /= validTargets.size.toDouble()
+            }
+
+            if (avgDist > 6.0.meters) return null
 
             var stDev = distCurve.getValue(avgDist.asMeters)
 
-            val stDevMultiplier = 100000.0.pow(avgAmbiguity)
+            if (validTargets.size == 1) stDev *= 10000.0.pow(avgAmbiguity) * 1000.0.pow(ambiguityRange)
 
-            if (numTargets < 2) stDev *= 10.0
+            stDev *= 5 * avgArea
+
+            if (numTargets < 2) stDev *= 8.0
+
+            stDev.coerceIn(0.000001, 1000.0)
 
             try {
                 estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
@@ -331,9 +379,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
 
-//            println("cam: ${photonCam.name} avgDist: ${avgDist.asMeters}   stDev: $stDev")
-
-            lastGlobalPose = GlobalPose(estimatedPose, stDev * stDevMultiplier, Timer.getFPGATimestamp())
+            lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
 
             stDevEntry.setDouble(stDev)
 
