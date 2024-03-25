@@ -157,6 +157,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 
     var prevHeadingError = 0.0
     var noNoteCounter = 0
+    var tooFarCounter = 0
 
 
     if (!Robot.isAutonomous) {
@@ -336,8 +337,14 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 println("exiting pick up note, it's been too long")
                 stop()
             } else if (Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
-                println("exiting pick up note, it's on the wrong side")
-                stop()
+                tooFarCounter += 1
+
+                if (tooFarCounter > 5) {
+                    println("exiting pick up note, it's on the wrong side  x: ${fieldCoords.x}")
+                    stop()
+                }
+            } else {
+                tooFarCounter = 0
             }
         }
     }
