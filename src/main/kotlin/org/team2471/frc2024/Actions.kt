@@ -101,7 +101,7 @@ suspend fun aimAtSpeaker() {
     }
 }
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFudge: Angle = 0.0.degrees) {
 
     println("Aiming...")
 
@@ -156,6 +156,9 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
     val startTime = Timer.getFPGATimestamp()
 
     var prevHeadingError = 0.0
+    var noNoteCounter = 0
+    var tooFarCounter = 0
+
 
     if (!Robot.isAutonomous) {
         // Start intaking
@@ -257,7 +260,12 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
             println("pick up seen note did not see any note to pickup")
             println("notes: ${NoteDetector.notes}")
 
-            stop() // we did not see any note
+            noNoteCounter += 1
+
+            if (noNoteCounter > 10) {
+                println("No notes > 10")
+                stop() // we did not see any note
+            }
         } else {
 
             //start driving
@@ -329,8 +337,14 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 println("exiting pick up note, it's been too long")
                 stop()
             } else if (Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
-                println("exiting pick up note, it's on the wrong side")
-                stop()
+                tooFarCounter += 1
+
+                if (tooFarCounter > 5) {
+                    println("exiting pick up note, it's on the wrong side  x: ${fieldCoords.x}")
+                    stop()
+                }
+            } else {
+                tooFarCounter = 0
             }
         }
     }

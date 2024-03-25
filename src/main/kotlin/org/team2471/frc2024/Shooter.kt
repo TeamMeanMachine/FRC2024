@@ -136,11 +136,11 @@ object Shooter: Subsystem("Shooter") {
             }
 
             if (isRedAlliance) {
-                topAmpRPMEntry.setDouble(1500.0)
-                bottomAmpRPMEntry.setDouble(1500.0)
+                topAmpRPMEntry.setDouble(1200.0)
+                bottomAmpRPMEntry.setDouble(1200.0)
             } else {
-                topAmpRPMEntry.setDouble(1500.0)
-                bottomAmpRPMEntry.setDouble(1500.0)
+                topAmpRPMEntry.setDouble(1200.0)
+                bottomAmpRPMEntry.setDouble(1200.0)
             }
 //        }
 
@@ -227,8 +227,8 @@ object Shooter: Subsystem("Shooter") {
                 // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
                 // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
                 if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1500.0)
-                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1500.0)
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
+                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0

@@ -14,6 +14,7 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.feet
 import org.team2471.frc.lib.math.inches
 import org.team2471.frc.lib.motion.following.driveAlongPath
+import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
@@ -94,13 +95,15 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 //        addOption("testingARoundTheStageBlue", "CirclePathes")
         addOption("MidPieces", "MidPieces")
         addOption("Pile", "Pile")
+        addOption("FirstMid", "FirstMid")
+        addOption("FirSec", "FirSec")
     }
 
     init {
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
-        closeFourToFiveEntry.setBoolean(false)
+        closeFourToFiveEntry.setBoolean(true)
         shootFirstEntry.setBoolean(true)
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -170,6 +173,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 //            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
             "MidPieces" -> midPieces()
             "Pile" -> pileAuto()
+            "FirstMid" -> firstMidAuto()
+            "FirSec" -> firstSecAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -300,9 +305,10 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 aimAndShoot(true)
             }
 
-
+            Drive.xPose()
 
         } finally {
+            Drive.xPose()
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
             delay(1.0)
@@ -424,7 +430,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 //                    Shooter.setRpms(Shooter.rpmCurve.getValue(Drive.distanceFromSpeakerDrivePos))
                 }
             })
+            Drive.xPose()
         } finally {
+            Drive.xPose()
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
             Shooter.setRpms(0.0)
@@ -493,7 +501,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         try {
             Drive.zeroGyro()
             Drive.combinedPosition =
-                if (isRedAlliance) Vector2(48.52, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+                if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -502,14 +510,16 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
             if (shootFirstEntry.getBoolean(true)) {
+                Pivot.angleFudge = 2.0.degrees
                 aimAndShoot()
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Shooter.setRpms(0.0)
+                Pivot.angleFudge = 0.0.degrees
             }
             parallel({
                 if (path != null) {
                     Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4), 5.0)
+                        it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(0), 5.0)
                     })
                 }
             }, {
@@ -520,7 +530,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 }
             })
             pickUpSeenNote()
-            path = auto?.get("2-ShootSecond")
+
+            path = auto?.get("2-ShootSecond") //Mid1 Third
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
@@ -528,14 +539,14 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             aimAndShoot()
             Intake.intakeState = Intake.IntakeState.INTAKING
             Shooter.setRpms(0.0)
-            path = auto?.get("3-GrabThird")
+            path = auto?.get("3-GrabThird") //Mid1 Fourth
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
                     NoteDetector.closestIsMiddleAdjust(4.5)
                 })
             }
             pickUpSeenNote()
-            path = auto?.get("4-ShootThird")
+            path = auto?.get("4-ShootThird") //Mid1 Fourth
             if (path != null) {
                 Drive.driveAlongPath(path, false)
             }
@@ -556,7 +567,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
             Shooter.setRpms(5000.0)
             aimAndShoot()
+            Drive.xPose()
         } finally {
+            Drive.xPose()
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
@@ -594,6 +607,173 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
             pickUpSeenNote()
         } finally {
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+        }
+    }
+
+    suspend fun firstMidAuto() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+            val auto = autonomi["SafeSubSide"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("0-Mid1_Grab1.5")
+            Shooter.setRpms(5000.0)
+            var t = Timer()
+            t.start()
+            suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
+            if (shootFirstEntry.getBoolean(true)) {
+                Pivot.angleFudge = 2.0.degrees
+                aimAndShoot()
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Shooter.setRpms(0.0)
+                Pivot.angleFudge = 0.0.degrees
+            }
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
+                        it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(2), 5.0)
+                    })
+                }
+            }, {
+                if (!shootFirstEntry.getBoolean(true)) {
+                    fire(0.5)
+                    Intake.intakeState = Intake.IntakeState.INTAKING
+                    Shooter.setRpms(0.0)
+                }
+            })
+            pickUpSeenNote()
+            path = auto?.get("6-ShootFourth") //Mid1 Second
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            Shooter.setRpms(5000.0)
+            aimAndShoot()
+
+            Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
+            path = auto?.get("0.1-Mid1_GrabSecond") //Mid1 Third
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote( 0))
+                })
+            }
+            pickUpSeenNote()
+
+            path = auto?.get("2-ShootSecond") //Mid1 Third
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            Shooter.setRpms(5000.0)
+            aimAndShoot()
+            Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
+            path = auto?.get("3-GrabThird") //Mid1 Fourth
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.closestIsMiddleAdjust(4.5)
+                })
+            }
+            pickUpSeenNote()
+            path = auto?.get("4-ShootThird") //Mid1 Fourth
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            Shooter.setRpms(5000.0)
+            aimAndShoot()
+            Drive.xPose()
+
+        } finally {
+            Drive.xPose()
+            Drive.aimSpeaker = false
+            Pivot.aimSpeaker = false
+        }
+    }
+
+    suspend fun firstSecAuto() = use(Drive, Shooter) {
+        try {
+            Drive.zeroGyro()
+            Drive.combinedPosition =
+                if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+            val auto = autonomi["SafeSubSide"]
+            auto?.isReflected = isBlueAlliance
+            var path = auto?.get("0.3-Fir2_Grab1.5")
+            Shooter.setRpms(5000.0)
+            var t = Timer()
+            t.start()
+            suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.5 }
+            if (shootFirstEntry.getBoolean(true)) {
+                Pivot.angleFudge = 2.0.degrees
+                aimAndShoot()
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Shooter.setRpms(0.0)
+                Pivot.angleFudge = 0.4.degrees
+            }
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
+                        it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(1), 7.0)
+                    })
+                }
+            }, {
+                if (!shootFirstEntry.getBoolean(true)) {
+                    fire(0.5)
+                    Intake.intakeState = Intake.IntakeState.INTAKING
+                    Shooter.setRpms(0.0)
+                    Pivot.angleFudge = 0.0.degrees
+                }
+            })
+            pickUpSeenNote()
+
+            path = auto?.get("4-ShootThird") //FirSe Second
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path as Path2D, false)
+                }
+            }, {
+                delay(2.0)
+            })
+            aimAndShoot()
+
+            Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
+            path = auto?.get("5-GrabFourth") //FirSe Third
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(2))
+                })
+            }
+            pickUpSeenNote()
+
+            path = auto?.get("6-ShootFourth") //FirSe Third
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            Shooter.setRpms(5000.0)
+            delay(0.05)
+            aimAndShoot()
+
+            Intake.intakeState = Intake.IntakeState.INTAKING
+            Shooter.setRpms(0.0)
+            path = auto?.get("0.1-Mid1_GrabSecond") //FirSe Fourth
+            if (path != null) {
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(0))
+                })
+            }
+            pickUpSeenNote()
+
+            path = auto?.get("2-ShootSecond") //FirSe Fourth
+            if (path != null) {
+                Drive.driveAlongPath(path, false)
+            }
+            Shooter.setRpms(5000.0)
+            aimAndShoot()
+            Drive.xPose()
+        } finally {
+            Drive.xPose()
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }

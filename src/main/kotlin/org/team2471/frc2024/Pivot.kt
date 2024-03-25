@@ -64,6 +64,8 @@ object Pivot: Subsystem("Pivot") {
     private val MINTICKS = if (isCompBot) 3551.0 else 2325.0
     private val MAXTICKS = if (isCompBot) 2374.0 else 1139.0
 
+    var angleFudge = 0.0.degrees
+
 //    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
@@ -159,7 +161,7 @@ object Pivot: Subsystem("Pivot") {
                     angleSetpoint = if (OI.driverController.x) {
                         39.0.degrees
                     } else if (AprilTag.aprilTagsEnabled) {
-                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees
+                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
                     } else {
                         PODIUMPOSE
                     }
