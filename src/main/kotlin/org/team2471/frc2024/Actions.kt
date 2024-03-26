@@ -42,6 +42,7 @@ suspend fun spit() = use(Intake) {
     Intake.intakeState = Intake.IntakeState.SPITTING
     Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
+    suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
     periodic {
         if (OI.driverController.a) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
