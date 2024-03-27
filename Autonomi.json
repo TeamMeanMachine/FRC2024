@@ -1894,7 +1894,7 @@
 										"y": 0.17350708117411728
 									},
 									"m_timeAndValue": {
-										"x": 2.6,
+										"x": 10.0,
 										"y": 1.0
 									}
 								},
@@ -1913,7 +1913,7 @@
 									"y": 0.5007592759482791
 								},
 								"m_timeAndValue": {
-									"x": 0.9912375096079937,
+									"x": 3.812451960030745,
 									"y": 0.5405405405405406
 								}
 							},
@@ -1989,7 +1989,7 @@
 												"y": 0.0
 											},
 											"m_timeAndValue": {
-												"x": 2.6,
+												"x": 10.0,
 												"y": 175.0
 											}
 										},
@@ -2008,7 +2008,7 @@
 											"y": -0.5892767453540929
 										},
 										"m_timeAndValue": {
-											"x": 1.3236363636363635,
+											"x": 5.09090909090909,
 											"y": 180.0
 										}
 									},
@@ -2027,7 +2027,7 @@
 										"y": -0.819638739431207
 									},
 									"m_timeAndValue": {
-										"x": 1.1531129900076864,
+										"x": 4.435049961568025,
 										"y": 180.0
 									}
 								},
@@ -2046,7 +2046,7 @@
 									"y": -13.118638726957617
 								},
 								"m_timeAndValue": {
-									"x": 0.3781818181818182,
+									"x": 1.4545454545454544,
 									"y": 181.0
 								}
 							},
@@ -5783,6 +5783,185 @@
 						}
 					},
 					"name": "1-KnockNotes",
+					"robotDirection": "FORWARD",
+					"speed": 1.0
+				}
+			}
+		},
+		"Shoot Pile": {
+			"m_mirrored": false,
+			"m_reflected": false,
+			"name": "Shoot Pile",
+			"paths": {
+				"1-DownCenter": {
+					"curveType": "EASE",
+					"m_easeCurve": {
+						"m_defaultValue": 0.0,
+						"m_headKey": {
+							"m_markBeginOrEndKeysToZeroSlope": true,
+							"m_nextAngleAndMagnitude": {
+								"x": 0.0,
+								"y": 1.0
+							},
+							"m_nextKey": {
+								"m_markBeginOrEndKeysToZeroSlope": true,
+								"m_nextAngleAndMagnitude": {
+									"x": 0.0,
+									"y": 1.0
+								},
+								"m_nextSlopeMethod": "SLOPE_FLAT",
+								"m_nextTangent": {
+									"x": 0.0,
+									"y": 0.0
+								},
+								"m_prevAngleAndMagnitude": {
+									"x": 0.0,
+									"y": 1.0
+								},
+								"m_prevSlopeMethod": "SLOPE_FLAT",
+								"m_prevTangent": {
+									"x": 3.5,
+									"y": 0.0
+								},
+								"m_timeAndValue": {
+									"x": 7.0,
+									"y": 1.0
+								}
+							},
+							"m_nextSlopeMethod": "SLOPE_FLAT",
+							"m_nextTangent": {
+								"x": 7.0,
+								"y": 0.0
+							},
+							"m_prevAngleAndMagnitude": {
+								"x": 0.0,
+								"y": 1.0
+							},
+							"m_prevSlopeMethod": "SLOPE_FLAT",
+							"m_prevTangent": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"m_timeAndValue": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						},
+						"m_markBeginOrEndKeysToZeroSlope": true,
+						"m_maxValue": 1.0,
+						"m_minValue": 0.0,
+						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
+						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
+					},
+					"m_headingCurve": {
+						"m_defaultValue": 0.0,
+						"m_markBeginOrEndKeysToZeroSlope": true,
+						"m_maxValue": 0.0,
+						"m_minValue": 0.0,
+						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
+						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
+					},
+					"m_mirrored": false,
+					"m_reflected": false,
+					"m_xyCurve": {
+						"m_headPoint": {
+							"m_nextAngleAndMagnitude": {
+								"x": -2.9800200161361374,
+								"y": 1.1787912001651095
+							},
+							"m_nextPoint": {
+								"m_nextAngleAndMagnitude": {
+									"x": 346.28169195246164,
+									"y": 8.207698047901554
+								},
+								"m_nextPoint": {
+									"m_nextAngleAndMagnitude": {
+										"x": 31.09687532117033,
+										"y": 1.242288662584964
+									},
+									"m_nextPoint": {
+										"m_nextAngleAndMagnitude": {
+											"x": 0.0,
+											"y": 1.9
+										},
+										"m_nextSlopeMethod": "SLOPE_SMOOTH",
+										"m_nextTangent": {
+											"x": -0.09743452902832085,
+											"y": -17.781801547668962
+										},
+										"m_position": {
+											"x": 27.701907952418313,
+											"y": 1.8266570380416767
+										},
+										"m_prevAngleAndMagnitude": {
+											"x": 0.0,
+											"y": 1.9
+										},
+										"m_prevSlopeMethod": "SLOPE_SMOOTH",
+										"m_prevTangent": {
+											"x": -0.09743452902832085,
+											"y": -17.781801547668962
+										}
+									},
+									"m_nextSlopeMethod": "SLOPE_SMOOTH",
+									"m_nextTangent": {
+										"x": -0.8807585522041927,
+										"y": -11.593150492073692
+									},
+									"m_position": {
+										"x": 27.804470614553388,
+										"y": 20.544342877693218
+									},
+									"m_prevAngleAndMagnitude": {
+										"x": 31.09687532117033,
+										"y": 0.49512869633447515
+									},
+									"m_prevSlopeMethod": "SLOPE_SMOOTH",
+									"m_prevTangent": {
+										"x": -0.3177450958703303,
+										"y": -4.182379728615016
+									}
+								},
+								"m_nextSlopeMethod": "SLOPE_SMOOTH",
+								"m_nextTangent": {
+									"x": -69.22979694117689,
+									"y": 6.461447714509825
+								},
+								"m_position": {
+									"x": 44.16321522509816,
+									"y": 24.95453734950153
+								},
+								"m_prevAngleAndMagnitude": {
+									"x": 346.28169195246164,
+									"y": 2.11071241251883
+								},
+								"m_prevSlopeMethod": "SLOPE_SMOOTH",
+								"m_prevTangent": {
+									"x": -4.944598139891779,
+									"y": 0.46149582638989817
+								}
+							},
+							"m_nextSlopeMethod": "SLOPE_SMOOTH",
+							"m_nextTangent": {
+								"x": -2.6153478844444606,
+								"y": 0.9230639592156926
+							},
+							"m_position": {
+								"x": 48.675972359041545,
+								"y": 23.621222741745527
+							},
+							"m_prevAngleAndMagnitude": {
+								"x": -2.9800200161361374,
+								"y": 1.9
+							},
+							"m_prevSlopeMethod": "SLOPE_SMOOTH",
+							"m_prevTangent": {
+								"x": -4.215471730488368,
+								"y": 1.487813551937072
+							}
+						}
+					},
+					"name": "1-DownCenter",
 					"robotDirection": "FORWARD",
 					"speed": 1.0
 				}

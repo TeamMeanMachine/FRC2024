@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.math.feet
 import org.team2471.frc.lib.math.inches
 import org.team2471.frc.lib.motion.following.driveAlongPath
@@ -18,6 +19,7 @@ import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.feet
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc2024.AprilTag.aprilTagsEnabled
@@ -325,7 +327,10 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         auto?.isReflected = isRedAlliance
         var path = auto?.get("1-GrabSecond")
 
-        if (path != null) combinedPosition = path.getPosition(0.0).feet
+        if (path != null) {
+            combinedPosition = path.getPosition(0.0).feet
+            Drive.position = combinedPosition.asFeet
+        }
 
         aimAndShoot(true)
 
@@ -502,6 +507,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             Drive.zeroGyro()
             Drive.combinedPosition =
                 if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+            Drive.position = combinedPosition.asFeet
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
@@ -575,42 +581,29 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         }
     }
 
-    suspend fun pileAuto() = use(Drive, Shooter) {
+    suspend fun pileAuto() = use(Drive, Shooter, Intake, name = "Shoot Pile") {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition = //edit to actual startPos
-                if (isRedAlliance) Vector2(48.52, 4.62).feet else Vector2(48.52, 4.62).reflectAcrossField().feet
-            val auto = autonomi["Pile"]
+            Shooter.setRpms(3000.0)
+            val auto = autonomi["Shoot Pile"]
             auto?.isReflected = isBlueAlliance
-//            Intake.intakeState = Intake.IntakeState.INTAKING
-//            var path: Path2D? = auto?.get("1-SpitFirst")
-//            var t = Timer()
-//            t.start()
-//            parallel({
-//                if (path != null) Drive.driveAlongPath(path as Path2D, true)
-//            }, {
-//                suspendUntil { Intake.intakeState == Intake.IntakeState.HOLDING || t.get() + 0.1 > (path?.duration ?: 10.0) }
-//                Shooter.setRpms(1000.0)
-//                suspendUntil { Shooter.motorRpmTop > 800.0 || t.get() + 0.1 > (path?.duration ?: 10.0)}
-//                fire()
-//            })
+            var path = auto?.get("1-DownCenter")
+            if (path != null) {
+                combinedPosition = path.getPosition(0.0).feet
+                Drive.position = combinedPosition.asFeet
 
-            var path = auto?.get("1-KnockNotes")
-            if (path != null) Drive.driveAlongPath(path, false)
-            path = auto?.get("3-GrabSecond")
-            if (path != null) Drive.driveAlongPath(path, false, extraTime = 0.5)
-            pickUpSeenNote()
+            }
+            Intake.setIntakeMotorsPercent(1.0)
 
-            path = auto?.get("4-ShootSecond")
-            if (path != null) Drive.driveAlongPath(path, false)
-            aimAndShoot()
+            if (path != null) Drive.driveAlongPath(path, false, turnOverride = { Drive.aim() } )
 
-            pickUpSeenNote()
         } finally {
             Drive.aimSpeaker = false
             Pivot.aimSpeaker = false
         }
     }
+
+
 
     suspend fun firstMidAuto() = use(Drive, Shooter) {
         try {

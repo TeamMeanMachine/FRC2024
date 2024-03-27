@@ -647,14 +647,31 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        if (OI.driverController.x) {
-            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+        aimHeadingSetpoint = if (OI.driverController.x) {
+            if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
         } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
-            aimHeadingSetpoint = getAngleToSpeaker()
+            getAngleToSpeaker()
         } else if (aimAmp) {
-            aimHeadingSetpoint = 90.0.degrees
+            90.0.degrees
         } else {
-            aimHeadingSetpoint = if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+            if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+        }
+
+        val angleError = (heading - aimHeadingSetpoint).wrap()
+
+        if (abs(angleError.asDegrees) > 2.0 || Robot.isAutonomous) {
+            return aimPDController.update(angleError.asDegrees)
+        }
+        return null
+    }
+
+    fun aim(): Double? {
+        aimHeadingSetpoint = if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
+            270.0.degrees
+        } else if (isRedAlliance) {
+            180.0.degrees
+        } else {
+            0.0.degrees
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -722,6 +739,8 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     if (DriverStation.isEnabled()) {
 
         testWheelPosition = combinedPosition + deltaPos
+        testWheelPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
+
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))

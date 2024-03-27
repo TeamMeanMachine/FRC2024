@@ -56,7 +56,7 @@ object AprilTag {
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, 58.0.degrees.asRadians, 0.0.degrees.asRadians)
+        Rotation3d(0.0.degrees.asRadians, -58.0.degrees.asRadians, 0.0.degrees.asRadians)
     )
 
     val cameras: Map<String, Camera> = mapOf(
