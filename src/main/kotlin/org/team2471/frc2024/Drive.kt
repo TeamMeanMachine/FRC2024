@@ -739,6 +739,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 
     if (b != 0.0) {
         combinedPosition = a.asMeters.div(b).meters
+        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
     }
 
     prevCombinedPosition = pos

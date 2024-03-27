@@ -157,13 +157,13 @@ object AprilTag {
                                         (speakerTagHeight - robotToCamSL.z.meters) / Angle.tan(-robotToCamSL.rotation.y.radians + target.pitch.degrees)
                                     //                    println("slDist: ${slDist}")
                                     slRot = (10.0.degrees) + target.yaw.degrees
-                                    numCams += 1.0
+                                    numCams ++
                                 }
                             }
                         }
                     }
                 }
-                if (camSR != null) {
+            if (camSR != null) {
                     if (camSR.isConnected) {
                         val validSRTargets = camSR.latestResult.targets
                         for (target in validSRTargets) {
@@ -174,7 +174,7 @@ object AprilTag {
                                     srDist =
                                         (speakerTagHeight - robotToCamSR.z.meters) / Angle.tan(-robotToCamSR.rotation.y.radians + target.pitch.degrees)
                                     srRot = ((-10.0).degrees) + target.yaw.degrees
-                                    numCams += 1.0
+                                    numCams ++
                                     //                    println("sr =dist ${srDist}")
                                 }
                             }
@@ -350,7 +350,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             }
 
-            estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
+            estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
 
             advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
 
