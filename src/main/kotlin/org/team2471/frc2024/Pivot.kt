@@ -191,6 +191,12 @@ object Pivot: Subsystem("Pivot") {
         pivotMotor.brakeMode()
     }
 
+    override suspend fun default() {
+        periodic {
+            ticksEntry.setDouble(pivotTicks.toDouble())
+        }
+    }
+
     override fun onDisable() {
         pivotMotor.coastMode()
     }

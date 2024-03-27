@@ -394,17 +394,20 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //        Preferences.setDouble("odometer 1", 0.0)
 //        Preferences.setDouble("odometer 2", 0.0)
 //        Preferences.setDouble("odometer 3", 0.0)
-
-        odometer0Entry.setDouble(Preferences.getDouble("odometer 0",5000.0))
-        odometer1Entry.setDouble(Preferences.getDouble("odometer 1",5000.0))
-        odometer2Entry.setDouble(Preferences.getDouble("odometer 2",5000.0))
-        odometer3Entry.setDouble(Preferences.getDouble("odometer 3",5000.0))
         initializeSteeringMotors()
         println("prefs at enable=${Preferences.getDouble("odometer 0",0.0)}")
     }
 
     override fun postEnable() {
-        brakeMode()
+        GlobalScope.launch {
+            println("INSIDE DRIVE POST ENABLE!!!!!!!!!!!! ${Robot.totalTimeTaken()}")
+            odometer0Entry.setDouble(Preferences.getDouble("odometer 0",5000.0))
+            odometer1Entry.setDouble(Preferences.getDouble("odometer 1",5000.0))
+            odometer2Entry.setDouble(Preferences.getDouble("odometer 2",5000.0))
+            odometer3Entry.setDouble(Preferences.getDouble("odometer 3",5000.0))
+            brakeMode()
+            println("after break mode in drive postEnable ${Robot.totalTimeTaken()}")
+        }
     }
 
     override fun onDisable() {
@@ -447,7 +450,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override suspend fun default() {
-
         periodic {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {

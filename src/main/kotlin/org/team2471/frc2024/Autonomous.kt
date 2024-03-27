@@ -14,6 +14,7 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.math.feet
 import org.team2471.frc.lib.math.inches
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
@@ -99,6 +100,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("Pile", "Pile")
         addOption("FirstMid", "FirstMid")
         addOption("FirSec", "FirSec")
+        addOption("hii", "hii")
     }
 
     init {
@@ -141,6 +143,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 if (json.isNotEmpty()) {
                     val t = measureTimeFPGA {
                         autonomi = Autonomi.fromJsonString(json) ?: Autonomi()
+//                        println(autonomi.getPath("Tests", "8 Foot Straight").getPosition(0.0))
                     }
                     println("Loaded autonomi in $t seconds")
                     if (cacheFile != null) {
@@ -161,11 +164,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun autonomous() = use(Drive, name = "Autonomous") {
-        println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.recentTimeTaken()}")
-        SmartDashboard.putString("autoStatus", "init")
-        println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
-        resetCameras()
-        println("reset cams ${Robot.recentTimeTaken()}")
+        println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.totalTimeTaken()}")
+//        SmartDashboard.putString("autoStatus", "init")
+        println("Selected Auto = *****************   $selAuto ****************************  ${Robot.totalTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
 //            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
@@ -177,10 +178,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             "Pile" -> pileAuto()
             "FirstMid" -> firstMidAuto()
             "FirSec" -> firstSecAuto()
-            else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
+            "hii" -> hii()
+            else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
-        println("finished autonomous  ${Robot.recentTimeTaken()}")
+        println("finished autonomous  ${Robot.totalTimeTaken()}")
     }
 
     suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
@@ -817,6 +819,48 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
         }
     }
+
+    suspend fun hii() = use(Drive, Shooter, Intake, name = "hii") {
+        println("hiiiii ${Robot.totalTimeTaken()}")
+        Drive.zeroGyro()
+        Drive.combinedPosition =
+            if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+        val auto = autonomi["SafeSubSide"]
+        auto?.isReflected = isBlueAlliance
+        var path = auto?.get("0-Mid1_Grab1.5")
+
+        val t = Timer()
+        t.start()
+
+        val startingPosition = Drive.combinedPosition
+
+        println("line in front of driveAlongPath ${Robot.totalTimeTaken()}")
+        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
+        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
+
+
+
+    }
+//
+//    suspend fun bye() {
+//        println("bye ${Robot.totalTimeTaken()}")
+//        Drive.zeroGyro()
+//        Drive.combinedPosition =
+//            if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+//        val auto = autonomi["4CloseSafe"]
+//        auto?.isReflected = isRedAlliance
+//        var path = auto?.get("1-GrabSecond")
+////        println(path?.getPosition(0.0))
+//
+//        val t = Timer()
+//        t.start()
+//
+//        val startingPosition = Drive.combinedPosition
+//
+//        println("line in front of driveAlongPath ${Robot.totalTimeTaken()}")
+//        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
+//        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
+//    }
 }
 
 

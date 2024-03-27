@@ -14,6 +14,7 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy
 import org.photonvision.targeting.PhotonPipelineResult
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
@@ -25,7 +26,7 @@ import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
 import kotlin.math.pow
 
-object AprilTag {
+object AprilTag: Subsystem("AprilTag") {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
     val aprilTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
     val aprilTagsEnabledEntry = aprilTable.getEntry("AprilTags Enabled")
@@ -99,11 +100,6 @@ object AprilTag {
                     }
                 } catch (ex: Exception) {
                     println("Error in apriltag: $ex")
-                }
-
-                for (c in cameras) {
-                    val camera = c.value
-                    camera.isConnectedEntry.setBoolean(camera.isConnected)
                 }
             }
         }
@@ -203,6 +199,21 @@ object AprilTag {
         distCurve.storeValue(4.5, 0.025) //photonvision says not to trust after 15 feet  old: 0.0165
         distCurve.storeValue(5.0, 0.03) // 0.02
         distCurve.storeValue(6.0, 0.04) // 0.03
+    }
+
+    override fun preEnable() {
+        GlobalScope.launch {
+            resetCameras()
+        }
+    }
+
+    override suspend fun default() {
+        periodic {
+            for (c in cameras) {
+                val camera = c.value
+                camera.isConnectedEntry.setBoolean(camera.isConnected)
+            }
+        }
     }
 }
 

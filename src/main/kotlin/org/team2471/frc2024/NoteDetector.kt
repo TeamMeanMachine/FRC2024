@@ -23,7 +23,7 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     private val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
     private val table = NetworkTableInstance.getDefault().getTable("NoteDetector")
-    private val camera : PhotonCamera = PhotonCamera("notecam")
+    val camera : PhotonCamera = PhotonCamera("notecam")
     private val noteAdvantagePosEntry = pvtable.getEntry("Advantage Note Pos")
 
     private val noteZeroPresentEntry = table.getEntry("NoteZeroPresent")

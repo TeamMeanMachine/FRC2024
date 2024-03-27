@@ -2,11 +2,14 @@
 
 package org.team2471.frc2024
 
-import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.team2471.frc.lib.coroutines.parallel
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
@@ -17,10 +20,9 @@ import java.net.NetworkInterface
 
 @DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
-    var startMeasureTime = System.nanoTime()
+    var startMeasureTime = getSystemTimeSeconds()
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
-    var beforeFirstEnable = true
 
     val inComp = true
 
@@ -49,18 +51,25 @@ object Robot : MeanlibRobot() {
         println("NEVER GONNA GIVE YOU UP")
 
         OI
-        println("Activating Drive!")
+        println("Activating OI! ${OI.driverController.leftThumbstickX}")
         Drive
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
+        println("Activating Drive! heading = ${Drive.heading}")
         Intake
+        println("Activating Intake! bottomBreak = ${Intake.bottomBreak}")
         Shooter
+        println("Activating Shooter! motorRpmTop = ${Shooter.motorRpmTop}")
         Climb
+        println("Activating Climb! climberHeight = ${Climb.climberHeight}")
         Pivot
+        println("Activating Pivot! pivotEncoderAngle = ${Pivot.pivotEncoderAngle}")
         AutoChooser
-        AprilTag
-        NoteDetector
         println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
+        AprilTag
+        println("Activating Apriltag! backCamsConnected = ${AprilTag.backCamsConnected}")
+        NoteDetector
+        println("Activating NoteDetector! noteCam isConnected = ${NoteDetector.camera.isConnected}")
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {
@@ -72,23 +81,31 @@ object Robot : MeanlibRobot() {
 
     override suspend fun enable() {
         initTimeMeasurement()
-        beforeFirstEnable = false
         println("starting enable")
-        Drive.enable()
-        Climb.enable()
-        Intake.enable()
-        Pivot.enable()
-        Shooter.enable()
-        println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
+        var done = false
+        GlobalScope.launch {
+            parallel(
+                {Drive.enable(); println("after drive ${totalTimeTaken()}")},
+                {Climb.enable(); println("after climb ${totalTimeTaken()}")},
+                {Intake.enable(); println("after intake ${totalTimeTaken()}")},
+                {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
+                {Shooter.enable(); println("after shooter ${totalTimeTaken()}")},
+                {AprilTag.enable(); println("after aprilTag ${totalTimeTaken()}")}
+
+            )
+            done = true
+        }
+        suspendUntil { done }
+//        println("field centric? ${SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous()}")
         println("ending enable ${totalTimeTaken()}")
     }
 
     override suspend fun autonomous() {
+        println("autonomous starting")
         if (!Drive.demoMode) {
             initTimeMeasurement()
-            println("autonomous starting")
-            Drive.brakeMode()
-            Drive.aimPDController = Drive.autoPDController
+//            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
+//            Drive.aimPDController = Drive.autoPDController
             println("autonomous Drive brakeMode ${totalTimeTaken()}")
             AutoChooser.autonomous()
             println("autonomous ending ${totalTimeTaken()}")
@@ -123,12 +140,13 @@ object Robot : MeanlibRobot() {
         Intake.disable()
         Pivot.disable()
         Shooter.disable()
+        AprilTag.disable()
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
     }
 
-    fun getSystemTimeSeconds(): Long {
-        return System.nanoTime() * 1000000
+    fun getSystemTimeSeconds(): Double {
+        return System.currentTimeMillis() / 1000.0
     }
 
     private fun initTimeMeasurement() {
@@ -140,7 +158,7 @@ object Robot : MeanlibRobot() {
         lastMeasureTime = getSystemTimeSeconds()
     }
 
-    fun totalTimeTaken(): Long {
+    fun totalTimeTaken(): Double {
         return getSystemTimeSeconds() - startMeasureTime
     }
 
