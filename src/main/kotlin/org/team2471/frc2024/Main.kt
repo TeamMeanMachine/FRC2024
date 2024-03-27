@@ -17,7 +17,7 @@ import java.net.NetworkInterface
 
 @DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
-    var startMeasureTime = System.nanoTime()
+    var startMeasureTime = getSystemTimeSeconds()
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
     var beforeFirstEnable = true
@@ -84,11 +84,11 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun autonomous() {
+        println("autonomous starting")
         if (!Drive.demoMode) {
             initTimeMeasurement()
-            println("autonomous starting")
             Drive.brakeMode()
-            Drive.aimPDController = Drive.autoPDController
+//            Drive.aimPDController = Drive.autoPDController
             println("autonomous Drive brakeMode ${totalTimeTaken()}")
             AutoChooser.autonomous()
             println("autonomous ending ${totalTimeTaken()}")
@@ -127,8 +127,8 @@ object Robot : MeanlibRobot() {
         OI.operatorController.rumble = 0.0
     }
 
-    fun getSystemTimeSeconds(): Long {
-        return System.nanoTime() * 1000000
+    fun getSystemTimeSeconds(): Double {
+        return System.currentTimeMillis() / 1000.0
     }
 
     private fun initTimeMeasurement() {
@@ -140,7 +140,7 @@ object Robot : MeanlibRobot() {
         lastMeasureTime = getSystemTimeSeconds()
     }
 
-    fun totalTimeTaken(): Long {
+    fun totalTimeTaken(): Double {
         return getSystemTimeSeconds() - startMeasureTime
     }
 
