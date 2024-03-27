@@ -103,6 +103,8 @@ object OI : Subsystem("OI") {
             Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
             Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
         }
+//        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { println("hiing"); println("end of hiing"); AutoChooser.hii() }
+//        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { println("byeing"); AutoChooser.bye() }
 
         operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
 
@@ -113,7 +115,7 @@ object OI : Subsystem("OI") {
                 // Driver Rumble
                 if (Robot.isTeleopEnabled && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
                     driverController.rumble = 1.0
-                } else if (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0) {
+                } else if (Robot.isTeleopEnabled && (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0)) {
                     driverController.rumble = 0.7
                 } else {
                     driverController.rumble = 0.0
