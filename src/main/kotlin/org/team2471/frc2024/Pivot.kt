@@ -106,7 +106,8 @@ object Pivot: Subsystem("Pivot") {
 
             // For amp shot edge case
             if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
-            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
+//            println("feed: ")
+            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.03 * (cos((pivotEncoderAngle).asRadians)) /*+ 0.000001*/)
 
 //            println("set pivot angle to $field")
         }
@@ -122,8 +123,8 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.config {
             pid {
-                p(0.00016)
-                d(0.000004)
+                p(0.00022)
+                d(0.000005)
             }
 
             //                              ticks / gear ratio   fudge factor
@@ -151,7 +152,7 @@ object Pivot: Subsystem("Pivot") {
 //                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
 //                advantagePivotPublisher.set(advantagePivotTransform)
 
-                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+//                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees) // big warning: causes setpoint jitter
 
 //                angleSetpoint = angleSetpoint
 
@@ -188,6 +189,14 @@ object Pivot: Subsystem("Pivot") {
     }
 
     override fun postEnable() {
+        val initialSensorPosition = pivotEncoderAngle
+        var newSensorPosition: Angle
+        pivotMotor.setPercentOutput(0.115)
+        do {
+            newSensorPosition = pivotEncoderAngle
+        } while (newSensorPosition != initialSensorPosition)
+        pivotMotor.setRawOffset(newSensorPosition.asDegrees)
+        pivotMotor.setPercentOutput(0.0)
         pivotMotor.brakeMode()
     }
 
@@ -198,6 +207,7 @@ object Pivot: Subsystem("Pivot") {
     }
 
     override fun onDisable() {
+
         pivotMotor.coastMode()
     }
 

@@ -51,6 +51,8 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
+
+
     var manualShootState = false
         set(value) {
             field = value
