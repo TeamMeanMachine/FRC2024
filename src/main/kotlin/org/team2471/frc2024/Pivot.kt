@@ -131,9 +131,9 @@ object Pivot: Subsystem("Pivot") {
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
             coastMode()
             inverted(true)
-
             currentLimit(35, 40, 20)
         }
+
 
         pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
         pivotAmpRate.setDouble(80.0)
@@ -152,9 +152,10 @@ object Pivot: Subsystem("Pivot") {
 //                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
 //                advantagePivotPublisher.set(advantagePivotTransform)
 
-//                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees) // big warning: causes setpoint jitter
 
-//                angleSetpoint = angleSetpoint
+                if ((pivotMotor.position - pivotEncoderAngle.asDegrees).absoluteValue > 0.4) { // big warning: causes setpoint jitter
+                    pivotMotor.setRawOffset(pivotMotor.position + (0.05 * (pivotEncoderAngle.asDegrees - pivotMotor.position)) )
+                }
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
