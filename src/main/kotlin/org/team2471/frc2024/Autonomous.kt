@@ -837,10 +837,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         }
     }
 
-    private suspend fun testAuto() = use(Drive) {
+    private suspend fun testAuto() = use(Drive, name = "test") {
         val testPath = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
         if (testPath != null) {
             val testAutonomous = autonomi["Tests"]
+            testAutonomous?.isReflected = isRedAlliance
             val path = testAutonomous?.get(testPath)
             println(testPath)
             if (path != null) {
