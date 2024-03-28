@@ -302,7 +302,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3 && abs(target.bestCameraToTarget.z - 90.0) > 5.0 && target.fiducialId != 6)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3)  {
                 validTargets.add(target)
             }
         }

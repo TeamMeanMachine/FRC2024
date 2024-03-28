@@ -6,11 +6,14 @@ import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
+import org.team2471.frc.lib.coroutines.periodic
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.MeanlibRobot
+import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.testing.driveTests
@@ -120,12 +123,16 @@ object Robot : MeanlibRobot() {
         Drive.headingSetpoint = Drive.heading
     }
 
-    override suspend fun test() {
+    override suspend fun test() = use(Drive) {
         println("test mode begin. Hi.")
 
-        Drive.driveTests()
-        Drive.steeringTests()
-
+//        Drive.driveTests()
+//        Drive.steeringTests()
+//
+//        periodic {
+//            (Drive.modules[0] as Drive.Module).turnMotor.setPercentOutput(0.25)
+//            (Drive.modules[1] as Drive.Module).turnMotor.setPercentOutput(0.25)
+//        }
 
 
         println("test mode done")
