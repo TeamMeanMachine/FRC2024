@@ -38,6 +38,10 @@ object NoteDetector: Subsystem("NoteDetector") {
     val closeNotesRedList : HashMap<Int, SchrodingerNote> = hashMapOf() // close notes n=0 is note closest to center field, n++ further away
     val closeNotesBlueList : HashMap<Int, SchrodingerNote> = hashMapOf()
 
+    val middleNotesSpoilerYaw = MotionCurve()
+    val middleNotesSpoilerPitch = MotionCurve()
+    val middleNotesSpoilerRPM = MotionCurve()
+
     fun closeNote(n : Int) : Vector2 {
         if (isRedAlliance) {
             return closeNotesRedList[n]!!.position
@@ -158,6 +162,27 @@ object NoteDetector: Subsystem("NoteDetector") {
             closeNotesRedList[n] = SchrodingerNote(Vector2(114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Blue side notes, smaller is closer to center
             closeNotesBlueList[n] = SchrodingerNote(Vector2(54.27 - 114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Red Side notes, smaller is closer to center
         }
+
+        // spoiler curves
+        middleNotesSpoilerYaw.storeValue(middleNote(0).y, -98.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(1).y, -107.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(2).y, -115.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(3).y,  -130.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(4).y, -140.0)
+
+        middleNotesSpoilerPitch.storeValue(middleNote(0).y, 15.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(1).y, 12.5)
+        middleNotesSpoilerPitch.storeValue(middleNote(2).y, 10.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(3).y, 8.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(4).y, 7.0)
+
+
+        middleNotesSpoilerRPM.storeValue(middleNote(0).y, 5000.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(1).y, 4000.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(2).y, 3100.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(3).y, 2300.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(4).y, 1200.0)
+
 
 
         GlobalScope.launch(MeanlibDispatcher) {

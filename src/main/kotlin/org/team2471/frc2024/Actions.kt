@@ -7,9 +7,6 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
@@ -17,9 +14,10 @@ import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
 import edu.wpi.first.wpilibj.Timer
-import org.team2471.frc.lib.math.asFeet
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
+import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
@@ -141,7 +139,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -190,7 +188,6 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
         if (NoteDetector.notes.isEmpty()) {
             println("there are no notes inside the note list")
         }
-
         //checking if note is in expected range and setting its position
         for (note in  NoteDetector.notes) {
             val latency = Timer.getFPGATimestamp() - note.timestampSeconds
@@ -279,32 +276,49 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 fieldPos = estimatedFieldPos
             }
 
-            if (notePos != null && headingError != null && fieldPos != null) { // This should always be true but whatever
 
-                val headingVelocity = (headingError - prevHeadingError) / 0.02
+            var approachAngle : Double? = null
+            if (wantedApproachAngle != null) {
+                approachAngle = wantedApproachAngle
+            } else {
+//                approachAngle = Drive.heading.asDegrees.coerceIn()
+            }
 
-                val feedForward = sign(headingError) * 0.001
-                val p = headingError * 0.005
-                val d = headingVelocity * 0.005
+            val targetHeadingError = if (approachAngle != null) { approachAngle - Drive.heading.asDegrees } else headingError
 
-                var driveSpeed = if (!Robot.isAutonomous) OI.driveLeftTrigger else 1.0
+
+            if (notePos != null && targetHeadingError != null && fieldPos != null) { // This should always be true but whatever
+
+                val headingVelocity = (targetHeadingError - prevHeadingError) / 0.02
+
+                val feedForward = sign(targetHeadingError) * 0.01
+                val p = targetHeadingError * 0.005
+                val d = headingVelocity * 0.0005
+
+                var driveSpeed = 0.0
                 val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
+                val targetPose = notePos - notePos.normalize() * 12.5.inches.asFeet
+
                 val driveVelocity = Drive.velocity.length
-                val driveD = (driveVelocity / notePos.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
+                val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
 
                 if (cautious) {
-                    driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((notePos.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
+                    driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((targetPose.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
                     driveSpeed -= driveD
                 }
-                if (notePos.x < 3.0 && !intakeTurnedOn) {
+                if (targetPose.x < 3.0 && !intakeTurnedOn) {
                     Intake.intakeState = Intake.IntakeState.INTAKING
                     intakeTurnedOn = true
                 }
 
+                if (!Robot.isAutonomous) {
+                    driveSpeed *= OI.driveLeftTrigger
+                }
+
                 driveSpeed.coerceIn(0.0, 1.0)
 
-                val driveDirection = Vector2(-0.85 * notePos.y, notePos.x).normalize()
+                val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
                 Drive.drive(driveDirection * driveSpeed, turnSpeed, false, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
@@ -314,12 +328,12 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                    println("Note pos length: ${notePos.length} Pos velocity: ${driveVelocity}")
 //                    println("Drive d: ${driveD}")
 //                println("Drive Speed $driveSpeed")
-//                println("turn control: ${turnSpeed}, heading err: ${headingError}")
+//                println("turn control: ${turnSpeed}, heading err: ${targetHeadingError}")
 //                println("heading velocity ${headingVelocity}")
-//                println("difference ${headingError - prevHeadingError}")
+//                println("difference ${targetHeadingError - prevHeadingError}")
 //                println("pcomponent: $p \nvcomponent: ${d}")
 
-                prevHeadingError = headingError
+                prevHeadingError = targetHeadingError
             }
 
             var fieldCoords = NoteDetector.robotCoordsToFieldCoords(notePos ?: Vector2(2.0, 0.0))
