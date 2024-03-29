@@ -768,7 +768,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 
     if (totalStDev != 0.0 && totalStDev < 1000000000.0) {
         combinedPosition = totalPos.asMeters.div(totalStDev).meters
-        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
+//        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
     }
 
     prevCombinedPosition = pos
@@ -785,4 +785,8 @@ fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
 
 fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
     return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
+}
+
+fun GlobalPose.latencyAdjust() {
+    this.pose += position.feet - (Drive.lookupPose(this.timestampSeconds)?.position ?: position).feet
 }

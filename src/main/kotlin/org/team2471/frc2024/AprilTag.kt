@@ -4,6 +4,8 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.*
+import edu.wpi.first.networktables.NetworkTable
+import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
@@ -11,6 +13,7 @@ import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
+import org.photonvision.targeting.MultiTargetPNPResult
 import org.photonvision.targeting.PhotonPipelineResult
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.periodic
@@ -18,18 +21,16 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
-import org.team2471.frc2024.AprilTag.aprilTable
-import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
-import org.team2471.frc2024.AprilTag.distCurve
-import org.team2471.frc2024.AprilTag.pvTable
+import org.team2471.frc.lib.vision.Camera
+import org.team2471.frc.lib.vision.GlobalPose
+import org.team2471.frc.lib.vision.PhotonVisionCamera
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
 import kotlin.math.pow
 
 object AprilTag: Subsystem("AprilTag") {
-    val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
-    val aprilTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
-    val aprilTagsEnabledEntry = aprilTable.getEntry("AprilTags Enabled")
+    val aprilTable: NetworkTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
+    val aprilTagsEnabledEntry: NetworkTableEntry = aprilTable.getEntry("AprilTags Enabled")
 
     val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
 
@@ -61,9 +62,24 @@ object AprilTag: Subsystem("AprilTag") {
     )
 
     val cameras: Map<String, Camera> = mapOf(
-        Pair("CamSL", Camera("CamSL", robotToCamSL)),
-        Pair("CamSR", Camera("CamSR", robotToCamSR)),
-        Pair("CamIB", Camera("CamIB", robotToCamIB))
+        Pair("CamSL", PhotonVisionCamera(
+            aprilTable,
+            "CamSL",
+            robotToCamSL,
+            aprilTagFieldLayout
+        )),
+        Pair("CamSR", PhotonVisionCamera(
+            aprilTable,
+            "CamSR",
+            robotToCamSR,
+            aprilTagFieldLayout
+        )),
+        Pair("CamIB", PhotonVisionCamera(
+            aprilTable,
+            "CamIB",
+            robotToCamIB,
+            aprilTagFieldLayout
+        ))
     )
 
     val backCamsConnected: Boolean
@@ -94,8 +110,8 @@ object AprilTag: Subsystem("AprilTag") {
 
                 try {
                     for (camera in cameras.values) {
-                        if (camera.photonCam.isConnected) {
-                            camera.getEstimatedGlobalPose()
+                        if (camera.isConnected) {
+                            camera.getEstimatedGlobalPose(Pose2d(Translation2d(Drive.position.x, Drive.position.y), Rotation2d(Drive.heading.asRadians)), distCurve)?.latencyAdjust()
                         }
                     }
                 } catch (ex: Exception) {
@@ -130,7 +146,7 @@ object AprilTag: Subsystem("AprilTag") {
         try {
             if (cameras["CamSL"] == null || cameras["CamSR"] == null) {
                 return null
-            } else if (!(cameras["CamSL"]?.photonCam?.isConnected ?: false) || !(cameras["CamSR"]?.photonCam?.isConnected ?: false)) {
+            } else if (cameras["CamSL"]?.isConnected != true || cameras["CamSR"]?.isConnected != true) {
                 return null
             } else {
                 var slDist = 0.0.feet
@@ -216,194 +232,4 @@ object AprilTag: Subsystem("AprilTag") {
         }
     }
 }
-
-class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
-
-    val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
-//    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
-    val stDevEntry = aprilTable.getEntry("stDev $name")
-//    val stDevMultiplierEntry = aprilTable.getEntry("stDev Multiplier $name")
-    val isConnectedEntry = aprilTable.getEntry("isConnected $name")
-    val poseAmbiguityHistory: ArrayList<Double> = arrayListOf()
-
-    val isConnected: Boolean
-        get() = photonCam.isConnected
-
-    var lastGlobalPose: GlobalPose? = null
-
-    var photonCam: PhotonCamera = PhotonCamera(name)
-
-    var closestReferenceEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
-        aprilTagFieldLayout,
-        singleTagStrategy,
-        photonCam,
-        robotToCamera
-    )
-    var coProcessorEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
-        aprilTagFieldLayout,
-        multiTagStrategy,
-        photonCam,
-        robotToCamera
-    )
-    var filterMultiTagEstimator: PhotonPoseEstimator = PhotonPoseEstimator(
-        aprilTagFieldLayout,
-        singleTagStrategy,
-        photonCam,
-        robotToCamera
-    )
-
-    val ambiguityRange: Double
-        get() {
-            var min = 10.0
-            var max = 0.0
-            for (ambi in poseAmbiguityHistory) {
-                if (ambi < min) min = ambi
-                if (ambi > max) max = ambi
-            }
-            return max - min
-        }
-
-    fun reset() {
-        if (!photonCam.isConnected) {
-            try {
-                if (pvTable.containsSubTable(name)) {
-                    photonCam = PhotonCamera(name)
-                    coProcessorEstimator = PhotonPoseEstimator(
-                        aprilTagFieldLayout,
-                        multiTagStrategy,
-                        photonCam,
-                        robotToCamera
-                    )
-                    closestReferenceEstimator = PhotonPoseEstimator(
-                        aprilTagFieldLayout,
-                        singleTagStrategy,
-                        photonCam,
-                        robotToCamera
-                    )
-                } else {
-                    println("Cam $name not found")
-                }
-            } catch (ex: Exception) {
-                println("Error resetting cam $name: $ex")
-            }
-        } else  {
-            println("$name already found, skipping reset")
-        }
-    }
-
-    fun getEstimatedGlobalPose(): GlobalPose? {
-        if (!photonCam.isConnected) {
-            return null
-        }
-
-        val targets = photonCam.latestResult.targets
-        var validTargets: ArrayList<PhotonTrackedTarget> = arrayListOf()
-
-        targets ?: return null
-
-        for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3)  {
-                validTargets.add(target)
-            }
-        }
-
-        val numTargets = validTargets.count()
-
-        val newPose = if (targets.size == validTargets.size) {
-
-            coProcessorEstimator.setReferencePose(
-                Pose2d(
-                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
-                    Rotation2d(Drive.heading.asRadians)
-                )
-            )
-            coProcessorEstimator.update()
-        } else {
-            closestReferenceEstimator.setReferencePose(
-                Pose2d(
-                    Translation2d(Drive.combinedPosition.asMeters.x, Drive.combinedPosition.asMeters.y),
-                    Rotation2d(Drive.heading.asRadians)
-                )
-            )
-            closestReferenceEstimator.update(PhotonPipelineResult(photonCam.latestResult.latencyMillis,validTargets))
-        }
-
-
-        if (newPose.isPresent && validTargets.size > 0) {
-
-            var estimatedPose = Vector2L(newPose.get().estimatedPose.x.meters, newPose.get().estimatedPose.y.meters)
-
-            var avgDist = 0.0.inches
-            var avgAmbiguity = 0.0
-            var avgArea = 0.0
-//            var targetPoses : ArrayList<Vector2L> = arrayListOf()
-
-            for (target in validTargets) {
-                val tagPose = aprilTagFieldLayout.getTagPose(target.fiducialId).get()
-                avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
-                avgAmbiguity += target.poseAmbiguity
-                avgArea += target.area
-                val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
-
-//                lastGlobalPose?.pose?.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters))
-//                    ?.let { targetPoses += it }
-                val robotPose = Pose3d(
-                    Translation3d(Drive.combinedPosition.x.asMeters, Drive.combinedPosition.y.asMeters, 0.0),
-                    Rotation3d(0.0, 0.0, Drive.heading.asRadians)
-                )
-                //val targetRelativePose = (target.bestCameraToTarget.translation - robotToCamera.translation).toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians + robotToCamera.rotation.angle))
-                val visionTargetPosition = robotPose.transformBy(robotToCamera).transformBy(target.bestCameraToTarget)
-//                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
-                //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
-            }
-            if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
-            if (poseAmbiguityHistory.size>4 ) {
-                poseAmbiguityHistory.removeAt(0)
-//                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
-            }
-
-//            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
-            if (validTargets.size.toDouble() > 0.0) {
-                avgDist /= validTargets.size.toDouble()
-                avgAmbiguity /= validTargets.size.toDouble()
-            }
-
-            if (avgDist > 6.0.meters) return null
-
-            var stDev = distCurve.getValue(avgDist.asMeters)
-
-            if (validTargets.size == 1) stDev *= 10000.0.pow(avgAmbiguity) * 1000.0.pow(ambiguityRange)
-
-            stDev *= 5 * avgArea
-
-            if (numTargets < 2) stDev *= 8.0
-
-            stDev.coerceIn(0.000001, 1000.0)
-
-            try {
-                estimatedPose = timeAdjust(estimatedPose, newPose.get().timestampSeconds)
-            } catch (_: Exception) {
-
-            }
-
-            estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
-
-            advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
-
-            lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
-
-            stDevEntry.setDouble(stDev)
-
-            return lastGlobalPose
-        } else {
-            return null
-        }
-    }
-}
-
-data class GlobalPose (
-    val pose: Vector2L,
-    val stDev: Double,
-    val timestamp: Double
-)
 
