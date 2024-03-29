@@ -200,7 +200,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var testWheelPosition: Vector2L = position.feet
 //                   feet seconds fps fudge
-    val driveStDevM = (2.5 / 30 / 50 * 15).feet.asMeters
+    val driveStDevM = (2.5 / 30.0 / 50.0 * 15.0).feet.asMeters
 
 
     override var robotPivot = Vector2(0.0, 0.0)
