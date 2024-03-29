@@ -11,6 +11,7 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.vision.LimelightCamera
 import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.isBlueAlliance
 import kotlin.math.absoluteValue
@@ -88,7 +89,7 @@ object OI : Subsystem("OI") {
             println("Aim note: ${Drive.aimNote}")
             println("Sees note: ${NoteDetector.seesNote}")
         }
-        driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
+        driverController::b.whenTrue {  } // println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }

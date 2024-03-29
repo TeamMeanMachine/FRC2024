@@ -23,6 +23,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.vision.Camera
 import org.team2471.frc.lib.vision.GlobalPose
+import org.team2471.frc.lib.vision.LimelightCamera
 import org.team2471.frc.lib.vision.PhotonVisionCamera
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.abs
@@ -31,7 +32,6 @@ import kotlin.math.pow
 object AprilTag: Subsystem("AprilTag") {
     val aprilTable: NetworkTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
     val aprilTagsEnabledEntry: NetworkTableEntry = aprilTable.getEntry("AprilTags Enabled")
-
     val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
 
     val speakerTagHeight = 57.13.inches
@@ -49,16 +49,21 @@ object AprilTag: Subsystem("AprilTag") {
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
+        Rotation3d(0.0, -60.degrees.asRadians, 145.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
         Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -170.0.degrees.asRadians)
+        Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -145.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
         Rotation3d(0.0.degrees.asRadians, -58.0.degrees.asRadians, 0.0.degrees.asRadians)
+    )
+
+    var robotToLimelight = Transform3d( //Limelight uses meters and degrees? 0 is vertical instead of horizontal like photonvision
+        Translation3d(6.0.inches.asMeters, 0.0, 4.0.inches.asMeters),
+        Rotation3d(0.0, 30.0, 0.0)
     )
 
     val cameras: Map<String, Camera> = mapOf(
@@ -79,7 +84,13 @@ object AprilTag: Subsystem("AprilTag") {
             "CamIB",
             robotToCamIB,
             aprilTagFieldLayout
-        ))
+        )),
+        Pair("limelight-shooter", LimelightCamera(
+            aprilTable,
+            "limelight-shooter",
+            robotToLimelight
+        )
+        )
     )
 
     val backCamsConnected: Boolean

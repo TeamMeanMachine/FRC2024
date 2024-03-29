@@ -610,6 +610,45 @@
               "_glyph": 148,
               "_showGlyph": false
             }
+          },
+          "12,2": {
+            "size": [
+              1,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/limelight-shooter_Interface",
+              "_title": "limelight-shooter_Interface",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "4,3": {
+            "size": [
+              1,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/limelight-shooter_Stream",
+              "_title": "limelight-shooter_Stream",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "6,3": {
+            "size": [
+              1,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/limelight-shooter_PipelineName",
+              "_title": "limelight-shooter_PipelineName",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
           }
         }
       }
@@ -681,7 +720,8 @@
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul"
+              "Y-axis/Unit": "ul",
+              "Visible data/Intake/Intake Current": true
             }
           },
           "9,4": {
