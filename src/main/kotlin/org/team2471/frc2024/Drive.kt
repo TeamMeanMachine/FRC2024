@@ -74,6 +74,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val drivePowerEntry = table.getEntry("Drive Percent Out")
 
+    val aimHeadingSetpointEntry = table.getEntry("aimHeadingSetpoint")
+
     val totalDriveCurretEntry = table.getEntry("Total Drive Current")
     val totalTurnCurrentEntry = table.getEntry("Total Turn Current")
 
@@ -219,7 +221,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimAmp = false
     val speakerPos
-        get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 223.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 213.42.inches.asFeet) //orig 218.42 for both -- aiming left
+        get() = if (isRedAlliance) Vector2(652.75.inches.asFeet - 7.0.inches.asFeet, 218.42.inches.asFeet) else Vector2(-1.575.inches.asFeet + 7.0.inches.asFeet, 218.42.inches.asFeet) //orig 218.42 for both -- aiming left   3/28 642.73.inches.asFeet
 
     val ampPos = Vector2(0.0, 0.0) //TODO
 
@@ -322,6 +324,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                     drivePowerEntry.setDouble((modules[0] as Module).power)
                 }
+
+                aimHeadingSetpointEntry.setDouble(aimHeadingSetpoint.asDegrees)
 
 
                 positionXEntry.setDouble(position.x)

@@ -114,7 +114,7 @@ object Pivot: Subsystem("Pivot") {
 
     var feedForward: Double = 0.0
         get() {
-            println("hi ${0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.1 else 0.0}")
+//            println("hi ${0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.1 else 0.0}")
             return 0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.05 else 0.0
         }
 

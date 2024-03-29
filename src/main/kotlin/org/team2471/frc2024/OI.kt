@@ -103,6 +103,9 @@ object OI : Subsystem("OI") {
             Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
             Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
         }
+
+        ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
+        ({ driverController.dPad == Controller.Direction.DOWN }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
 //        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { println("hiing"); println("end of hiing"); AutoChooser.hii() }
 //        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { println("byeing"); AutoChooser.bye() }
 
