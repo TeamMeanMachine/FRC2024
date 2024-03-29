@@ -12,6 +12,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.asFeet
+import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
@@ -282,6 +283,14 @@ object NoteDetector: Subsystem("NoteDetector") {
         }
         return false
     }
+
+    fun angleToClosestNote() : Angle? {
+        if (notes.isEmpty()) return null
+        var poseDiff =  Drive.poseDiff(Timer.getFPGATimestamp() - notes[0].timestampSeconds)
+        if (poseDiff == null) poseDiff = SwerveDrive.Pose(Vector2(0.0, 0.0), 0.0.degrees)
+        return -(Drive.heading + notes[0].yawOffset.degrees + (poseDiff.heading)).wrap()
+    }
+
 }
 
 data class Note(
