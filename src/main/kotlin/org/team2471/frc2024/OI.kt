@@ -83,7 +83,11 @@ object OI : Subsystem("OI") {
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
         driverController::x.whenTrue { aimAtSpeaker() }
-        ({ driveLeftTrigger > 0.2 }).whenTrue { seeAndPickUpSeenNote(cancelWithTrigger = true) }
+        driverController::leftTriggerFullPress.toggleWhenTrue { // broken right now, see NoteDetector.angleToClosestNote
+            Drive.aimNote = !Drive.aimNote
+            println("Aim note: ${Drive.aimNote}")
+            println("Sees note: ${NoteDetector.seesNote}")
+        }
         driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
@@ -103,6 +107,9 @@ object OI : Subsystem("OI") {
             Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
             Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
         }
+
+        ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
+        ({ driverController.dPad == Controller.Direction.DOWN }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
 //        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { println("hiing"); println("end of hiing"); AutoChooser.hii() }
 //        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { println("byeing"); AutoChooser.bye() }
 
