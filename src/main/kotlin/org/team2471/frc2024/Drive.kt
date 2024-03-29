@@ -216,7 +216,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var aimPDController = teleopPDController
 
     var aimSpeaker = false
-
+    var aimNote = false
     var aimAmp = false
     val speakerPos
         get() = if (isRedAlliance) Vector2(642.73.inches.asFeet, 223.42.inches.asFeet) else Vector2(8.5.inches.asFeet, 213.42.inches.asFeet) //orig 218.42 for both -- aiming left
@@ -368,6 +368,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 if (Robot.isAutonomous && aimSpeaker) {
                     var turn = 0.0
                     val aimTurn = aimSpeakerAmpLogic()
+                    println("$aimTurn")
 
                     if (aimTurn != null) {
                         turn = aimTurn
@@ -459,7 +460,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val translation = OI.driveTranslation
 
 
-            if (aimSpeaker || aimAmp) {
+            if (aimSpeaker || aimAmp || aimNote) {
                 val aimTurn = aimSpeakerAmpLogic()
                 if (aimTurn != null) {
                     turn = aimTurn
@@ -651,13 +652,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun aimSpeakerAmpLogic(): Double? {
         aimHeadingSetpoint = if (OI.driverController.x) {
             if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
-        } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
+        } else (if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
             getAngleToSpeaker()
         } else if (aimAmp) {
             90.0.degrees
+        } else if (aimNote && NoteDetector.angleToClosestNote() != null) {
+            println("aiming")
+            NoteDetector.angleToClosestNote()!!
         } else {
             if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
-        }
+        })
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
 
