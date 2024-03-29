@@ -23,7 +23,7 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     private val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
     private val table = NetworkTableInstance.getDefault().getTable("NoteDetector")
-    private val camera : PhotonCamera = PhotonCamera("notecam")
+    val camera : PhotonCamera = PhotonCamera("notecam")
     private val noteAdvantagePosEntry = pvtable.getEntry("Advantage Note Pos")
 
     private val noteZeroPresentEntry = table.getEntry("NoteZeroPresent")
@@ -32,14 +32,15 @@ object NoteDetector: Subsystem("NoteDetector") {
     private val noteThreePresentEntry = table.getEntry("NoteThreePresent")
     private val noteFourPresentEntry = table.getEntry("NoteFourPresent")
 
-    private val noteHalfHeight = 1.0.inches
-    private val camHeight = 9.796.inches
     private val camRobotCoords = Vector2(11.96.inches.asFeet, 0.0.inches.asFeet)
-    private val cameraAngle = 15.0.degrees
 
     val middleNotesList: HashMap<Int, SchrodingerNote> = hashMapOf() // from closest to y=0 in wpi blue
     val closeNotesRedList : HashMap<Int, SchrodingerNote> = hashMapOf() // close notes n=0 is note closest to center field, n++ further away
     val closeNotesBlueList : HashMap<Int, SchrodingerNote> = hashMapOf()
+
+    val middleNotesSpoilerYaw = MotionCurve()
+    val middleNotesSpoilerPitch = MotionCurve()
+    val middleNotesSpoilerRPM = MotionCurve()
 
     fun closeNote(n : Int) : Vector2 {
         if (isRedAlliance) {
@@ -83,7 +84,7 @@ object NoteDetector: Subsystem("NoteDetector") {
         get() {
             val n = closestNote
             if (n != null) {
-                println("Closest is middle: ${(26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5)} x: ${n.fieldCoords.x}")
+                println("Closest is middle: ${(26.135 - 4.0 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 4.0)} x: ${n.fieldCoords.x}")
                 return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
             }
             return false
@@ -115,6 +116,7 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     init {
         println("init note detector")
+        PhotonCamera.setVersionCheckEnabled(false)
 
         distanceCurve.setMarkBeginOrEndKeysToZeroSlope(false) // IDK IF THIS GOES BFORE OR AFTER
         distanceCurve.storeValue(-14.7, 14.0.inches.asFeet)
@@ -160,6 +162,27 @@ object NoteDetector: Subsystem("NoteDetector") {
             closeNotesRedList[n] = SchrodingerNote(Vector2(114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Blue side notes, smaller is closer to center
             closeNotesBlueList[n] = SchrodingerNote(Vector2(54.27 - 114.0.inches.asFeet, 13.46 + (n * 57.0).inches.asFeet)) // Red Side notes, smaller is closer to center
         }
+
+        // spoiler curves
+        middleNotesSpoilerYaw.storeValue(middleNote(0).y, -98.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(1).y, -107.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(2).y, -115.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(3).y,  -130.0)
+        middleNotesSpoilerYaw.storeValue(middleNote(4).y, -140.0)
+
+        middleNotesSpoilerPitch.storeValue(middleNote(0).y, 15.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(1).y, 12.5)
+        middleNotesSpoilerPitch.storeValue(middleNote(2).y, 10.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(3).y, 8.0)
+        middleNotesSpoilerPitch.storeValue(middleNote(4).y, 7.0)
+
+
+        middleNotesSpoilerRPM.storeValue(middleNote(0).y, 5000.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(1).y, 4000.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(2).y, 3100.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(3).y, 2300.0)
+        middleNotesSpoilerRPM.storeValue(middleNote(4).y, 1200.0)
+
 
 
         GlobalScope.launch(MeanlibDispatcher) {
@@ -213,11 +236,13 @@ object NoteDetector: Subsystem("NoteDetector") {
                         }
                     }
                 }
-                middleNotesList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
-                middleNotesList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                if (!Robot.inComp) {
+                    middleNotesList[0]?.let { noteZeroPresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[1]?.let { noteOnePresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[2]?.let { noteTwoPresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[3]?.let { noteThreePresentEntry.setBoolean(it.isPresent) }
+                    middleNotesList[4]?.let { noteFourPresentEntry.setBoolean(it.isPresent) }
+                }
                 SmartDashboard.putBoolean("NoteCameraIsConnected", camera.isConnected)
             }
         }
@@ -232,11 +257,28 @@ object NoteDetector: Subsystem("NoteDetector") {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition.asFeet
     }
 
-    fun seesNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
-        for (note in notes) {
-            if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
-                return true
-            }
+    fun closestNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
+        var note = closestNote
+
+        if (note != null) {
+            println("Expected: $expectedPos   Note: ${note.fieldCoords}   Length: ${(expectedPos - note.fieldCoords).length}")
+
+//            if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
+//                return true
+//            } else {
+//                println("Note: ${note.fieldCoords}  Pos: $expectedPos")
+//            }
+        }
+        return seesNote
+
+//        return false
+    }
+
+    fun closestIsMiddleAdjust(maximumErr: Double = 3.5) : Boolean {
+        val n = closestNote
+        if (n != null) {
+            println("Closest is middle: ${(26.135 - maximumErr < n.fieldCoords.x && n.fieldCoords.x < 26.135 + maximumErr)} x: ${n.fieldCoords.x}")
+            return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
         }
         return false
     }

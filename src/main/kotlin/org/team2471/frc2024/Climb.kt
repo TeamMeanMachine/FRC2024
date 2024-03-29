@@ -98,9 +98,9 @@ object Climb: Subsystem("Climb") {
     override fun preEnable() {
         relayOn = false
         preEnabled = true
-        println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+//        println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         climbSetpoint = climberHeight
-        println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
+//        println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
     }
     override fun onDisable() {
         preEnabled = false

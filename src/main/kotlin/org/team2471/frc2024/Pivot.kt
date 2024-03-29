@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -37,11 +38,11 @@ object Pivot: Subsystem("Pivot") {
     private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
-    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+//    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
-    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
+//    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
 
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
@@ -60,17 +61,22 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3515.0 else 2325.0
-    private val MAXTICKS = if (isCompBot) 2329.0 else 1139.0
+    private val MINTICKS = if (isCompBot) 3539.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2363.0 else 1139.0
 
-    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
+    var angleFudge = 0.0.degrees
+
+//    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
 
     var aimSpeaker = false
         set(value) {
             field = value
             if (value) {
-                if (!Robot.isAutonomous) {
+                if (OI.driverController.x && !DriverStation.isAutonomous()) {
+                    Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(10.9)
+                    Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
+                } else if (!Robot.isAutonomous) {
                     Shooter.rpmTopSetpoint = Shooter.rpmCurve.getValue(distFromSpeaker)
                     Shooter.rpmBottomSetpoint = Shooter.rpmTopSetpoint
                 }
@@ -79,6 +85,8 @@ object Pivot: Subsystem("Pivot") {
                 Shooter.rpmBottomSetpoint = 0.0
             }
         }
+
+    var aimSpeakerDistanceOffset: Double = 0.0 //feet
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -97,35 +105,41 @@ object Pivot: Subsystem("Pivot") {
             field = value.asDegrees.coerceIn(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees).degrees
 
             // For amp shot edge case
-            Shooter.manualShootState = Shooter.manualShootState
-
-            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.024 * (cos((pivotEncoderAngle + 20.0.degrees).asRadians)) /*+ 0.000001*/)
+            if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
+//            println("feed: ")
+            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, feedForward)
 
 //            println("set pivot angle to $field")
+        }
+
+    var feedForward: Double = 0.0
+        get() {
+            println("hi ${0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.1 else 0.0}")
+            return 0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.05 else 0.0
         }
 
     val pivotError: Double
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else AprilTag.last2DSpeakerDist
+        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else Drive.position.distance(speakerPos)
 
     init {
         stageAngleEntry.setDouble(20.0)
 
         pivotMotor.config {
             pid {
-                p(0.00016)
-                d(0.000004)
+                p(0.00022)
+                d(0.000005)
             }
 
             //                              ticks / gear ratio   fudge factor
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
             coastMode()
             inverted(true)
-
             currentLimit(35, 40, 20)
         }
+
 
         pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
         pivotAmpRate.setDouble(80.0)
@@ -137,23 +151,30 @@ object Pivot: Subsystem("Pivot") {
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
-                encoderVoltageEntry.setDouble(encoderVoltage)
+//                encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
-                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
-                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
-                advantagePivotPublisher.set(advantagePivotTransform)
+//                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
+//                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
+//                advantagePivotPublisher.set(advantagePivotTransform)
 
-                pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
+                angleSetpoint = angleSetpoint //keeps the feedforward updated based on angle
 
-//                angleSetpoint = angleSetpoint
+                if ((pivotMotor.position - pivotEncoderAngle.asDegrees).absoluteValue > 0.4) { // big warning: causes setpoint jitter
+                    pivotMotor.setRawOffset(pivotMotor.position + (0.05 * (pivotEncoderAngle.asDegrees - pivotMotor.position)) )
+                }
 
                 distanceFromSpeakerEntry.setDouble(distFromSpeaker)
 
                 if (aimSpeaker) {
-                    val angle = if (AprilTag.backCamsConnected) Shooter.pitchCurve.getValue(distFromSpeaker).degrees else PODIUMPOSE
+                    angleSetpoint = if (OI.driverController.x) {
+                        39.0.degrees
+                    } else if (AprilTag.aprilTagsEnabled) {
+                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
+                    } else {
+                        PODIUMPOSE
+                    }
 //                    println("Angle: ${angle}")
-                    angleSetpoint = angle
                 }
             }
         }
@@ -176,10 +197,25 @@ object Pivot: Subsystem("Pivot") {
     }
 
     override fun postEnable() {
+        val initialSensorPosition = pivotEncoderAngle
+        var newSensorPosition: Angle
+        pivotMotor.setPercentOutput(0.115)
+        do {
+            newSensorPosition = pivotEncoderAngle
+        } while (newSensorPosition != initialSensorPosition)
+        pivotMotor.setRawOffset(newSensorPosition.asDegrees)
+        pivotMotor.setPercentOutput(0.0)
         pivotMotor.brakeMode()
     }
 
+    override suspend fun default() {
+        periodic {
+            ticksEntry.setDouble(pivotTicks.toDouble())
+        }
+    }
+
     override fun onDisable() {
+
         pivotMotor.coastMode()
     }
 

@@ -82,6 +82,7 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
+        driverController::x.whenTrue { aimAtSpeaker() }
         ({ driveLeftTrigger > 0.2 }).whenTrue { seeAndPickUpSeenNote(cancelWithTrigger = true) }
         driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
@@ -94,8 +95,16 @@ object OI : Subsystem("OI") {
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue { Pivot.angleSetpoint += 1.0.degrees}
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue { Pivot.angleSetpoint -= 1.0.degrees}
+        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue {
+            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
+            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
+        }
+        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
+            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
+            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
+        }
+//        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { println("hiing"); println("end of hiing"); AutoChooser.hii() }
+//        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { println("byeing"); AutoChooser.bye() }
 
         operatorController::start.whenTrue { Drive.frontSpeakerResetOdom() }
 
@@ -106,7 +115,7 @@ object OI : Subsystem("OI") {
                 // Driver Rumble
                 if (Robot.isTeleopEnabled && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
                     driverController.rumble = 1.0
-                } else if (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0) {
+                } else if (Robot.isTeleopEnabled && (Intake.intakeMotorTop.output > 0.0 || Intake.intakeMotorBottom.output > 0.0)) {
                     driverController.rumble = 0.7
                 } else {
                     driverController.rumble = 0.0
