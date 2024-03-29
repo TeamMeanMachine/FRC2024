@@ -32,7 +32,7 @@ suspend fun Intake.motorsTest() {
         }
 
         OI.operatorController::a.whenTrue {
-            switch += 1
+            switch ++
             if (switch > 2) switch = 0
         }
         intakeMotorTop.setPercentOutput(intakeP)

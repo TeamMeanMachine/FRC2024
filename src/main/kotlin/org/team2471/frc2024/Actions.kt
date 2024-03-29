@@ -251,7 +251,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                notePosCount += weight
 
         } else {
-            println("did not find note")
+//            println("did not find note")
         }
 
         if (!noteFound && !noteFoundFlag) {

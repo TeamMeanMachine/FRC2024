@@ -61,8 +61,8 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 107.5.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3551.0 else 2325.0
-    private val MAXTICKS = if (isCompBot) 2374.0 else 1139.0
+    private val MINTICKS = if (isCompBot) 3539.0 else 2325.0
+    private val MAXTICKS = if (isCompBot) 2363.0 else 1139.0
 
     var angleFudge = 0.0.degrees
 
@@ -107,9 +107,14 @@ object Pivot: Subsystem("Pivot") {
             // For amp shot edge case
             if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
 //            println("feed: ")
-            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, 0.03 * (cos((pivotEncoderAngle).asRadians)) /*+ 0.000001*/)
+            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, feedForward)
 
 //            println("set pivot angle to $field")
+        }
+
+    var feedForward: Double = 0.0
+        get() {
+            return 0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.05 else 0.0
         }
 
     val pivotError: Double
@@ -152,6 +157,7 @@ object Pivot: Subsystem("Pivot") {
 //                advantagePivotTransform = Transform3d(Translation3d(pivotPos.x.inches.asMeters, pivotPos.y.inches.asMeters, 0.0), Rotation3d((Math.PI / 2) + pivotEncoderAngle.asRadians, 0.0, (Math.PI / 2)))
 //                advantagePivotPublisher.set(advantagePivotTransform)
 
+                angleSetpoint = angleSetpoint //keeps the feedforward updated based on angle
 
                 if ((pivotMotor.position - pivotEncoderAngle.asDegrees).absoluteValue > 0.4) { // big warning: causes setpoint jitter
                     pivotMotor.setRawOffset(pivotMotor.position + (0.05 * (pivotEncoderAngle.asDegrees - pivotMotor.position)) )
