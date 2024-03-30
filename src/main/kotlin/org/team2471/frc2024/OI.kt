@@ -75,6 +75,7 @@ object OI : Subsystem("OI") {
         driverController::leftBumper.whenTrue {
             if (Intake.intakeState == Intake.IntakeState.EMPTY) {
                 Intake.intakeState = Intake.IntakeState.INTAKING
+//                Shooter.manualShootState = false
             } else {
                 Intake.intakeState = Intake.IntakeState.EMPTY
             }
@@ -89,14 +90,14 @@ object OI : Subsystem("OI") {
             println("Aim note: ${Drive.aimNote}")
             println("Sees note: ${NoteDetector.seesNote}")
         }
-        driverController::b.whenTrue {  } // println("driver B pressed trying to drive to amp"); lockToAmp() }
+        driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
         operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.FARSTAGELEG }
 
-        operatorController::leftTriggerFullPress.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
+        operatorController::leftTriggerFullPress.whenTrue { holdRampUpShooter() }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
@@ -131,7 +132,7 @@ object OI : Subsystem("OI") {
 
                 // Operator Rumble
                 if (Shooter.manualShootState && Robot.isTeleopEnabled) {
-                    operatorController.rumble = 0.7
+                    operatorController.rumble = 1.0
                 } else {
                     operatorController.rumble = 0.0
                 }

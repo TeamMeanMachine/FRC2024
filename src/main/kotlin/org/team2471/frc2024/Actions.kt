@@ -435,4 +435,12 @@ suspend fun flipAmpShot() = use(Pivot) {
     println("finished pivot animation of ${curveTime.round(1)} seconds, took ${timer.get().round(1)} seconds. pivotAngle: ${Pivot.pivotEncoderAngle} endingAngle: $endingAngle")
 }
 
+suspend fun holdRampUpShooter() {
+    Shooter.manualShootState = true
+    val t = Timer()
+    t.start()
+    suspendUntil { !OI.operatorController.leftTriggerFullPress && t.get() > 0.2 }
+    Shooter.manualShootState = false
+}
+
 
