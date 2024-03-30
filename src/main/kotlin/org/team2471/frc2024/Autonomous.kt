@@ -135,9 +135,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         NetworkTableInstance.getDefault().addListener(
             autonomiEntryTopicSub,
             EnumSet.of(
-                NetworkTableEvent.Kind.kImmediate,
-                NetworkTableEvent.Kind.kPublish,
-                NetworkTableEvent.Kind.kValueAll
+                NetworkTableEvent.Kind.kValueRemote
             )
         ) { event ->
             println("Autonomous change detected")
@@ -152,6 +150,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                     if (cacheFile != null) {
                         println("CacheFile != null. Hi.")
                         cacheFile!!.writeText(json)
+                        NetworkTableInstance.getDefault().getTable("PathVisualizer").getEntry("Autonomi").setString("")
 
                     } else {
                         println("cacheFile == null. Hi.")
