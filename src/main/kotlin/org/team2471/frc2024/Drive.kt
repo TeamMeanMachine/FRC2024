@@ -24,7 +24,6 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.deltaPos
@@ -793,7 +792,6 @@ fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
 fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
     return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
 }
-
-fun GlobalPose.latencyAdjust() {
-    this.pose += position.feet - (Drive.lookupPose(this.timestampSeconds)?.position ?: position).feet
-}
+//fun GlobalPose.latencyAdjust() {
+//    this.pose += position.feet - (Drive.lookupPose(this.timestampSeconds)?.position ?: position).feet
+//}
