@@ -118,28 +118,40 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFud
 
 suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Boolean = false) {
 
-    val startTime = Timer.getFPGATimestamp()
+    val t = Timer()
+    t.start()
 
     var seesNote = false
+    var noteSeenThreshold = 0
+
     periodic{
         if (NoteDetector.notes.size > 0){
-            seesNote = true
-            stop()
+            noteSeenThreshold ++
+            if (noteSeenThreshold > 10) {
+                seesNote = true
+                println("exiting with seen note")
+                stop()
+            }
+            println("i see note for $noteSeenThreshold ticks")
+        } else {
+            noteSeenThreshold = 0
         }
-        if (timeOut && (Timer.getFPGATimestamp() - startTime) > 3) {
+        if (timeOut && t.get() > 3) {
+            println("exiting with timeout")
             stop()
         }
         if (cancelWithTrigger && OI.driveLeftTrigger < 0.2) {
+            println("exiting with trigger")
             stop()
         }
     }
 
     if (seesNote) {
-        pickUpSeenNote(cautious = true)
+        pickUpSeenNote(cautious = false, teleopTranslation = true)
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null, teleopTranslation: Boolean = false) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -251,7 +263,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                notePosCount += weight
 
         } else {
-//            println("did not find note")
+            println("did not find note")
         }
 
         if (!noteFound && !noteFoundFlag) {
@@ -313,13 +325,15 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 }
 
                 if (!Robot.isAutonomous) {
-                    driveSpeed *= OI.driveLeftTrigger
+                    driveSpeed = OI.driveLeftTrigger
                 }
 
                 driveSpeed.coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
-                Drive.drive(driveDirection * driveSpeed, turnSpeed, false, closedLoopHeading = !doTurn)
+
+                println("translation. direction: ${driveDirection}  speed $driveSpeed")
+                Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
 //                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
@@ -436,11 +450,22 @@ suspend fun flipAmpShot() = use(Pivot) {
 }
 
 suspend fun holdRampUpShooter() {
-    Shooter.manualShootState = true
     val t = Timer()
     t.start()
-    suspendUntil { !OI.operatorController.leftTriggerFullPress && t.get() > 0.2 }
+    periodic {
+        Shooter.manualShootState = (Intake.intakeState != Intake.IntakeState.SLOWING || Intake.intakeState != Intake.IntakeState.INTAKING) //true if not intaking a note
+        if (!OI.operatorController.leftTriggerFullPress && t.get() > 0.2) {
+            this.stop()
+        }
+    }
     Shooter.manualShootState = false
+}
+
+suspend fun toggleAimAtNote() {
+    Drive.aimNote = true
+    val t = Timer()
+    suspendUntil { OI.driverController.leftTrigger < 0.2 && t.get() > 0.2 }
+    Drive.aimNote = false
 }
 
 
