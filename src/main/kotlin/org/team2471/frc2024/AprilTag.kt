@@ -10,6 +10,8 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.com.google.common.graph.Network
+import org.opencv.dnn.Net
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
@@ -26,12 +28,14 @@ import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc.lib.vision.LimelightCamera
 import org.team2471.frc.lib.vision.PhotonVisionCamera
 import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Drive.speakerPos
 import kotlin.math.abs
 import kotlin.math.pow
 
 object AprilTag: Subsystem("AprilTag") {
     val aprilTable: NetworkTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
     val aprilTagsEnabledEntry: NetworkTableEntry = aprilTable.getEntry("AprilTags Enabled")
+    val speakerPosEntry: NetworkTableEntry = aprilTable.getEntry("Speaker Pos")
     val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
 
     val speakerTagHeight = 57.13.inches
@@ -111,6 +115,8 @@ object AprilTag: Subsystem("AprilTag") {
 
         GlobalScope.launch {
             periodic {
+
+                speakerPosEntry.setAdvantagePose(speakerPos.feet)
 
                 val temp2DOffset = get2DSpeakerOffset()
                 if (temp2DOffset != null) {
