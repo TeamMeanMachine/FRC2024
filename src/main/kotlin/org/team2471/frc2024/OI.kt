@@ -83,7 +83,7 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
-        driverController::x.whenTrue { aimAtSpeaker() }
+        driverController::x.whenTrue { aimFromPodium() }
         driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()

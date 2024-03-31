@@ -85,13 +85,13 @@ suspend fun fire(duration: Double? = null) = use(Shooter){
 //    }
 }
 suspend fun aimAtSpeaker() {
-    Drive.aimSpeaker = true
+    Drive.aimTarget = AimTarget.SPEAKER
     Pivot.aimSpeaker = true
 
     if (!DriverStation.isAutonomous()) {
-        suspendUntil(20) { !OI.driverController.y && !OI.driverController.x}
+        suspendUntil(20) { !OI.driverController.y }
 
-        Drive.aimSpeaker = false
+        Drive.aimTarget = AimTarget.NONE
         Pivot.aimSpeaker = false
 
         Pivot.angleSetpoint = Pivot.DRIVEPOSE
@@ -100,7 +100,22 @@ suspend fun aimAtSpeaker() {
     }
 }
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFudge: Angle = 0.0.degrees) {
+suspend fun aimFromPodium() {
+    Drive.aimTarget = AimTarget.PODIUM
+    Pivot.aimSpeaker = true
+
+    suspendUntil { !OI.driverController.x }
+
+    Drive.aimTarget = AimTarget.NONE
+    Pivot.aimSpeaker = false
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
+
+}
+
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, angleFudge: Angle = 0.0.degrees) {
 
     println("Aiming...")
 
@@ -108,12 +123,12 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFud
     aimAtSpeaker()
     t.start()
     suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
-    if (t.get() > 0.75) {
-        println("Aiming max time")
+    if (t.get() > minTime) {
+        println("Aiming max time. ${t.get()}")
         Pivot.speakerIsReady(debug = true)
     }
     fire()
-    Drive.aimSpeaker = false
+    Drive.aimTarget = AimTarget.NONE
 }
 
 suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Boolean = false) {
@@ -386,10 +401,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 }
 
 suspend fun lockToAmp() {
-    Drive.aimAmp = true
-    println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
+    Drive.aimTarget = AimTarget.AMP
+    println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
     suspendUntil(20) { !OI.driverController.b }
-    Drive.aimAmp = false
+    Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition.asFeet)
@@ -462,10 +477,10 @@ suspend fun holdRampUpShooter() {
 }
 
 suspend fun toggleAimAtNote() {
-    Drive.aimNote = true
+    Drive.aimTarget = AimTarget.GAMEPIECE
     val t = Timer()
     suspendUntil { OI.driverController.leftTrigger < 0.2 && t.get() > 0.2 }
-    Drive.aimNote = false
+    Drive.aimTarget = AimTarget.NONE
 }
 
 
