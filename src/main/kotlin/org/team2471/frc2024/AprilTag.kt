@@ -20,10 +20,11 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.AprilTag.aprilTable
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
-import org.team2471.frc2024.AprilTag.distCurve
+import org.team2471.frc2024.AprilTag.excludedIDs
+import org.team2471.frc2024.AprilTag.photonDistCurve
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
-import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.math.pow
 
 object AprilTag: Subsystem("AprilTag") {
@@ -40,6 +41,8 @@ object AprilTag: Subsystem("AprilTag") {
     var last2DSpeakerAngleFilter = LinearFilter.movingAverage(5)
     var last2DSpeakerAngle = 0.0
 
+    val excludedIDs = intArrayOf(2)
+
 
     var aprilTagsEnabled: Boolean
         get() = aprilTagsEnabledEntry.getBoolean(true)
@@ -49,12 +52,14 @@ object AprilTag: Subsystem("AprilTag") {
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
+        Rotation3d(0.0, -70.degrees.asRadians, 145.0.degrees.asRadians)
+//        Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
         Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -170.0.degrees.asRadians)
+        Rotation3d(0.0, -70.degrees.asRadians, -145.0.degrees.asRadians)
+//        Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
         Translation3d(12.05.inches.asMeters, 0.0.inches.asMeters, 8.0.inches.asMeters),
@@ -70,7 +75,7 @@ object AprilTag: Subsystem("AprilTag") {
     val backCamsConnected: Boolean
         get() = cameras["CamSL"]?.isConnected == true && cameras["CamSR"]?.isConnected == true
 
-    val distCurve = MotionCurve()
+    val photonDistCurve = MotionCurve()
 
     init {
         resetCameras()
@@ -188,18 +193,18 @@ object AprilTag: Subsystem("AprilTag") {
     }
 
     fun rebuildCurves() {
-        distCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        photonDistCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
         // dist in meters
-        distCurve.storeValue(1.5, 0.00075)
-        distCurve.storeValue(1.9, 0.00125)
-        distCurve.storeValue(2.5, 0.003)
-        distCurve.storeValue(3.0, 0.0065)
-        distCurve.storeValue(3.5, 0.0023)
-        distCurve.storeValue(4.0, 0.014)
-        distCurve.storeValue(4.5, 0.025) //photonvision says not to trust after 15 feet  old: 0.0165
-        distCurve.storeValue(5.0, 0.03) // 0.02
-        distCurve.storeValue(6.0, 0.04) // 0.03
+        photonDistCurve.storeValue(1.5, 0.00075)
+        photonDistCurve.storeValue(1.9, 0.00125)
+        photonDistCurve.storeValue(2.5, 0.003)
+        photonDistCurve.storeValue(3.0, 0.0065)
+        photonDistCurve.storeValue(3.5, 0.0023)
+        photonDistCurve.storeValue(4.0, 0.014)
+        photonDistCurve.storeValue(4.5, 0.025) //photonvision says not to trust after 15 feet  old: 0.0165
+        photonDistCurve.storeValue(5.0, 0.03) // 0.02
+        photonDistCurve.storeValue(6.0, 0.04) // 0.03
     }
 
     override fun preEnable() {
@@ -305,7 +310,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3 && target.fiducialId !in excludedIDs)  {
                 validTargets.add(target)
             }
         }
@@ -360,6 +365,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 //                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
                 //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
+
             if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
             if (poseAmbiguityHistory.size>4 ) {
                 poseAmbiguityHistory.removeAt(0)
@@ -374,7 +380,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             if (avgDist > 6.0.meters) return null
 
-            var stDev = distCurve.getValue(avgDist.asMeters)
+            var stDev = photonDistCurve.getValue(avgDist.asMeters)
 
             if (validTargets.size == 1) stDev *= 10000.0.pow(avgAmbiguity) * 1000.0.pow(ambiguityRange)
 
@@ -392,7 +398,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
 
-            advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
+            advantagePoseEntry.setAdvantagePose(estimatedPose, newPose.get().estimatedPose.rotation.angle.radians)
 
             lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
 

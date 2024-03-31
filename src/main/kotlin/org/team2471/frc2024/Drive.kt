@@ -24,6 +24,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc.lib.vision.Limelight
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.deltaPos
@@ -191,9 +192,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var prevTickVelocity = Vector2(0.0, 0.0)
 
     override var combinedPosition: Vector2L = position.feet
-        set(value) {
-            field = value
-        }
+//        set(value) {
+//            field = value
+//        }
     var prevCombinedPosition: Vector2L = position.feet
 
 
@@ -747,14 +748,20 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
     val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
 
-    if (DriverStation.isEnabled()) {
+//    if (DriverStation.isEnabled()) {
 
-        testWheelPosition = combinedPosition + deltaPos
+        testWheelPosition = pos + deltaPos
+        deltaPos = Vector2L(0.0.inches, 0.0.inches)
         testWheelPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
 
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
+//    }
+
+    if (Limelight.isConnected) {
+        var globalPose = Limelight.getCurrentGlobalPose()
+        if (globalPose != null) measurementsAndStDevs.add(Pair(globalPose.pose, globalPose.stDev))
     }
 
 
