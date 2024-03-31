@@ -156,11 +156,11 @@ object Shooter: Subsystem("Shooter") {
             }
 
             if (isRedAlliance) {
-                topAmpRPMEntry.setDouble(1200.0)
-                bottomAmpRPMEntry.setDouble(1200.0)
+                topAmpRPMEntry.setDouble(2000.0)
+                bottomAmpRPMEntry.setDouble(2000.0)
             } else {
-                topAmpRPMEntry.setDouble(1200.0)
-                bottomAmpRPMEntry.setDouble(1200.0)
+                topAmpRPMEntry.setDouble(2000.0)
+                bottomAmpRPMEntry.setDouble(2000.0)
             }
 //        }
 

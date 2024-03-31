@@ -85,10 +85,9 @@ object OI : Subsystem("OI") {
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
         driverController::x.whenTrue { aimAtSpeaker() }
-        driverController::leftTriggerFullPress.toggleWhenTrue { // broken right now, see NoteDetector.angleToClosestNote
-            Drive.aimNote = !Drive.aimNote
-            println("Aim note: ${Drive.aimNote}")
-            println("Sees note: ${NoteDetector.seesNote}")
+        driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
+            seeAndPickUpSeenNote(false, true)
+//            toggleAimAtNote()
         }
         driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }

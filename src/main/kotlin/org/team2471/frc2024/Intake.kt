@@ -98,6 +98,7 @@ object Intake: Subsystem("Intake") {
                 IntakeState.SPITTING -> {}
                 IntakeState.INTAKING -> {
                     Pivot.angleSetpoint = 18.0.degrees
+                    Shooter.manualShootState = false
                     setIntakeMotorsPercent(0.9)
                     OI.driverController.rumble = 0.7
                     if (bottomBreak) {
@@ -117,6 +118,7 @@ object Intake: Subsystem("Intake") {
                     if (t.get() > 2.0) {
                         intakeState = IntakeState.INTAKING
                     }
+                    Shooter.manualShootState = false
                 }
                 IntakeState.REVERSING -> {
                     if (manualIntake.getBoolean(false)) {

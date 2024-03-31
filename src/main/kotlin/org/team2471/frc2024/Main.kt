@@ -22,7 +22,7 @@ object Robot : MeanlibRobot() {
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
 
-    val inComp = true
+    val inComp = false
 
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()

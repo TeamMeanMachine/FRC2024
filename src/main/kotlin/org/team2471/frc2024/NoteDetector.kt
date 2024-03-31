@@ -20,7 +20,7 @@ import org.team2471.frc.lib.units.Angle.Companion.tan
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
 
-object NoteDetector: Subsystem("NoteDetector") {
+object NoteDetector {
 
     private val pvtable = NetworkTableInstance.getDefault().getTable("photonvision")
     private val table = NetworkTableInstance.getDefault().getTable("NoteDetector")
@@ -286,9 +286,9 @@ object NoteDetector: Subsystem("NoteDetector") {
 
     fun angleToClosestNote() : Angle? {
         if (notes.isEmpty()) return null
-        var poseDiff =  Drive.poseDiff(Timer.getFPGATimestamp() - notes[0].timestampSeconds)
-        if (poseDiff == null) poseDiff = SwerveDrive.Pose(Vector2(0.0, 0.0), 0.0.degrees)
-        return -(Drive.heading + notes[0].yawOffset.degrees + (poseDiff.heading)).wrap()
+//        var poseDiff =  Drive.poseDiff(Timer.getFPGATimestamp() - notes[0].timestampSeconds)
+//        if (poseDiff == null) poseDiff = SwerveDrive.Pose(Vector2(0.0, 0.0), 0.0.degrees)
+        return if (closestNote != null) closestNote?.robotCoords?.angle else null
     }
 
 }
