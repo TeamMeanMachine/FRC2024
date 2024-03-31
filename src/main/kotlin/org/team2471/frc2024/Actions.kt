@@ -296,10 +296,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                approachAngle = Drive.heading.asDegrees.coerceIn()
             }
 
-            val targetHeadingError = if (approachAngle != null) { approachAngle - Drive.heading.asDegrees } else headingError
+            val targetHeadingError = if (approachAngle != null) { (Drive.heading - approachAngle.degrees).wrap().asDegrees } else headingError
+             println("approachangle = $approachAngle")
 
-
-            if (notePos != null && targetHeadingError != null && fieldPos != null) { // This should always be true but whatever
+            if (notePos != null && targetHeadingError != null && fieldPos != null) {
 
                 val headingVelocity = (targetHeadingError - prevHeadingError) / 0.02
 
@@ -307,16 +307,16 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 val p = targetHeadingError * 0.005
                 val d = headingVelocity * 0.0005
 
-                var driveSpeed = 0.0
+                var driveSpeed = 1.0
                 val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
                 val targetPose = notePos - notePos.normalize() * 12.5.inches.asFeet
 
                 val driveVelocity = Drive.velocity.length
-                val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
 
                 if (cautious) {
                     driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((targetPose.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
+                    val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
                     driveSpeed -= driveD
                 }
                 if (targetPose.x < 3.0 && !intakeTurnedOn) {
@@ -325,14 +325,14 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 }
 
                 if (!Robot.isAutonomous) {
-                    driveSpeed = OI.driveLeftTrigger
+                    driveSpeed *= OI.driveLeftTrigger
                 }
 
                 driveSpeed.coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
 
-                println("translation. direction: ${driveDirection}  speed $driveSpeed")
+//                println("translation. direction: $driveDirection  speed $driveSpeed")
                 Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")

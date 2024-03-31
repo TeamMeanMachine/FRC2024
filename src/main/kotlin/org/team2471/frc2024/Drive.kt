@@ -20,6 +20,7 @@ import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
+import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
@@ -31,10 +32,7 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import kotlin.math.abs
-import kotlin.math.absoluteValue
-import kotlin.math.min
-import kotlin.math.pow
+import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -676,12 +674,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun aim(): Double? {
-        aimHeadingSetpoint = if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
-            270.0.degrees
+        if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
+            val dVector = combinedPosition - Vector2L(if (isBlueAlliance) 25.0.feet else 29.0.feet, 27.0.feet)
+            aimHeadingSetpoint = atan2(dVector.y.asFeet, dVector.x.asFeet).radians
         } else if (isRedAlliance) {
-            180.0.degrees
+            aimHeadingSetpoint = 180.0.degrees
         } else {
-            0.0.degrees
+            aimHeadingSetpoint = 0.0.degrees
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()

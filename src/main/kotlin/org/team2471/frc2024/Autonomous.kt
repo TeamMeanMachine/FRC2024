@@ -11,22 +11,19 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.math.inches
-import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.feet
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc2024.AprilTag.aprilTagsEnabled
-import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -595,40 +592,23 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             if (path != null) {
                 combinedPosition = path.getPosition(0.0).feet
                 Drive.position = combinedPosition.asFeet
-
             }
             Intake.setIntakeMotorsPercent(1.0)
 
-            if (path != null) Drive.driveAlongPath(path, false, earlyExit = {
-                NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && abs(combinedPosition.x.asFeet - 27.135) < 4.0
-            })
-            while (Drive.combinedPosition.y.asFeet > 7.0 && !NoteDetector.seesNote) {
-                Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
-                pickUpSeenNote(wantedApproachAngle = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.closestNote!!.fieldCoords.y))
-                fire()
-                val newPath = Path2D("newPath")
-                newPath.addVector2(Drive.combinedPosition.asFeet)
-                val xVal = if (isBlueAlliance) 25.135 else 29.135
-                if (isBlueAlliance) {
-                    newPath.addPoint(xVal, 4.0)  // coords??
-                } else {
-                    newPath.addPoint(xVal, 4.0)  // coords??
-                }
-                newPath.addPoint(xVal, combinedPosition.y.asFeet - 3.0)
-                val distance = newPath.length
-                val rate = 15.0 // if we are stopped, use 5 fps
-                newPath.duration = distance / rate + 0.35
-                newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
-                newPath.addEasePoint(0.0, 0.0)
-                newPath.addEasePoint(newPath.duration, 1.0)
-                newPath.addHeadingPoint(newPath.duration, NoteDetector.middleNotesSpoilerYaw.getValue(4.0))
-                newPath.addHeadingPoint(0.0, NoteDetector.middleNotesSpoilerYaw.getValue(combinedPosition.y.asFeet - 3.0))
-                Drive.driveAlongPath(newPath, false, earlyExit = {
-                    NoteDetector.seesNote
+            Shooter.setRpms(5000.0)
+            if (path != null) {
+                Drive.driveAlongPath(path, false, turnOverride = { Drive.aim() }, earlyExit = {
+                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && abs(combinedPosition.x.asFeet - 27.135) < 4.0
                 })
             }
+            var endYaw = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.middleNote(4).y)
+            if (isBlueAlliance) endYaw = 180.0 - endYaw
+            pickUpSeenNote()
 
-
+            dynamicDriveAlongPoints(combinedPosition.asFeet, Vector2(27.1, 24.4), Vector2(if (isRedAlliance) -3.0 else 3.0, 0.0), Vector2(0.0, -3.0), Drive.heading, endYaw.degrees, 7.0, {NoteDetector.seesNote})
+            pickUpSeenNote(wantedApproachAngle = endYaw)
+            Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
+            fire()
 
         } finally {
             Drive.aimSpeaker = false
@@ -636,6 +616,19 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         }
     }
 
+    private suspend fun dynamicDriveAlongPoints(startPos: Vector2, endPos: Vector2, startTan: Vector2, endTan: Vector2, startHeading: Angle, endHeading: Angle, velocity: Double, earlyExit: (Double) -> Boolean = {false}) = use(Drive) {
+        val newPath = Path2D("newPath")
+        newPath.addPointAndTangent(startPos.x, startPos.y, startTan.x, startTan.y)
+        newPath.addPointAndTangent(endPos.x, endPos.y, endTan.x, endTan.y)
+        val distance = newPath.length
+        val duration = distance / velocity
+        newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
+        newPath.addEasePoint(0.0, 0.0)
+        newPath.addEasePoint(duration, 1.0)
+        newPath.addHeadingPoint(0.0, startHeading.asDegrees)
+        newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
+        Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
+    }
 
 
     suspend fun firstMidAuto() = use(Drive, Shooter) {
