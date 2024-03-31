@@ -18,6 +18,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc2024.AprilTag.aprilTable
 import org.team2471.frc2024.AprilTag.aprilTagFieldLayout
 import org.team2471.frc2024.AprilTag.excludedIDs
@@ -52,13 +53,17 @@ object AprilTag: Subsystem("AprilTag") {
 
     var robotToCamSL: Transform3d = Transform3d(
         Translation3d(-6.45.inches.asMeters, 9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0, -70.degrees.asRadians, 145.0.degrees.asRadians)
+        Rotation3d(0.0, -65.0.degrees.asRadians, 150.0.degrees.asRadians)
+
+//        Rotation3d(0.0, -70.degrees.asRadians, 145.0.degrees.asRadians)
 //        Rotation3d(0.0, -60.degrees.asRadians, 170.0.degrees.asRadians)
     )
 
     var robotToCamSR = Transform3d(
         Translation3d(-6.45.inches.asMeters, -9.54.inches.asMeters, 8.75.inches.asMeters),
-        Rotation3d(0.0, -70.degrees.asRadians, -145.0.degrees.asRadians)
+        Rotation3d(0.0, -65.0.degrees.asRadians, -150.0.degrees.asRadians)
+
+//        Rotation3d(0.0, -70.degrees.asRadians, -145.0.degrees.asRadians)
 //        Rotation3d(0.0.degrees.asRadians, -60.degrees.asRadians, -170.0.degrees.asRadians)
     )
     var robotToCamIB = Transform3d(
@@ -400,7 +405,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             advantagePoseEntry.setAdvantagePose(estimatedPose, newPose.get().estimatedPose.rotation.angle.radians)
 
-            lastGlobalPose = GlobalPose(estimatedPose, stDev, Timer.getFPGATimestamp())
+            lastGlobalPose = GlobalPose(estimatedPose, newPose.get().estimatedPose.rotation.angle.radians, stDev, Timer.getFPGATimestamp())
 
             stDevEntry.setDouble(stDev)
 
@@ -410,10 +415,4 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         }
     }
 }
-
-data class GlobalPose (
-    var pose: Vector2L,
-    val stDev: Double,
-    val timestamp: Double
-)
 

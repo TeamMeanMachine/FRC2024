@@ -20,12 +20,11 @@ import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
-import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.vision.Limelight
+import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.deltaPos

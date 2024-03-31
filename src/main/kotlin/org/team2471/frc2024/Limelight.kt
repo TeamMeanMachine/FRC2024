@@ -1,26 +1,18 @@
-package org.team2471.frc.lib.vision
-
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
-import edu.wpi.first.math.filter.LinearFilter
-import edu.wpi.first.math.geometry.*
+package org.team2471.frc2024
 import edu.wpi.first.networktables.NetworkTable
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.gradle.utils.`is`
-import org.photonvision.PhotonCamera
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.setAdvantagePose
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.vision.Limelight.limelightDistCurve
-import org.team2471.frc2024.AprilTag
-import org.team2471.frc2024.Drive
-
+import org.team2471.frc2024.Limelight.limelightDistCurve
+import org.team2471.frc.lib.vision.GenericCamera
+import org.team2471.frc.lib.vision.GlobalPose
+import org.team2471.frc.lib.vision.LimelightHelpers
 
 object Limelight: Subsystem("Limelight") {
 
@@ -86,7 +78,7 @@ object Limelight: Subsystem("Limelight") {
 class LimelightCamera(
     networkTable: NetworkTable,
     name: String,
-): Camera(networkTable, name) {
+): GenericCamera(networkTable, name) {
 
 
 //    TODO(Unsure how limelight handles disconnects)
@@ -102,7 +94,7 @@ class LimelightCamera(
     }
 
 
-    override fun getEstimatedGlobalPose(): GlobalPose? {
+    override fun getEstimatedGlobalPose(): org.team2471.frc.lib.vision.GlobalPose? {
         val poseArray = LimelightHelpers.getBotPoseEstimate_wpiBlue(name)   // LimelightHelpers.getBotPose3d_wpiBlue(name)
         var estimatedPose = Vector2L(poseArray.pose.translation.x.meters, poseArray.pose.translation.y.meters)
         var tagCount = poseArray.tagCount
@@ -118,7 +110,8 @@ class LimelightCamera(
 
         var stDev = limelightDistCurve.getValue(avgDist.asMeters)
 
-        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stDev, Timer.getFPGATimestamp())
+        lastGlobalPose =
+            org.team2471.frc.lib.vision.GlobalPose(estimatedPose, Drive.heading, stDev, Timer.getFPGATimestamp())
 
         stDevEntry.setDouble(stDev)
 
