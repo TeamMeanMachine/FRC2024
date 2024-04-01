@@ -85,7 +85,7 @@ object NoteDetector {
         get() {
             val n = closestNote
             if (n != null) {
-                println("Closest is middle: ${(26.135 - 4.0 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 4.0)} x: ${n.fieldCoords.x}")
+//                println("Closest is middle: ${(26.135 - 4.0 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 4.0)} x: ${n.fieldCoords.x}")
                 return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
             }
             return false
@@ -278,7 +278,7 @@ object NoteDetector {
     fun closestIsMiddleAdjust(maximumErr: Double = 3.5) : Boolean {
         val n = closestNote
         if (n != null) {
-            println("Closest is middle: ${(26.135 - maximumErr < n.fieldCoords.x && n.fieldCoords.x < 26.135 + maximumErr)} x: ${n.fieldCoords.x}")
+//            println("Closest is middle: ${(26.135 - maximumErr < n.fieldCoords.x && n.fieldCoords.x < 26.135 + maximumErr)} x: ${n.fieldCoords.x}")
             return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
         }
         return false

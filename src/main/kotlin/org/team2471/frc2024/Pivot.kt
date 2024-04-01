@@ -204,7 +204,9 @@ object Pivot: Subsystem("Pivot") {
         } while (newSensorPosition != initialSensorPosition)
         pivotMotor.setRawOffset(newSensorPosition.asDegrees)
         pivotMotor.setPercentOutput(0.0)
-        pivotMotor.brakeMode()
+        GlobalScope.launch {
+            pivotMotor.brakeMode()
+        }
     }
 
     override suspend fun default() {
@@ -214,7 +216,6 @@ object Pivot: Subsystem("Pivot") {
     }
 
     override fun onDisable() {
-
         pivotMotor.coastMode()
     }
 

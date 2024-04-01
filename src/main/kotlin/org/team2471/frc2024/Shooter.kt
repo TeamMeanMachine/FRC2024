@@ -307,8 +307,10 @@ object Shooter: Subsystem("Shooter") {
     }
 
     fun setRpms(rpm: Double) {
-        rpmTopSetpoint = rpm
-        rpmBottomSetpoint = rpm
+        GlobalScope.launch {
+            rpmTopSetpoint = rpm
+            rpmBottomSetpoint = rpm
+        }
     }
 
     fun getRpmFromPosition(point: Vector2): Double {

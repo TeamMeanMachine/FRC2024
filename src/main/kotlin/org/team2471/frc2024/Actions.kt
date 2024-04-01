@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
+import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -312,7 +313,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
             }
 
             val targetHeadingError = if (approachAngle != null) { (Drive.heading - approachAngle.degrees).wrap().asDegrees } else headingError
-             println("approachangle = $approachAngle")
+//             println("approachangle = $approachAngle")
 
             if (notePos != null && targetHeadingError != null && fieldPos != null) {
 
@@ -393,6 +394,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
         }
     }
     Drive.drive(Vector2(0.0, 0.0), 0.0, false)
+    if (Robot.isAutonomous) {
+        Drive.xPose()
+        delay(0.05)
+    }
     return@use success
 
 //    } catch (exception: Exception) {

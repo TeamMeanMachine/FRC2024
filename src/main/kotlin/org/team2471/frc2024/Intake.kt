@@ -44,8 +44,6 @@ object Intake: Subsystem("Intake") {
         get() = intakeState != IntakeState.EMPTY && intakeState != IntakeState.INTAKING && intakeState != IntakeState.SPITTING
 
     init {
-        intakingEntry.setBoolean(false)
-        holdingNoteEntry.setBoolean(true)
         manualIntake.setBoolean(false)
 
         var x = feederCurrentEntry.getDouble(0.0)
@@ -82,6 +80,8 @@ object Intake: Subsystem("Intake") {
                 feederCurrentEntry.setDouble(feederMotor.current)
                 bottomBreakEntry.setBoolean(bottomBreak)
                 topBreakEntry.setBoolean(topBreak)
+                holdingNoteEntry.setBoolean(holdingCargo)
+                intakingEntry.setBoolean(intakeState == IntakeState.INTAKING)
 
             }
         }
