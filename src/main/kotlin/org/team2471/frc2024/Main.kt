@@ -13,6 +13,7 @@ import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.vision.Limelight
 import java.net.NetworkInterface
 
 
@@ -68,6 +69,8 @@ object Robot : MeanlibRobot() {
         println("Activating Apriltag! backCamsConnected = ${AprilTag.backCamsConnected}")
         NoteDetector
         println("Activating NoteDetector! noteCam isConnected = ${NoteDetector.camera.isConnected}")
+        Limelight
+        println("Activating Limelight! limelight isConnected = ${Limelight.isConnected}")
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {

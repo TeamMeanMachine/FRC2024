@@ -207,7 +207,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(-1.0, 0.0)
-    override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kCarpet = 0.0//212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
@@ -621,12 +621,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                    d(0.0000025)
                 }
             }
-            GlobalScope.launch {
-                periodic {
-//                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
-
-                }
-            }
+//            GlobalScope.launch {
+//                periodic {
+////                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
+//
+//                }
+//            }
         }
 
         override fun driveWithDistance(angle: Angle, distance: Length) {
@@ -751,7 +751,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 
         testWheelPosition = pos + deltaPos
         deltaPos = Vector2L(0.0.inches, 0.0.inches)
-        testWheelPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
+//       testWheelPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
 
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
@@ -778,10 +778,24 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         totalPos += posAndStDev.first.asMeters.times(editedStDev).meters
         totalStDev += editedStDev
     }
+    if (pos != combinedPosition) {
+        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    }
+
+
+
     //                       breaks apriltags for some reason
     if (totalStDev != 0.0 /*&& totalStDev < 1000000000.0*/) {
         combinedPosition = totalPos.asMeters.div(totalStDev).meters
 //        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
+    }
+
+    if (!Limelight.isConnected && aprilPoses.isEmpty() && pos != totalPos) {
+        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
+        println("Odometry value not counted at 100%")
+        println("x%: ${totalPos.x.asMeters/pos.x.asMeters}")
+        println("y%: ${totalPos.y.asMeters/pos.y.asMeters}")
     }
 
     prevCombinedPosition = pos

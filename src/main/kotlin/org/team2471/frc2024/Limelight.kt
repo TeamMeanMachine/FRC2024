@@ -2,6 +2,7 @@ package org.team2471.frc.lib.vision
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTable
@@ -44,16 +45,18 @@ object Limelight: Subsystem("Limelight") {
                 } catch (ex: Exception) {
                     println("Error in Limelight: $ex")
                 }
+                limelight.isConnectedEntry.setBoolean(limelight.isConnected)
 
             }
         }
     }
 
     fun getCurrentGlobalPose(): GlobalPose? {
-        val lastGlobalPose = limelight.lastGlobalPose
+        val lastGlobalPose = if(limelight.newHeartbeat)limelight.lastGlobalPose else null
         if (lastGlobalPose != null) {
             limelight.lastGlobalPose = null
         }
+        println("llPose is $lastGlobalPose")
         return lastGlobalPose
     }
 
@@ -88,10 +91,28 @@ class LimelightCamera(
     name: String,
 ): Camera(networkTable, name) {
 
+    var previousHeartbeat = 0.0
+//    TODO: (Unsure how limelight handles disconnects)
+    override var isConnected: Boolean = false
+    var newHeartbeat = false
+    var connectedDebouncer = Debouncer(0.1, Debouncer.DebounceType.kFalling)
 
-//    TODO(Unsure how limelight handles disconnects)
-    override val isConnected: Boolean = true
-//        get() = limelightTable exists
+
+    init {
+
+        GlobalScope.launch {
+            periodic {
+                val tempHeartbeat = LimelightHelpers.getLimelightNTDouble(name,"hb")
+                newHeartbeat = tempHeartbeat != previousHeartbeat
+                isConnected = connectedDebouncer.calculate(newHeartbeat)
+                previousHeartbeat = tempHeartbeat
+
+
+
+            }
+        }
+    }
+
 
     override fun reset() {
         try {

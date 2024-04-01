@@ -87,6 +87,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("Full Field Straight B","Full Field Straight B")
         addOption("Full Field Straight R","Full Field Straight R")
         addOption("Hook Path", "Hook Path")
+        addOption("16 Foot Fast", "16 Foot Fast")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
 
 
