@@ -21,10 +21,11 @@ import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for po
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.vision.Limelight
+import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.deltaPos
@@ -32,10 +33,7 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import kotlin.math.abs
-import kotlin.math.absoluteValue
-import kotlin.math.min
-import kotlin.math.pow
+import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -218,9 +216,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimPDController = teleopPDController
 
-    var aimSpeaker = false
-    var aimNote = false
-    var aimAmp = false
+//    var aimSpeaker = false
+//    var aimNote = false
+//    var aimAmp = false
+
+    var aimTarget: AimTarget = AimTarget.NONE
+
     val speakerPos
         get() = if (isRedAlliance) Vector2(652.76.inches.asFeet - 7.0.inches.asFeet, 218.5.inches.asFeet) else Vector2(-1.575.inches.asFeet + 7.0.inches.asFeet, 218.5.inches.asFeet) //orig 218.5 for both -- aiming left   3/28 642.73.inches.asFeet
 
@@ -370,7 +371,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 updatePos(driveStDevM, *AprilTag.getCurrentGlobalPoses())
 
 
-                if (Robot.isAutonomous && aimSpeaker) {
+                if (Robot.isAutonomous && aimTarget == AimTarget.SPEAKER) {
                     var turn = 0.0
                     val aimTurn = aimSpeakerAmpLogic()
 //                    println("$aimTurn")
@@ -388,7 +389,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         OI.driveTranslation * maxTranslation,
                         turn * maxRotation,
                         useGyro2,
-                        !aimSpeaker  // true for teleop, false when aiming
+                        aimTarget == AimTarget.SPEAKER  // true for teleop, false when aiming
                     )
                 }
             }
@@ -466,7 +467,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val translation = OI.driveTranslation
 
 
-            if (aimSpeaker || aimAmp || aimNote) {
+            if (aimTarget != AimTarget.NONE) {
                 val aimTurn = aimSpeakerAmpLogic()
                 if (aimTurn != null) {
                     turn = aimTurn
@@ -481,10 +482,30 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 translation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
-                !(aimSpeaker || aimAmp)  // true for teleop, false when aiming
+                aimTarget == AimTarget.NONE  // true for teleop, false when aiming
             )
         }
     }
+
+    suspend fun dynamicDriveBetweenPoints(startHeading: Angle, endHeading: Angle, vararg points: Vector2, setVelocity: Double = 10.0, earlyExit: (Double) -> Boolean = {false}) {
+        val newPath = Path2D("newPath")
+
+        for (p in points) {
+            newPath.addVector2(p)
+        }
+        val duration = newPath.length / setVelocity
+        newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
+        newPath.addEasePoint(0.0, 0.0)
+        newPath.addEasePoint(duration, 1.0)
+        newPath.addHeadingPoint(0.0, startHeading.asDegrees)
+        newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
+        Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
+    }
+
+
+
+
+
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested
             val module = (modules[moduleCount] as Module)
@@ -656,7 +677,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
     fun aimSpeakerAmpLogic(): Double? {
-        aimHeadingSetpoint = if (OI.driverController.x) {
+/*        aimHeadingSetpoint =
+            if (OI.driverController.x) {
             if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
         } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
             getAngleToSpeaker()
@@ -665,7 +687,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         } else if (aimNote && NoteDetector.angleToClosestNote() != null) {
             -NoteDetector.angleToClosestNote()!!
         } else {
-            if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+                if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+        }*/
+
+        aimHeadingSetpoint = when(aimTarget) {
+            AimTarget.SPEAKER -> getAngleToSpeaker()
+            AimTarget.AMP -> 90.0.degrees
+            AimTarget.GAMEPIECE -> -NoteDetector.angleToClosestNote()!!
+            AimTarget.PODIUM -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+            else -> getAngleToSpeaker()
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -677,12 +707,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun aim(): Double? {
-        aimHeadingSetpoint = if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
-            270.0.degrees
+        if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
+            val dVector = combinedPosition - Vector2L(if (isBlueAlliance) 25.0.feet else 29.0.feet, 27.0.feet)
+            aimHeadingSetpoint = atan2(dVector.y.asFeet, dVector.x.asFeet).radians
         } else if (isRedAlliance) {
-            180.0.degrees
+            aimHeadingSetpoint = 180.0.degrees
         } else {
-            0.0.degrees
+            aimHeadingSetpoint = 0.0.degrees
         }
 
         val angleError = (heading - aimHeadingSetpoint).wrap()
@@ -813,6 +844,16 @@ fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
 fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
     return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
 }
+
+enum class AimTarget {
+    SPEAKER,
+    AMP,
+    GAMEPIECE,
+    PODIUM,
+    NONE
+}
+
+
 //fun GlobalPose.latencyAdjust() {
 //    this.pose += position.feet - (Drive.lookupPose(this.timestampSeconds)?.position ?: position).feet
 //}

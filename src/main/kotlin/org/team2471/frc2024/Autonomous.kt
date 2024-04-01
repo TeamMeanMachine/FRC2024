@@ -11,22 +11,19 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
 import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.math.inches
-import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.feet
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc2024.AprilTag.aprilTagsEnabled
-import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -248,7 +245,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 aimAndShoot() //third note shot
             }
         } finally {
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
     }
@@ -316,7 +313,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
         } finally {
             Drive.xPose()
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
             delay(1.0)
             Shooter.setRpms(0.0)
@@ -443,72 +440,16 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             Drive.xPose()
         } finally {
             Drive.xPose()
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
             Shooter.setRpms(0.0)
             Intake.setIntakeMotorsPercent(0.0)
         }
     }
 
-    suspend fun substationSide() = use(Drive, Shooter) {
-        try {
-            Drive.zeroGyro()
-            Drive.combinedPosition =
-                if (isRedAlliance) Vector2(46.0, 11.95).feet else Vector2(46.0, 11.95).reflectAcrossField().feet
-            val auto = autonomi["SubSide"]
-            auto?.isReflected = isBlueAlliance
-            var path = auto?.get("1-GrabSecond")
-            aimAndShoot()
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            if (path != null) {
-                Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
-                    /*Drive.combinedPosition.x > 23.0 &&*/ NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            println("finished path")
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote()
-            path = auto?.get("2-ShootSecond")
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            aimAndShoot()
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            path = auto?.get("3-GrabThird")
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote()
-            path = auto?.get("4-ShootThird")
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            aimAndShoot()
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            path = auto?.get("5-GrabFourth")
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote()
-            path = auto?.get("6-ShootFourth")
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            aimAndShoot()
-        } finally {
-            Drive.aimSpeaker = false
-            Pivot.aimSpeaker = false
-        }
-    }
-
     suspend fun safeSubstationSide() = use(Drive, Shooter) {
         try {
+            Shooter.setRpms(5000.0)
             Drive.zeroGyro()
             Drive.combinedPosition =
                 if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
@@ -516,16 +457,16 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-GrabSecond")
-            Shooter.setRpms(5000.0)
-            var t = Timer()
+            val t = Timer()
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
+            println("starting auto stuff now ${Robot.totalTimeTaken()}")
             if (shootFirstEntry.getBoolean(true)) {
-                Pivot.angleFudge = 2.0.degrees
-                aimAndShoot()
+//                Pivot.angleFudge = 2.0.degrees
+                aimAndShoot(true)
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Shooter.setRpms(0.0)
-                Pivot.angleFudge = 0.0.degrees
+//                Pivot.angleFudge = 0.0.degrees
             }
             parallel({
                 if (path != null) {
@@ -542,48 +483,87 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             })
             pickUpSeenNote()
 
-            path = auto?.get("2-ShootSecond") //Mid1 Third
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
+            val noPiece = false
+            parallel({
+                path = auto?.get("2-ShootSecond") //Mid1 Third
+                parallel({
+                    if (path != null) {
+                        Drive.driveAlongPath(path!!, false, turnOverride = {Drive.aimSpeakerAmpLogic()}, earlyExit = { noPiece })
+                    }
+                }, {
+                    delay(0.5)
+                    if (!noPiece) {
+                        Shooter.setRpms(5000.0)
+                        Pivot.aimSpeaker = true
+                    }
+                })
+            }, {
+                t.start()
+                if (!Intake.holdingCargo && t.get() > 0.4) {
+                    println("aborting path because missed note")
+
+                }
+            })
+
+            fire(0.5)
             Intake.intakeState = Intake.IntakeState.INTAKING
             Shooter.setRpms(0.0)
             path = auto?.get("3-GrabThird") //Mid1 Fourth
             if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
+                Drive.driveAlongPath(path!!, false, earlyExit = {
                     NoteDetector.closestIsMiddleAdjust(4.5)
                 })
             }
             pickUpSeenNote()
             path = auto?.get("4-ShootThird") //Mid1 Fourth
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, turnOverride = {Drive.aimSpeakerAmpLogic()})
+                }
+            }, {
+                delay(0.3)
+                Shooter.setRpms(5000.0)
+                Pivot.aimSpeaker = true
+            })
+            fire(0.5)
             Intake.intakeState = Intake.IntakeState.INTAKING
             Shooter.setRpms(0.0)
             path = auto?.get("5-GrabFourth")
             if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
+                Drive.driveAlongPath(path!!, false, earlyExit = {
                     NoteDetector.closestIsMiddle
                 })
             }
             pickUpSeenNote()
             path = auto?.get("6-ShootFourth")
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
+            parallel({
+                if (path != null) {
+                    Drive.driveAlongPath(path!!, false, turnOverride = {Drive.aimSpeakerAmpLogic()})
+                }
+            }, {
+                delay(0.3)
+                Shooter.setRpms(5000.0)
+                Pivot.aimSpeaker = true
+            })
+            fire(0.5)
             Drive.xPose()
         } finally {
             Drive.xPose()
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
+    }
+
+    suspend fun driveAlongPathThenShoot(path: Path2D?, aimWhileDriving: Boolean,  earlyExit: (Double) -> Boolean) {
+        if (path != null) {
+            Drive.driveAlongPath(path, false, turnOverride = { if (aimWhileDriving)  Drive.aimSpeakerAmpLogic() else null })
+        } else {
+            println("PATH IS NULL!")
+        }
+    }
+
+    suspend fun dynamicDriveToPiece() {
+
     }
 
     suspend fun pileAuto() = use(Drive, Shooter, Intake, name = "Shoot Pile") {
@@ -596,47 +576,43 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             if (path != null) {
                 combinedPosition = path.getPosition(0.0).feet
                 Drive.position = combinedPosition.asFeet
-
             }
             Intake.setIntakeMotorsPercent(1.0)
 
-            if (path != null) Drive.driveAlongPath(path, false, earlyExit = {
-                NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && abs(combinedPosition.x.asFeet - 27.135) < 4.0
-            })
-            while (Drive.combinedPosition.y.asFeet > 7.0 && !NoteDetector.seesNote) {
-                Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
-                pickUpSeenNote(wantedApproachAngle = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.closestNote!!.fieldCoords.y))
-                fire()
-                val newPath = Path2D("newPath")
-                newPath.addVector2(Drive.combinedPosition.asFeet)
-                val xVal = if (isBlueAlliance) 25.135 else 29.135
-                if (isBlueAlliance) {
-                    newPath.addPoint(xVal, 4.0)  // coords??
-                } else {
-                    newPath.addPoint(xVal, 4.0)  // coords??
-                }
-                newPath.addPoint(xVal, combinedPosition.y.asFeet - 3.0)
-                val distance = newPath.length
-                val rate = 15.0 // if we are stopped, use 5 fps
-                newPath.duration = distance / rate + 0.35
-                newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
-                newPath.addEasePoint(0.0, 0.0)
-                newPath.addEasePoint(newPath.duration, 1.0)
-                newPath.addHeadingPoint(newPath.duration, NoteDetector.middleNotesSpoilerYaw.getValue(4.0))
-                newPath.addHeadingPoint(0.0, NoteDetector.middleNotesSpoilerYaw.getValue(combinedPosition.y.asFeet - 3.0))
-                Drive.driveAlongPath(newPath, false, earlyExit = {
-                    NoteDetector.seesNote
+            Shooter.setRpms(5000.0)
+            if (path != null) {
+                Drive.driveAlongPath(path, false, turnOverride = { Drive.aim() }, earlyExit = {
+                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && abs(combinedPosition.x.asFeet - 27.135) < 4.0
                 })
             }
+            var endYaw = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.middleNote(4).y)
+            if (isBlueAlliance) endYaw = 180.0 - endYaw
+            pickUpSeenNote()
 
-
+            dynamicDriveAlongPoints(combinedPosition.asFeet, Vector2(27.1, 24.4), Vector2(if (isRedAlliance) -3.0 else 3.0, 0.0), Vector2(0.0, -3.0), Drive.heading, endYaw.degrees, 7.0, {NoteDetector.seesNote})
+            pickUpSeenNote(wantedApproachAngle = endYaw)
+            Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
+            fire()
 
         } finally {
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
     }
 
+    private suspend fun dynamicDriveAlongPoints(startPos: Vector2, endPos: Vector2, startTan: Vector2, endTan: Vector2, startHeading: Angle, endHeading: Angle, velocity: Double, earlyExit: (Double) -> Boolean = {false}) = use(Drive) {
+        val newPath = Path2D("newPath")
+        newPath.addPointAndTangent(startPos.x, startPos.y, startTan.x, startTan.y)
+        newPath.addPointAndTangent(endPos.x, endPos.y, endTan.x, endTan.y)
+        val distance = newPath.length
+        val duration = distance / velocity
+        newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
+        newPath.addEasePoint(0.0, 0.0)
+        newPath.addEasePoint(duration, 1.0)
+        newPath.addHeadingPoint(0.0, startHeading.asDegrees)
+        newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
+        Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
+    }
 
 
     suspend fun firstMidAuto() = use(Drive, Shooter) {
@@ -714,7 +690,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
         } finally {
             Drive.xPose()
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
     }
@@ -801,7 +777,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             Drive.xPose()
         } finally {
             Drive.xPose()
-            Drive.aimSpeaker = false
+            Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
     }

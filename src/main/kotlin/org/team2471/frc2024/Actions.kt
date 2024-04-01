@@ -85,13 +85,13 @@ suspend fun fire(duration: Double? = null) = use(Shooter){
 //    }
 }
 suspend fun aimAtSpeaker() {
-    Drive.aimSpeaker = true
+    Drive.aimTarget = AimTarget.SPEAKER
     Pivot.aimSpeaker = true
 
     if (!DriverStation.isAutonomous()) {
-        suspendUntil(20) { !OI.driverController.y && !OI.driverController.x}
+        suspendUntil(20) { !OI.driverController.y }
 
-        Drive.aimSpeaker = false
+        Drive.aimTarget = AimTarget.NONE
         Pivot.aimSpeaker = false
 
         Pivot.angleSetpoint = Pivot.DRIVEPOSE
@@ -100,7 +100,22 @@ suspend fun aimAtSpeaker() {
     }
 }
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFudge: Angle = 0.0.degrees) {
+suspend fun aimFromPodium() {
+    Drive.aimTarget = AimTarget.PODIUM
+    Pivot.aimSpeaker = true
+
+    suspendUntil { !OI.driverController.x }
+
+    Drive.aimTarget = AimTarget.NONE
+    Pivot.aimSpeaker = false
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
+
+}
+
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, angleFudge: Angle = 0.0.degrees) {
 
     println("Aiming...")
 
@@ -108,12 +123,12 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.75, angleFud
     aimAtSpeaker()
     t.start()
     suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
-    if (t.get() > 0.75) {
-        println("Aiming max time")
+    if (t.get() > minTime) {
+        println("Aiming max time. ${t.get()}")
         Pivot.speakerIsReady(debug = true)
     }
     fire()
-    Drive.aimSpeaker = false
+    Drive.aimTarget = AimTarget.NONE
 }
 
 suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Boolean = false) {
@@ -296,10 +311,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 //                approachAngle = Drive.heading.asDegrees.coerceIn()
             }
 
-            val targetHeadingError = if (approachAngle != null) { approachAngle - Drive.heading.asDegrees } else headingError
+            val targetHeadingError = if (approachAngle != null) { (Drive.heading - approachAngle.degrees).wrap().asDegrees } else headingError
+             println("approachangle = $approachAngle")
 
-
-            if (notePos != null && targetHeadingError != null && fieldPos != null) { // This should always be true but whatever
+            if (notePos != null && targetHeadingError != null && fieldPos != null) {
 
                 val headingVelocity = (targetHeadingError - prevHeadingError) / 0.02
 
@@ -307,16 +322,16 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 val p = targetHeadingError * 0.005
                 val d = headingVelocity * 0.0005
 
-                var driveSpeed = 0.0
+                var driveSpeed = 1.0
                 val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
                 val targetPose = notePos - notePos.normalize() * 12.5.inches.asFeet
 
                 val driveVelocity = Drive.velocity.length
-                val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
 
                 if (cautious) {
                     driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((targetPose.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
+                    val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
                     driveSpeed -= driveD
                 }
                 if (targetPose.x < 3.0 && !intakeTurnedOn) {
@@ -325,14 +340,14 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 }
 
                 if (!Robot.isAutonomous) {
-                    driveSpeed = OI.driveLeftTrigger
+                    driveSpeed *= OI.driveLeftTrigger
                 }
 
                 driveSpeed.coerceIn(0.0, 1.0)
 
                 val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
 
-                println("translation. direction: ${driveDirection}  speed $driveSpeed")
+//                println("translation. direction: $driveDirection  speed $driveSpeed")
                 Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
@@ -386,10 +401,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
 }
 
 suspend fun lockToAmp() {
-    Drive.aimAmp = true
-    println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimAmp}")
+    Drive.aimTarget = AimTarget.AMP
+    println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
     suspendUntil(20) { !OI.driverController.b }
-    Drive.aimAmp = false
+    Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")
     newPath.addVector2(Drive.combinedPosition.asFeet)
@@ -462,10 +477,10 @@ suspend fun holdRampUpShooter() {
 }
 
 suspend fun toggleAimAtNote() {
-    Drive.aimNote = true
+    Drive.aimTarget = AimTarget.GAMEPIECE
     val t = Timer()
     suspendUntil { OI.driverController.leftTrigger < 0.2 && t.get() > 0.2 }
-    Drive.aimNote = false
+    Drive.aimTarget = AimTarget.NONE
 }
 
 
