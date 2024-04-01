@@ -25,7 +25,6 @@ import org.team2471.frc2024.AprilTag.excludedIDs
 import org.team2471.frc2024.AprilTag.photonDistCurve
 import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
-import kotlin.math.absoluteValue
 import kotlin.math.pow
 
 object AprilTag: Subsystem("AprilTag") {
@@ -276,6 +275,15 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             return max - min
         }
 
+    val ambiguityHistoryAvg: Double
+        get() {
+            var total = 0.0
+            for (ambi in poseAmbiguityHistory) {
+                total += ambi
+            }
+            return total / poseAmbiguityHistory.size
+        }
+
     fun reset() {
         if (!photonCam.isConnected) {
             try {
@@ -315,7 +323,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
         targets ?: return null
 
         for (target in targets) {
-            if (target.fiducialId < 16 && target.poseAmbiguity < 0.3 && target.fiducialId !in excludedIDs)  {
+            if (target.fiducialId < 16 && target.poseAmbiguity < 0.2 && target.fiducialId !in excludedIDs)  {
                 validTargets.add(target)
             }
         }
@@ -371,23 +379,23 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
             }
 
-            if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
-            if (poseAmbiguityHistory.size>4 ) {
-                poseAmbiguityHistory.removeAt(0)
-//                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
-            }
-
 //            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
             if (validTargets.size.toDouble() > 0.0) {
                 avgDist /= validTargets.size.toDouble()
                 avgAmbiguity /= validTargets.size.toDouble()
             }
 
+            if (avgAmbiguity > 0.0) poseAmbiguityHistory.add(avgAmbiguity)
+            if (poseAmbiguityHistory.size > 15 ) {
+                poseAmbiguityHistory.removeAt(0)
+//                println("pose abiguity avrage ${poseAmbiguityHistory.average()}")
+            }
+
             if (avgDist > 6.0.meters) return null
 
             var stDev = photonDistCurve.getValue(avgDist.asMeters)
 
-            if (validTargets.size == 1) stDev *= 10000.0.pow(avgAmbiguity) * 1000.0.pow(ambiguityRange)
+            if (avgAmbiguity > 0.0) stDev *= 10000.0.pow(ambiguityHistoryAvg) * 1000.0.pow(ambiguityRange)
 
             stDev *= 5 * avgArea
 

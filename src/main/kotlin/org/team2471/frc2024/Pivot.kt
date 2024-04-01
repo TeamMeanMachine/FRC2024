@@ -22,6 +22,7 @@ import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Drive.combinedPosition
+import org.team2471.frc2024.Drive.isRedAlliance
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.abs
@@ -61,13 +62,12 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 110.0.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3539.0 else 2325.0
+    private val MINTICKS = if (isCompBot) 3550.0 else 2370.0
     private val MAXTICKS = if (isCompBot) 2363.0 else 1139.0
 
     var angleFudge = 0.0.degrees
 
 //    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
-
 
     var aimSpeaker = false
         set(value) {
@@ -87,6 +87,9 @@ object Pivot: Subsystem("Pivot") {
         }
 
     var aimSpeakerDistanceOffset: Double = 0.0 //feet
+        set(value) {
+            field = value + if (isRedAlliance) 1.2 else 1.7
+        }
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -142,6 +145,7 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
         pivotAmpRate.setDouble(80.0)
+        aimSpeakerDistanceOffset = 0.0
 
 
         GlobalScope.launch {
@@ -169,6 +173,7 @@ object Pivot: Subsystem("Pivot") {
                     angleSetpoint = if (OI.driverController.x) {
                         39.0.degrees
                     } else if (AprilTag.aprilTagsEnabled) {
+                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
                         Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
                     } else {
                         PODIUMPOSE
