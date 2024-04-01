@@ -1,4 +1,5 @@
 package org.team2471.frc2024
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
@@ -47,7 +48,6 @@ object Limelight: Subsystem("Limelight") {
         if (lastGlobalPose != null) {
             limelight.lastGlobalPose = null
         }
-        println("llPose is $lastGlobalPose")
         return lastGlobalPose
     }
 
