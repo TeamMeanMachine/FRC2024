@@ -423,7 +423,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             estimatedPose.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
 
-            advantagePoseEntry.setAdvantagePose(estimatedPose, newPose.get().estimatedPose.rotation.angle.radians)
+            advantagePoseEntry.setAdvantagePoses(arrayOf(estimatedPose), arrayOf(newPose.get().estimatedPose.rotation.angle.radians))
 
             lastGlobalPose = GlobalPose(estimatedPose, newPose.get().estimatedPose.rotation.angle.radians, stDev, Timer.getFPGATimestamp())
 
@@ -431,6 +431,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             return lastGlobalPose
         } else {
+            advantagePoseEntry.setAdvantagePoses(arrayOf(), arrayOf())
             return null
         }
     }

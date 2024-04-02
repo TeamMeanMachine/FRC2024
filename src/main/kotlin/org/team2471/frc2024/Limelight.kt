@@ -8,6 +8,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.setAdvantagePose
+import org.team2471.frc.lib.math.setAdvantagePoses
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Limelight.limelightDistCurve
@@ -107,7 +108,10 @@ class LimelightCamera(
         var estimatedPose = Vector2L(poseArray.pose.translation.x.meters, poseArray.pose.translation.y.meters * (8.2 / 8.0)) // * 1.017 to compensate for limelight being off on y
         var tagCount = poseArray.tagCount
 
-        if (estimatedPose == Vector2L(0.0.meters, 0.0.meters) || tagCount < 2) return null // estimatedPose returns origin if no tags seen
+        if (estimatedPose == Vector2L(0.0.meters, 0.0.meters) || tagCount < 2) {
+            advantagePoseEntry.setAdvantagePoses(arrayOf(), arrayOf())
+            return null
+        } // estimatedPose returns origin if no tags seen
 
         var avgDist = 0.0.inches
 
@@ -122,7 +126,7 @@ class LimelightCamera(
 
         stDevEntry.setDouble(stDev)
 
-        advantagePoseEntry.setAdvantagePose(estimatedPose, Drive.heading)
+        advantagePoseEntry.setAdvantagePoses(arrayOf(estimatedPose), arrayOf(poseArray.pose.rotation.radians.radians))
         // Todo filter more
 
         return lastGlobalPose
