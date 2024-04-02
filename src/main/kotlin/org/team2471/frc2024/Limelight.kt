@@ -43,8 +43,9 @@ object Limelight: Subsystem("Limelight") {
         }
     }
 
-    fun getCurrentGlobalPose(): GlobalPose? {
-        val lastGlobalPose = if(limelight.newHeartbeat)limelight.lastGlobalPose else null
+    fun getCurrentGlobalPose(ignoreHeartbeat: Boolean): GlobalPose? {
+        val lastGlobalPose = if (limelight.newHeartbeat || ignoreHeartbeat) limelight.lastGlobalPose else null
+        if (!ignoreHeartbeat) println("Not ignoring")
         if (lastGlobalPose != null) {
             limelight.lastGlobalPose = null
         }

@@ -65,7 +65,7 @@ object Pivot: Subsystem("Pivot") {
 
     // Ticks
     private val MINTICKS = if (isCompBot) 3550.0 else 2316.0
-    private val MAXTICKS = if (isCompBot) 2363.0 else 1116.0
+    private val MAXTICKS = if (isCompBot) 2374.0 else 1116.0
 
     var angleFudge = 0.0.degrees
 
@@ -90,7 +90,7 @@ object Pivot: Subsystem("Pivot") {
 
     var aimSpeakerDistanceOffset: Double = 0.0 //feet
         set(value) {
-            field = value + if (isRedAlliance) 1.2 else 1.7
+            field = value + if (isRedAlliance) 0.0 else 1.7
         }
 
     val pivotTicks: Int
