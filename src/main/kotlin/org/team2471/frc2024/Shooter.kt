@@ -288,8 +288,6 @@ object Shooter: Subsystem("Shooter") {
         pitchCurve.storeValue(13.7, Pitch13_7Entry.getDouble(70.0))
         pitchCurve.storeValue(15.0, Pitch15Entry.getDouble(70.0))
         pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(70.0))
-//        pitchCurve.storeValue(19.0, Pitch19Entry.getDouble(70.0))
-//        pitchCurve.storeValue(21.0, Pitch21Entry.getDouble(70.0))
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 

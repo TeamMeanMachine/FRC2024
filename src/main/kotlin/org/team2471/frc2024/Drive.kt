@@ -33,6 +33,7 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
+import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -328,7 +329,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
 
                 aimHeadingSetpointEntry.setDouble(aimHeadingSetpoint.asDegrees)
-
 
                 positionXEntry.setDouble(position.x)
                 positionYEntry.setDouble(position.y)
@@ -725,9 +725,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun getAngleToSpeaker(): Angle {
-        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else Vector2(speakerPos.x + 7.0.inches.asFeet, speakerPos.y)
+        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
         val dVector = combinedPosition - point.feet
-        return if (AprilTag.aprilTagsEnabled) kotlin.math.atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
+        return if (AprilTag.aprilTagsEnabled) atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
 
@@ -790,7 +790,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 //    }
 
     if (Limelight.isConnected) {
-        var globalPose = Limelight.getCurrentGlobalPose()
+        var globalPose = Limelight.getCurrentGlobalPose(deltaPos.asFeet.length < 0.1)
         if (globalPose != null) measurementsAndStDevs.add(Pair(globalPose.pose, globalPose.stDev))
     }
 
@@ -809,9 +809,9 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         totalPos += posAndStDev.first.asMeters.times(editedStDev).meters
         totalStDev += editedStDev
     }
-    if (pos != combinedPosition) {
-        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-    }
+//    if (pos != combinedPosition) {
+//        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+//    }
 
 
 
@@ -820,15 +820,6 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         combinedPosition = totalPos.asMeters.div(totalStDev).meters
 //        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
     }
-
-    if (!Limelight.isConnected && aprilPoses.isEmpty() && pos != totalPos) {
-        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
-        println("Odometry value not counted at 100%")
-        println("x%: ${totalPos.x.asMeters/pos.x.asMeters}")
-        println("y%: ${totalPos.y.asMeters/pos.y.asMeters}")
-    }
-
     prevCombinedPosition = pos
 }
 

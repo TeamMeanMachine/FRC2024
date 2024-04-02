@@ -16,7 +16,6 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.feet
 import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
@@ -63,7 +62,7 @@ object Pivot: Subsystem("Pivot") {
 
     // Ticks
     private val MINTICKS = if (isCompBot) 3550.0 else 2370.0
-    private val MAXTICKS = if (isCompBot) 2363.0 else 1139.0
+    private val MAXTICKS = if (isCompBot) 2374.0 else 1139.0
 
     var angleFudge = 0.0.degrees
 
@@ -88,7 +87,7 @@ object Pivot: Subsystem("Pivot") {
 
     var aimSpeakerDistanceOffset: Double = 0.0 //feet
         set(value) {
-            field = value + if (isRedAlliance) 1.2 else 1.7
+            field = value + if (isRedAlliance) 0.0 else 1.7
         }
 
     val pivotTicks: Int
@@ -173,7 +172,7 @@ object Pivot: Subsystem("Pivot") {
                     angleSetpoint = if (OI.driverController.x) {
                         39.0.degrees
                     } else if (AprilTag.aprilTagsEnabled) {
-                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
+//                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
                         Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
                     } else {
                         PODIUMPOSE

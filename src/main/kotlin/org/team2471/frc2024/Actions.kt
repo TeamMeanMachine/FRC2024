@@ -393,6 +393,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
             }
         }
     }
+
     Drive.drive(Vector2(0.0, 0.0), 0.0, false)
     if (Robot.isAutonomous) {
         Drive.xPose()
