@@ -57,7 +57,7 @@ object Robot : MeanlibRobot() {
         Intake
         println("Activating Intake! bottomBreak = ${Intake.bottomBreak}")
         Shooter
-        println("Activating Shooter! motorRpmTop = ${Shooter.motorRpmTop}")
+        println("Activating Shooter! rpmError = ${(Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint) - (Shooter.motorRpmTop + Shooter.motorRpmBottom)}")
         Climb
         println("Activating Climb! climberHeight = ${Climb.climberHeight}")
         Pivot
@@ -86,10 +86,10 @@ object Robot : MeanlibRobot() {
         GlobalScope.launch {
             parallel(
                 {Drive.enable(); println("after drive ${totalTimeTaken()}")},
+                {Shooter.enable(); println("after shooter ${totalTimeTaken()}")},
                 {Climb.enable(); println("after climb ${totalTimeTaken()}")},
                 {Intake.enable(); println("after intake ${totalTimeTaken()}")},
                 {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
-                {Shooter.enable(); println("after shooter ${totalTimeTaken()}")},
                 {AprilTag.enable(); println("after aprilTag ${totalTimeTaken()}")}
 
             )

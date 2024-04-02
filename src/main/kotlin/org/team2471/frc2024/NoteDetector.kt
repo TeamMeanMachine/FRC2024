@@ -67,6 +67,7 @@ object NoteDetector {
                 false
             }
         }
+    var seesNoteCounter = 0
 
     val closestIsValid: Boolean
         get() {
@@ -261,6 +262,12 @@ object NoteDetector {
     fun closestNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
         var note = closestNote
 
+        if (seesNote) {
+            seesNoteCounter ++
+        } else {
+            seesNoteCounter = 0
+        }
+
         if (note != null) {
             println("Expected: $expectedPos   Note: ${note.fieldCoords}   Length: ${(expectedPos - note.fieldCoords).length}")
 
@@ -270,7 +277,7 @@ object NoteDetector {
 //                println("Note: ${note.fieldCoords}  Pos: $expectedPos")
 //            }
         }
-        return seesNote
+        return seesNoteCounter > 1
 
 //        return false
     }

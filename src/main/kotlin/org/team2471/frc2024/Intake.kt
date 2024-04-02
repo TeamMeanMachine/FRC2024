@@ -90,6 +90,7 @@ object Intake: Subsystem("Intake") {
 
     override suspend fun default() {
         val t = Timer()
+        var bottomBreakCounter = 0
         periodic {
             when(intakeState) {
                 IntakeState.EMPTY -> {
@@ -101,9 +102,13 @@ object Intake: Subsystem("Intake") {
                     Shooter.manualShootState = false
                     setIntakeMotorsPercent(0.9)
                     OI.driverController.rumble = 0.7
-                    if (bottomBreak) {
+                    if (bottomBreak && bottomBreakCounter > 1) {
                         intakeState = IntakeState.SLOWING
                         t.start()
+                    } else if (bottomBreak) {
+                        bottomBreakCounter ++
+                    } else {
+                        bottomBreakCounter = 0
                     }
                 }
                 IntakeState.SLOWING -> {

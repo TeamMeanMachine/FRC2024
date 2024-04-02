@@ -271,9 +271,13 @@ object Shooter: Subsystem("Shooter") {
         }
     }
 
-    override fun preEnable() {
-        rpmTopSetpoint  = 0.0
-        rpmBottomSetpoint = 0.0
+    override fun postEnable() {
+        println("inside shooter preEnable ${Robot.totalTimeTaken()}")
+        GlobalScope.launch {
+            rpmTopSetpoint  = 0.0
+            rpmBottomSetpoint = 0.0
+        }
+        println("after shooter preEnable ${Robot.totalTimeTaken()}")
     }
 
     fun rebuildCurves() {
@@ -305,10 +309,8 @@ object Shooter: Subsystem("Shooter") {
     }
 
     fun setRpms(rpm: Double) {
-        GlobalScope.launch {
-            rpmTopSetpoint = rpm
-            rpmBottomSetpoint = rpm
-        }
+        rpmTopSetpoint = rpm
+        rpmBottomSetpoint = rpm
     }
 
     fun getRpmFromPosition(point: Vector2): Double {

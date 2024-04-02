@@ -232,7 +232,11 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
     val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
     //    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
-    //    val stDevMultiplierEntry = aprilTable.getEntry("stDev Multiplier $name")
+    val distStDevEntry = aprilTable.getEntry("Base (Dist) StDev $name")
+    val stDevMultiplierEntry = aprilTable.getEntry("StDev Multiplier $name")
+    val ambiguityStDevMultiplierEntry = aprilTable.getEntry("Ambiguity StDev Mutliplier $name")
+    val ambiguityRangeStDevMultiplierEntry = aprilTable.getEntry("AmbiguityRange StDev Mutliplier $name")
+    val avgAreaAmbiguityMultiplierEntry = aprilTable.getEntry("avgArea StDev Mutliplier $name")
     val isConnectedEntry = aprilTable.getEntry("isConnected $name")
     val poseAmbiguityHistory: ArrayList<Double> = arrayListOf()
 
@@ -395,9 +399,22 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             var stDev = photonDistCurve.getValue(avgDist.asMeters)
 
-            if (avgAmbiguity > 0.0) stDev *= 10000.0.pow(ambiguityHistoryAvg) * 1000.0.pow(ambiguityRange)
+            distStDevEntry.setDouble(stDev)
 
-            stDev *= 5 * avgArea
+            if (avgAmbiguity > 0.0) {
+                stDev *= 10000.0.pow(ambiguityHistoryAvg) * 1000.0.pow(ambiguityRange)
+                ambiguityStDevMultiplierEntry.setDouble(10000.0.pow(ambiguityHistoryAvg))
+                ambiguityRangeStDevMultiplierEntry.setDouble(1000.0.pow(ambiguityRange))
+            } else {
+                ambiguityStDevMultiplierEntry.setDouble(0.0)
+                ambiguityRangeStDevMultiplierEntry.setDouble(0.0)
+            }
+
+
+
+            stDev *= 5.0 * avgArea
+
+            avgAreaAmbiguityMultiplierEntry.setDouble(5.0 * avgArea)
 
             if (numTargets < 2) stDev *= 8.0
 

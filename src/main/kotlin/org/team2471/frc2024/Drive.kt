@@ -676,20 +676,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
 
-    fun aimSpeakerAmpLogic(): Double? {
-/*        aimHeadingSetpoint =
-            if (OI.driverController.x) {
-            if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
-        } else if ((aimSpeaker && AprilTag.backCamsConnected) || Robot.isAutonomous ) {
-            getAngleToSpeaker()
-        } else if (aimAmp) {
-            90.0.degrees
-        } else if (aimNote && NoteDetector.angleToClosestNote() != null) {
-            -NoteDetector.angleToClosestNote()!!
-        } else {
-                if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
-        }*/
-
+    fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {
             AimTarget.SPEAKER -> getAngleToSpeaker()
             AimTarget.AMP -> 90.0.degrees
@@ -698,6 +685,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             else -> getAngleToSpeaker()
         }
 
+        if (smoothing) {
+            aimHeadingSetpoint = interpTo(heading.asDegrees, aimHeadingSetpoint.asDegrees, 20.0).degrees
+        }
         val angleError = (heading - aimHeadingSetpoint).wrap()
 
         if (abs(angleError.asDegrees) > 2.0 || Robot.isAutonomous) {
