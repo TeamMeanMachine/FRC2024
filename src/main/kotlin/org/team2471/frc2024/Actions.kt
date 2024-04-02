@@ -19,6 +19,7 @@ import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.asFeet
+import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
@@ -169,7 +170,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null, teleopTranslation: Boolean = false) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null, teleopTranslation: Boolean = false, stopWhenBeamBreak: Boolean = false, ignoreWrongSide: Boolean = false, overrideTimeout: Double? = null) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -187,6 +188,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
     var prevHeadingError = 0.0
     var noNoteCounter = 0
     var tooFarCounter = 0
+    var beamBreakCounter = 0
 
 
     if (!Robot.isAutonomous) {
@@ -328,7 +330,11 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 var driveSpeed = 1.0
                 val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
-                val targetPose = notePos - notePos.normalize() * 12.5.inches.asFeet
+                var targetPose = (notePos - NoteDetector.camRobotCoords)
+
+                if (approachAngle != null) {
+                    targetPose = targetPose.rotateDegrees(approachAngle + 90.0)
+                }
 
                 val driveVelocity = Drive.velocity.length
 
@@ -345,13 +351,21 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                 if (!Robot.isAutonomous) {
                     driveSpeed *= OI.driveLeftTrigger
                 }
-
                 driveSpeed.coerceIn(0.0, 1.0)
 
-                val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
+
+
+                if (cautious) {
+                    val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
+
+                    Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
+                } else {
+                    val driveDirection = Vector2(-targetPose.y, targetPose.x).normalize().rotateDegrees(-Drive.heading.asDegrees)
+
+                    Drive.drive(driveDirection, turnSpeed, false, false)
+                }
 
 //                println("translation. direction: $driveDirection  speed $driveSpeed")
-                Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
 
 //                    println("note Found: $noteFound")
 //                    println("NOTE x: ${notePos.x}, y: ${notePos.y}")
@@ -380,17 +394,24 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, timeOut: Boolean = true, ex
                     Intake.intakeState = Intake.IntakeState.EMPTY
                 }
                 stop()
-            } else if (Robot.isAutonomous && ((timeOut && elapsedTime > 5.0)/* || (!noteFound && notePos!!.length < 0.5)*/)) {
+            } else if (Robot.isAutonomous && (elapsedTime > (overrideTimeout ?: 5.0))) {
                 println("exiting pick up note, it's been too long")
                 stop()
-            } else if (Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
+            } else if (!ignoreWrongSide && Robot.isAutonomous && ((fieldCoords.x > 30.0 && isBlueAlliance) || (fieldCoords.x < 24.0 && isRedAlliance))) {
                 tooFarCounter += 1
 
                 if (tooFarCounter > 5) {
                     println("exiting pick up note, it's on the wrong side  x: ${fieldCoords.x}")
                     stop()
                 }
+            } else if (stopWhenBeamBreak && Intake.bottomBreak) {
+                beamBreakCounter ++
+                if (beamBreakCounter > 1) {
+                    println("exiting pick up note, beam break activated")
+                    stop()
+                }
             } else {
+                beamBreakCounter = 0
                 tooFarCounter = 0
             }
         }

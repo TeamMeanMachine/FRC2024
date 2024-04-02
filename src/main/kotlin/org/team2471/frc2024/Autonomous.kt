@@ -187,71 +187,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         println("finished autonomous  ${Robot.totalTimeTaken()}")
     }
 
-    suspend fun twoFarTwoCloseAmp() = use(Drive, Shooter) {
-        try {
-            Drive.zeroGyro()
-            Drive.combinedPosition = if (isRedAlliance) Vector2(48.32, 21.78).feet else Vector2(48.32, 21.78).reflectAcrossField().feet //sets position the starting position FOR RED ONLY!!! //47.6, 20.6)
-            val auto = autonomi["2Far2CloseAmp"]
-            auto?.isReflected = isBlueAlliance
-            var path: Path2D? = auto?.get("0.5-GrabSecond")
-            val ti = Timer()
-            if (shootFirstEntry.getBoolean(true)) {
-                println("shooter ramp in Preload ")
-                aimAndShoot() //preLoaded shot
-            }
-            println(" shooter after preload")
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            ti.start()
-            if (path != null) {
-                Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            pickUpSeenNote()
-            suspendUntil{ Intake.intakeState == Intake.IntakeState.HOLDING || ti.get() > 0.4}
-            aimAndShoot() //second note shot
-
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            if (path != null) {
-                Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            if (!NoteDetector.seesNote) delay(0.2)
-            pickUpSeenNote()
-            path = auto?.get("2-ShootThird")
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-
-            delay(0.3) //Waiting for AprilTag to catch up
-            aimAndShoot() //third note shot
-
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            path = auto?.get("3-GrabFourth")
-            if (path != null) {
-                Drive.driveAlongPath(path,  false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-
-            pickUpSeenNote(timeOut = false)
-
-            if (closeFourToFiveEntry.getBoolean(false)) {
-                path = auto?.get("4-ShootFourth")
-                if (path != null) {
-                    Drive.driveAlongPath(path, false)
-                }
-
-                delay(0.3) //Waiting for AprilTag to catch up
-                aimAndShoot() //third note shot
-            }
-        } finally {
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-        }
-    }
-
     suspend fun midPieces() = use(Drive, Shooter) {
         try {
             grabFirstFour() //split because we want intake default for picking up middle pieces
@@ -639,8 +574,25 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     suspend fun pileAuto() = use(Drive, Shooter, Intake, name = "Shoot Pile") {
         try {
-            Drive.zeroGyro()
-            Shooter.setRpms(3000.0)
+            println("inside pile ${Robot.totalTimeTaken()}")
+            parallel({
+                Shooter.setRpms(3000.0)
+            }, {
+                Drive.zeroGyro()
+            }, {
+                Drive.combinedPosition =
+                    if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
+                Drive.position = combinedPosition.asFeet
+            })
+            println("after pileAuto parallel ${Robot.totalTimeTaken()}")
+            val t = Timer()
+            t.start()
+            periodic {
+                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0) {
+                    println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
+                    this.stop()
+                }
+            }
             val auto = autonomi["Shoot Pile"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-DownCenter")
@@ -648,24 +600,38 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 combinedPosition = path.getPosition(0.0).feet
                 Drive.position = combinedPosition.asFeet
             }
-            Intake.setIntakeMotorsPercent(1.0)
+            println("running auto stuff ${Robot.totalTimeTaken()}")
 
-            Shooter.setRpms(5000.0)
+            Intake.setIntakeMotorsPercent(1.0)
             if (path != null) {
-                Drive.driveAlongPath(path, false, turnOverride = { Drive.aim() }, earlyExit = {
-                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && abs(combinedPosition.x.asFeet - 27.135) < 4.0
+                Drive.driveAlongPath(path, false, earlyExit = {
+                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && it > 0.5
                 })
             }
-            var endYaw = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.middleNote(4).y)
-            if (isBlueAlliance) endYaw = 180.0 - endYaw
-            pickUpSeenNote()
+            pickUpSeenNote(true, stopWhenBeamBreak = true)
 
-            dynamicDriveAlongPoints(combinedPosition.asFeet, Vector2(27.1, 24.4), Vector2(if (isRedAlliance) -3.0 else 3.0, 0.0), Vector2(0.0, -3.0), Drive.heading, endYaw.degrees, 7.0, {NoteDetector.seesNote})
-            pickUpSeenNote(wantedApproachAngle = endYaw)
-            Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
-            fire()
+
+            Shooter.setRpms(5000.0)
+            Intake.setIntakeMotorsPercent(1.0)
+            Drive.robotPivot = Vector2(0.0, 10.5)
+            pickUpSeenNote(wantedApproachAngle = -80.0, overrideTimeout = 1.0)
+
+
+
+
+
+
+//            var endYaw = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.middleNote(4).y)
+//            if (isBlueAlliance) endYaw = 180.0 - endYaw
+//            pickUpSeenNote()
+//
+//            dynamicDriveAlongPoints(combinedPosition.asFeet, Vector2(27.1, 24.4), Vector2(if (isRedAlliance) -3.0 else 3.0, 0.0), Vector2(0.0, -3.0), Drive.heading, endYaw.degrees, 7.0, {NoteDetector.seesNote})
+//            pickUpSeenNote(wantedApproachAngle = endYaw)
+//            Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
+//            fire()
 
         } finally {
+            Drive.robotPivot = Vector2(0.0, 0.0)
             Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
