@@ -99,6 +99,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
 
+    private val aimTargetEntry = table.getEntry("Aim Target")
+
     val rateCurve = MotionCurve()
 
 
@@ -301,6 +303,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
+                val aimTargetPoint = if (aimTarget == AimTarget.SPEAKER) arrayOf(Vector2L(speakerPos.x.feet, speakerPos.y.feet))else(arrayOf())
+                aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
                 advantageCombinedPoseEntry.setAdvantagePose(combinedPosition, heading)
 
@@ -310,7 +314,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 motorAngle3Entry.setDouble((modules[3] as Module).angle.wrap().asDegrees)
 
                 absoluteAngle0Entry.setDouble((modules[0] as Module).absoluteAngle.asDegrees)
-                absoluteAngle1Entry.setDouble((modules[1] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
