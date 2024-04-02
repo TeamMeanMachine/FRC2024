@@ -225,7 +225,7 @@ object AprilTag {
 class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
 
     val advantagePoseEntry = aprilTable.getEntry("April Advantage Pos $name")
-    //    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
+    val targetPoseEntry = aprilTable.getEntry("April Target Pos $name")
     val stDevEntry = aprilTable.getEntry("stDev $name")
     val distStDevEntry = aprilTable.getEntry("Base (Dist) StDev $name")
     val stDevMultiplierEntry = aprilTable.getEntry("StDev Multiplier $name")
@@ -356,7 +356,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
             var avgDist = 0.0.inches
             var avgAmbiguity = 0.0
             var avgArea = 0.0
-//            var targetPoses : ArrayList<Vector2L> = arrayListOf()
+            var targetPoses : ArrayList<Vector2L> = arrayListOf()
             val currLatency = Timer.getFPGATimestamp() - newPose.get().timestampSeconds
             val avgLatency = camLatency.calculate(currLatency)
             //println("$name latency ${round(currLatency, 4)} avg: ${round(avgLatency, 4)}")
@@ -365,20 +365,18 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
                 avgDist += Vector2L(tagPose.x.meters, tagPose.y.meters).distance(estimatedPose)
                 avgAmbiguity += target.poseAmbiguity
                 avgArea += target.area
-                val targetRelativePose = (target.bestCameraToTarget + robotToCamera).translation.toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians))
 
                 val robotPose = Pose3d(
                     Translation3d(Drive.combinedPosition.x.asMeters, Drive.combinedPosition.y.asMeters, 0.0),
                     Rotation3d(0.0, 0.0, Drive.heading.asRadians)
                 )
 
-                //val targetRelativePose = (target.bestCameraToTarget.translation - robotToCamera.translation).toTranslation2d().rotateBy(Rotation2d(Drive.heading.asRadians + robotToCamera.rotation.angle))
                 val visionTargetPosition = robotPose.transformBy(robotToCamera).transformBy(target.bestCameraToTarget)
-//                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
-                //targetPoses.add(Drive.combinedPosition.plus(Vector2L(targetRelativePose.x.meters, targetRelativePose.y.meters)))
+
+                targetPoses.add(Vector2L(visionTargetPosition.x.meters, visionTargetPosition.y.meters))
             }
 
-//            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
+            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
             if (validTargets.size.toDouble() > 0.0) {
                 avgDist /= validTargets.size.toDouble()
                 avgAmbiguity /= validTargets.size.toDouble()
