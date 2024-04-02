@@ -165,12 +165,16 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.totalTimeTaken()}")
 //        SmartDashboard.putString("autoStatus", "init")
         println("Selected Auto = *****************   $selAuto ****************************  ${Robot.totalTimeTaken()}")
+        println("before when block ${Robot.totalTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
 //            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4CloseSafe" -> fourCloseSafe()
 //            "SubSide" -> substationSide()
-            "SafeSubSide" -> safeSubstationSide()
+            "SafeSubSide" -> {
+                println("about to call sub ${Robot.totalTimeTaken()}")
+                safeSubstationSide()
+            }
 //            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
             "MidPieces" -> midPieces()
             "Pile" -> pileAuto()
@@ -445,7 +449,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         }
     }
 
-    suspend fun safeSubstationSide() = use(Drive, Shooter) {
+    suspend fun safeSubstationSide() = use(Drive, Shooter, name = "safeSubAuto") {
+        println("before try in safeSub ${Robot.totalTimeTaken()}")
         try {
             println("inside safeSubstationSide ${Robot.totalTimeTaken()}")
             parallel({
@@ -472,6 +477,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             println("starting auto stuff now ${Robot.totalTimeTaken()}")
             if (shootFirstEntry.getBoolean(true)) {
 //                Pivot.angleFudge = 2.0.degrees
+                Shooter.setRpms(Shooter.getRpmFromPosition(Drive.combinedPosition.asFeet))
                 aimAndShoot()
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Shooter.setRpms(0.0)
@@ -489,10 +495,12 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 dynamicDriveToMissedPiece(NoteDetector.middleNote(1))
             }
 
+            println("going to shoot second piece. noCargo: $noCargo")
+
             noCargo = false
             finishedPath = false
             parallel({
-                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { NoteDetector.closestIsMiddleAdjust(4.5) })
+                shootThenIntake(auto?.get("1.25-ShootSecondChain"), true, { noCargo }, auto?.get("1.35-GrabThirdChain"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(4.5) })
                 finishedPath = true
             }, {
                 t.start()
@@ -512,10 +520,12 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 dynamicDriveToMissedPiece(NoteDetector.middleNote(2))
             }
 
+            println("going to shoot third piece. noCargo: $noCargo")
+
             noCargo = false
             finishedPath = false
             parallel({
-                shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { NoteDetector.closestIsMiddleAdjust(4.5) })
+                shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.5 && NoteDetector.closestIsMiddleAdjust(4.5) })
                 finishedPath = true
             }, {
                 t.start()
@@ -533,6 +543,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 println("didn't pick up cargo")
                 dynamicDriveToMissedPiece(NoteDetector.middleNote(3))
             }
+
+            println("going to shoot sixth piece. noCargo: $noCargo")
 
             val path = auto?.get("6-ShootFourth")
             parallel({
@@ -561,7 +573,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         if (!skipShoot) {
             if (shootPath != null) {
                 parallel({
-                    Drive.driveAlongPath(shootPath, false, turnOverride = { if (aimWhileDriving)  Drive.aimSpeakerAmpLogic() else null }, earlyExit = {missedPieceFlag})
+//                    shootPath.xyCurve.headPoint.position = Drive.combinedPosition.asFeet
+                    Drive.driveAlongPath(shootPath, false, turnOverride = { if (aimWhileDriving) Drive.aimSpeakerAmpLogic(true) else null }, earlyExit = {missedPieceFlag})
+                    println("FINISHED SHOOTER PATH YAY!!")
                     finishedPath = true
                 }, {
                     periodic {
@@ -612,16 +626,14 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         val path = Path2D("newPath")
         path.addVector2(Drive.combinedPosition.asFeet)
         path.addVector2(notePos)
-        val duration = path.length / 10.0
+        val duration = path.length / 5.0
         path.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
         path.addEasePoint(0.0, 0.0)
         path.addEasePoint(duration, 1.0)
         path.addHeadingPoint(0.0, Drive.heading.asDegrees)
-
-        val endHeading = if (Drive.combinedPosition.y.asFeet - notePos.y < 0.0) -90.0 else 90.0
-        path.addHeadingPoint(duration * 0.5, endHeading)
-        path.addHeadingPoint(duration, endHeading)
-        Drive.driveAlongPath(path, false, earlyExit = { it > 0.5 && NoteDetector.closestIsMiddle})
+        path.addHeadingPoint(duration * 0.5, -90.0)
+        path.addHeadingPoint(duration, -90.0)
+        Drive.driveAlongPath(path, false, earlyExit = { (it > 0.5 && NoteDetector.closestIsMiddle) || Intake.holdingCargo})
         pickUpSeenNote()
     }
 

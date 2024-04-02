@@ -123,11 +123,13 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, angleFudg
     val t = Timer()
     aimAtSpeaker()
     t.start()
+    Pivot.readyToShootTimer.start()
     suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
     if (t.get() > minTime) {
         println("Aiming max time. ${t.get()}")
         Pivot.speakerIsReady(debug = true)
     }
+    println("firing note at ${t.get()} seconds")
     fire()
     Drive.aimTarget = AimTarget.NONE
 }

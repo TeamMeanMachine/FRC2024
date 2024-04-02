@@ -16,11 +16,13 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.feet
 import org.team2471.frc.lib.math.linearMap
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.isRedAlliance
 import org.team2471.frc2024.Drive.speakerPos
@@ -62,8 +64,8 @@ object Pivot: Subsystem("Pivot") {
     val AMPPOSE = 110.0.degrees
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3550.0 else 2370.0
-    private val MAXTICKS = if (isCompBot) 2363.0 else 1139.0
+    private val MINTICKS = if (isCompBot) 3550.0 else 2316.0
+    private val MAXTICKS = if (isCompBot) 2363.0 else 1116.0
 
     var angleFudge = 0.0.degrees
 
@@ -126,6 +128,11 @@ object Pivot: Subsystem("Pivot") {
     val distFromSpeaker: Double
         get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else Drive.position.distance(speakerPos)
 
+    val readyToShootTimer = Timer()
+    var rpmReady = false
+    var pitchReady = false
+    var aimReady = false
+
     init {
         stageAngleEntry.setDouble(20.0)
 
@@ -173,7 +180,7 @@ object Pivot: Subsystem("Pivot") {
                     angleSetpoint = if (OI.driverController.x) {
                         39.0.degrees
                     } else if (AprilTag.aprilTagsEnabled) {
-                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
+//                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
                         Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
                     } else {
                         PODIUMPOSE
@@ -186,16 +193,23 @@ object Pivot: Subsystem("Pivot") {
     }
 
     fun speakerIsReady(rpmTol: Double = 400.0, pitchTol: Double = 1.0, aimTol: Double = 3.0, debug: Boolean = false): Boolean {
+        val wasRpmReady = rpmReady
+        val wasPitchReady = pitchReady
+        val wasAimReady = aimReady
 
-        val rpmReady = abs(Shooter.rpmTopSetpoint - Shooter.motorRpmTop) < rpmTol && abs(Shooter.rpmBottomSetpoint - Shooter.motorRpmBottom) < rpmTol
-        val pitchReady = abs(angleSetpoint.asDegrees - pivotEncoderAngle.asDegrees) < pitchTol
-        val aimReady = abs(Drive.aimHeadingSetpoint.asDegrees - Drive.heading.asDegrees) < aimTol
+        rpmReady = abs(Shooter.rpmTopSetpoint - Shooter.motorRpmTop) < rpmTol && abs(Shooter.rpmBottomSetpoint - Shooter.motorRpmBottom) < rpmTol
+        pitchReady = abs(angleSetpoint.asDegrees - pivotEncoderAngle.asDegrees) < pitchTol
+        aimReady = abs(Drive.aimHeadingSetpoint.asDegrees - Drive.heading.asDegrees) < aimTol
 
         if (debug) {
             if (!rpmReady) println("Top RPM Setpoint: ${Shooter.rpmTopSetpoint} Top RPM: ${Shooter.motorRpmTop} Bottom RPM Setpoint: ${Shooter.rpmBottomSetpoint} Bottom RPM: ${Shooter.motorRpmBottom}")
             if (!pitchReady) println("Pitch Setpoint: ${angleSetpoint.asDegrees} Pitch: ${pivotEncoderAngle.asDegrees}")
             if (!aimReady) println("Aim Setpoint: ${Drive.aimHeadingSetpoint} Heading: ${Drive.heading}")
         }
+
+        if (!wasAimReady && aimReady) println("heading took ${readyToShootTimer.get().round(2)} seconds")
+        if (!wasRpmReady && rpmReady) println("rpm took ${readyToShootTimer.get().round(2)} seconds")
+        if (!wasPitchReady && pitchReady) println("pitch took ${readyToShootTimer.get().round(2)} seconds")
 
         return rpmReady && pitchReady && aimReady
     }
@@ -207,9 +221,9 @@ object Pivot: Subsystem("Pivot") {
         do {
             newSensorPosition = pivotEncoderAngle
         } while (newSensorPosition != initialSensorPosition)
-        pivotMotor.setRawOffset(newSensorPosition.asDegrees)
-        pivotMotor.setPercentOutput(0.0)
         GlobalScope.launch {
+            pivotMotor.setRawOffset(newSensorPosition.asDegrees)
+            pivotMotor.setPercentOutput(0.0)
             pivotMotor.brakeMode()
         }
     }
