@@ -27,7 +27,7 @@ import org.team2471.frc2024.AprilTag.pvTable
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.pow
 
-object AprilTag: Subsystem("AprilTag") {
+object AprilTag {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
     val aprilTable = NetworkTableInstance.getDefault().getTable("AprilTag2.0")
     val aprilTagsEnabledEntry = aprilTable.getEntry("AprilTags Enabled")
@@ -94,7 +94,10 @@ object AprilTag: Subsystem("AprilTag") {
 
         GlobalScope.launch {
             periodic {
-
+                for (c in cameras) {
+                    val camera = c.value
+                    camera.isConnectedEntry.setBoolean(camera.isConnected)
+                }
                 val temp2DOffset = get2DSpeakerOffset()
                 if (temp2DOffset != null) {
 //                    println("Setting angle to ${temp2DOffset.second}")
@@ -211,20 +214,12 @@ object AprilTag: Subsystem("AprilTag") {
         photonDistCurve.storeValue(6.0, 0.04) // 0.03
     }
 
-    override fun preEnable() {
+    fun backgroundReset() {
         GlobalScope.launch {
             resetCameras()
         }
     }
 
-    override suspend fun default() {
-        periodic {
-            for (c in cameras) {
-                val camera = c.value
-                camera.isConnectedEntry.setBoolean(camera.isConnected)
-            }
-        }
-    }
 }
 
 class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStrategy: PoseStrategy = PoseStrategy.CLOSEST_TO_REFERENCE_POSE, val multiTagStrategy: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {

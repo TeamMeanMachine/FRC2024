@@ -15,7 +15,7 @@ import org.team2471.frc.lib.vision.GenericCamera
 import org.team2471.frc.lib.vision.GlobalPose
 import org.team2471.frc.lib.vision.LimelightHelpers
 
-object Limelight: Subsystem("Limelight") {
+object Limelight {
 
 
     val limelight: LimelightCamera = LimelightCamera(AprilTag.aprilTable, "limelight-shooter")
@@ -27,7 +27,6 @@ object Limelight: Subsystem("Limelight") {
 
 
     init {
-        limelight.reset()
         rebuildCurves()
 
         GlobalScope.launch {
@@ -67,15 +66,6 @@ object Limelight: Subsystem("Limelight") {
         limelightDistCurve.storeValue(6.0, 0.04) // 0.03
     }
 
-    override fun preEnable() {
-        limelight.reset()
-    }
-
-    override suspend fun default() {
-        periodic {
-            limelight.isConnectedEntry.setBoolean(limelight.isConnected)
-        }
-    }
 }
 
 class LimelightCamera(
@@ -84,8 +74,11 @@ class LimelightCamera(
 ): GenericCamera(networkTable, name) {
 
     var previousHeartbeat = 0.0
-//    TODO: (Unsure how limelight handles disconnects)
     override var isConnected: Boolean = false
+    override fun reset() {
+        println("limelight reset not implemented")
+    }
+
     var newHeartbeat = false
     var connectedDebouncer = Debouncer(0.1, Debouncer.DebounceType.kFalling)
 
@@ -106,13 +99,7 @@ class LimelightCamera(
     }
 
 
-    override fun reset() {
-        try {
-            println("Implement reset")
-        } catch (ex: Exception) {
-            println("Error resetting cam $name: $ex")
-        }
-    }
+
 
 
     override fun getEstimatedGlobalPose(): GlobalPose? {

@@ -90,7 +90,7 @@ object Robot : MeanlibRobot() {
                 {Climb.enable(); println("after climb ${totalTimeTaken()}")},
                 {Intake.enable(); println("after intake ${totalTimeTaken()}")},
                 {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
-                {AprilTag.enable(); println("after aprilTag ${totalTimeTaken()}")}
+                {AprilTag.backgroundReset(); println("after aprilTag ${totalTimeTaken()}")}
 
             )
             done = true
@@ -138,7 +138,7 @@ object Robot : MeanlibRobot() {
         Intake.disable()
         Pivot.disable()
         Shooter.disable()
-        AprilTag.disable()
+
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
     }
