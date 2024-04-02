@@ -115,9 +115,9 @@ class LimelightCamera(
     }
 
 
-    override fun getEstimatedGlobalPose(): org.team2471.frc.lib.vision.GlobalPose? {
+    override fun getEstimatedGlobalPose(): GlobalPose? {
         val poseArray = LimelightHelpers.getBotPoseEstimate_wpiBlue(name)   // LimelightHelpers.getBotPose3d_wpiBlue(name)
-        var estimatedPose = Vector2L(poseArray.pose.translation.x.meters, poseArray.pose.translation.y.meters)
+        var estimatedPose = Vector2L(poseArray.pose.translation.x.meters, poseArray.pose.translation.y.meters * (8.2 / 8.0)) // * 1.017 to compensate for limelight being off on y
         var tagCount = poseArray.tagCount
 
         if (estimatedPose == Vector2L(0.0.meters, 0.0.meters) || tagCount < 2) return null // estimatedPose returns origin if no tags seen
@@ -131,8 +131,7 @@ class LimelightCamera(
 
         var stDev = limelightDistCurve.getValue(avgDist.asMeters)
 
-        lastGlobalPose =
-            org.team2471.frc.lib.vision.GlobalPose(estimatedPose, Drive.heading, stDev, Timer.getFPGATimestamp())
+        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stDev, Timer.getFPGATimestamp())
 
         stDevEntry.setDouble(stDev)
 
