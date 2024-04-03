@@ -560,7 +560,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                     Intake.intakeState = Intake.IntakeState.INTAKING
                     Pivot.aimSpeaker = false
                 })
-                pickUpSeenNote(true, getClosestNoteAtPosition = grabNoteAtPosition)
+                pickUpSeenNote(true, getClosestNoteAtPosition = grabNoteAtPosition, overrideTimeout = 2.0)
             } else {
                 println("INTAKE PATH IS NULL")
             }
@@ -577,7 +577,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         path.addEasePoint(duration, 1.0)
         path.addHeadingPoint(0.0, Drive.heading.asDegrees)
         path.addHeadingPoint(duration * 0.35, 90.0)
-        path.addHeadingPoint(duration, 90.0)
+        path.addHeadingPoint(duration, 120.0)
         Drive.driveAlongPath(path, false, earlyExit = { (it > 0.1 && NoteDetector.seesNote) || Intake.holdingCargo})
         pickUpSeenNote()
     }
