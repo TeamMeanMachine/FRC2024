@@ -330,7 +330,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
                 var driveSpeed = 1.0
                 val turnSpeed = if (doTurn) feedForward + p else 0.0 //+ d
 
-                var targetPose = (notePos - NoteDetector.camRobotCoords)
+                var targetPose = if (cautious) (notePos - notePos.normalize() * 12.5.inches.asFeet) else (notePos - NoteDetector.camRobotCoords)
 
                 if (approachAngle != null) {
                     targetPose = targetPose.rotateDegrees(approachAngle + 90.0)
@@ -418,10 +418,10 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
     }
 
     Drive.drive(Vector2(0.0, 0.0), 0.0, false)
-    if (Robot.isAutonomous) {
-        Drive.xPose()
-        delay(0.05)
-    }
+//    if (Robot.isAutonomous) {
+//        Drive.xPose()
+//        delay(0.05)
+//    }
     return@use success
 
 //    } catch (exception: Exception) {

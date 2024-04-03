@@ -16,6 +16,8 @@ class NavxWrapper {
 
     fun reset() = navx.reset()
 
+    fun isConnected() = navx.isConnected
+
     var deltaTime: Double = 1.0
         set(value) {
             field = value

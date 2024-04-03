@@ -41,7 +41,7 @@ object AprilTag {
     var last2DSpeakerAngleFilter = LinearFilter.movingAverage(5)
     var last2DSpeakerAngle = 0.0
 
-    val excludedIDs = intArrayOf(2)
+    val excludedIDs = intArrayOf()
 
 
     var aprilTagsEnabled: Boolean

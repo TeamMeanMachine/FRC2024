@@ -126,6 +126,7 @@ object Robot : MeanlibRobot() {
 //        Drive.driveTests()
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
+        Drive.setAngleOffsets()
         println("test mode done")
     }
 

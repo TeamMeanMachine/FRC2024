@@ -71,10 +71,9 @@ object Climb: Subsystem("Climb") {
                     relayOn = true
                 }
 
-                climberCurrentEntry.setDouble(climberMotor.current)
+                climbSetpointEntry.setDouble(climbSetpoint.asInches)
                 climberEncoderEntry.setDouble(climberEncoder.get())
                 climberHeightEntry.setDouble(climberHeight.asInches)
-                climbSetpointEntry.setDouble(climbSetpoint.asInches)
                 relayOnEntry.setBoolean(relayOn)
                 matchTimeLeft.setDouble(DriverStation.getMatchTime())
 
@@ -93,14 +92,17 @@ object Climb: Subsystem("Climb") {
 
     override suspend fun default() {
         periodic {
+            climberCurrentEntry.setDouble(climberMotor.current)
         }
     }
     override fun preEnable() {
-        relayOn = false
-        preEnabled = true
+        GlobalScope.launch {
+            relayOn = false
+            preEnabled = true
 //        println("climber height $climberHeight  climber setpoint $climbSetpoint !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        climbSetpoint = climberHeight
+            climbSetpoint = climberHeight
 //        println("AFTER RESET:::  climber height $climberHeight  climber setpoint $climbSetpoint")
+        }
     }
     override fun onDisable() {
         preEnabled = false

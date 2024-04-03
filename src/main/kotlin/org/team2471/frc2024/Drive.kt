@@ -88,6 +88,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val rotationalAccelerationEntry = table.getEntry("rotational Acceleration")
 
     val useGyroEntry = table.getEntry("Use Gyro")
+    val gyroIsConnectedEntry = table.getEntry("Gyro Connected")
 
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
@@ -126,7 +127,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",-141.55).degrees,
+            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) -141.55 else -85.34).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -135,7 +136,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",-21.4).degrees,
+            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -21.4 else 41.66).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -144,7 +145,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",36.5).degrees,
+            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 36.5 else 152.65).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -153,7 +154,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",165.2).degrees,
+            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 165.2 else 105.99).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -316,6 +317,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle0Entry.setDouble((modules[0] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
+
+                gyroIsConnectedEntry.setBoolean(gyro.isConnected())
 
                 if (!Robot.inComp) {
                     turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
