@@ -517,7 +517,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         if (!skipShoot) {
             if (shootPath != null) {
                 parallel({
-                    shootPath.xyCurve.headPoint.position = Drive.combinedPosition.asFeet
+                    shootPath.xyCurve.headPoint.position = if (isRedAlliance) combinedPosition.asFeet else combinedPosition.asFeet.reflectAcrossField()
                     Drive.driveAlongPath(shootPath, false, turnOverride = { if (aimWhileDriving) Drive.aimSpeakerAmpLogic() else null }, earlyExit = {missedPieceFlag})
                     println("FINISHED SHOOTER PATH YAY!!")
                     finishedPath = true
