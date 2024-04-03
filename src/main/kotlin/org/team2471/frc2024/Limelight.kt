@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
@@ -73,6 +74,10 @@ class LimelightCamera(
     networkTable: NetworkTable,
     name: String,
 ): GenericCamera(networkTable, name) {
+    val robotToCamera = Transform3d(
+        Translation3d(-0.185.meters.asMeters, -0.06.inches.asMeters, 0.15.inches.asMeters),
+        Rotation3d(0.0, 30.degrees.asRadians, -178.degrees.asRadians)
+    )
 
     var previousHeartbeat = 0.0
     override var isConnected: Boolean = false
@@ -107,18 +112,30 @@ class LimelightCamera(
         val poseArray = LimelightHelpers.getBotPoseEstimate_wpiBlue(name)   // LimelightHelpers.getBotPose3d_wpiBlue(name)
         var estimatedPose = Vector2L(poseArray.pose.translation.x.meters, poseArray.pose.translation.y.meters * (8.2 / 8.0)) // * 1.017 to compensate for limelight being off on y
         var tagCount = poseArray.tagCount
+        var targetPoses : ArrayList<Vector2L> = arrayListOf()
 
         if (estimatedPose == Vector2L(0.0.meters, 0.0.meters) || tagCount < 2) {
+            targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
             advantagePoseEntry.setAdvantagePoses(arrayOf(), arrayOf())
             return null
         } // estimatedPose returns origin if no tags seen
 
         var avgDist = 0.0.inches
+        var avgAmbiguity = 0.0
 
         for (target in poseArray.rawFiducials!!) {
-            avgDist += target?.distToCamera?.meters ?: 0.0.inches
+            target?.let{
+                avgDist += it.distToCamera.meters
+                avgAmbiguity += it.ambiguity
+
+            }
         }
+//            val visionTargetPosition = LimelightHelpers.getTargetPose_RobotSpace(name)
+//            targetPoses.add(Vector2L(visionTargetPosition[0].meters, visionTargetPosition[1].meters))
+
+ //       targetPoseEntry.setAdvantagePoses(targetPoses.toTypedArray())
         avgDist /= poseArray.tagCount.toDouble()
+        avgAmbiguity /= poseArray.tagCount.toDouble()
 
         var stDev = limelightDistCurve.getValue(avgDist.asMeters)
 
