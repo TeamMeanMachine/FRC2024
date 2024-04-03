@@ -207,7 +207,7 @@ object Shooter: Subsystem("Shooter") {
                     if (rpmTopSetpoint == 0.0) { // ramp down
                         pdPowerTop = 0.0
                         power = if (motorRpmTop > 1.0 && motorRpmTop < 4000.0
-                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorTop.current > 3.0))
+                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING))
                             NEG_POWER else 0.0
                     }
                     power = power.coerceIn(NEG_POWER, 1.0)
@@ -220,7 +220,7 @@ object Shooter: Subsystem("Shooter") {
                     if (rpmBottomSetpoint == 0.0) { // ramp down
                         pdPowerBottom = 0.0
                         power = if (motorRpmBottom > 1.0 && motorRpmBottom < 4000.0
-                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorBottom.current > 3.0))
+                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING))
                             NEG_POWER else 0.0
                     }
                     power = power.coerceIn(NEG_POWER, 1.0)

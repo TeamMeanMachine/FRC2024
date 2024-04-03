@@ -511,7 +511,7 @@ suspend fun holdRampUpShooter() {
     val t = Timer()
     t.start()
     periodic {
-        Shooter.manualShootState = (Intake.intakeState != Intake.IntakeState.SLOWING || Intake.intakeState != Intake.IntakeState.INTAKING) //true if not intaking a note
+        Shooter.manualShootState = (Intake.intakeState != Intake.IntakeState.SLOWING && Intake.intakeState != Intake.IntakeState.INTAKING) //true if not intaking a note
         if (!OI.operatorController.leftTriggerFullPress && t.get() > 0.2) {
             this.stop()
         }
