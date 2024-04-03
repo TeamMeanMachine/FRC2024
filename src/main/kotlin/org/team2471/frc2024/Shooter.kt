@@ -205,6 +205,7 @@ object Shooter: Subsystem("Shooter") {
                     pdPowerTop += topPDController.update(rpmTopSetpoint - motorRpmTop)
                     var power = pdPowerTop + ffTopPower
                     if (rpmTopSetpoint == 0.0) { // ramp down
+                        pdPowerTop = 0.0
                         power = if (motorRpmTop > 1.0 && motorRpmTop < 4000.0
                             && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorTop.current > 3.0))
                             NEG_POWER else 0.0
@@ -217,6 +218,7 @@ object Shooter: Subsystem("Shooter") {
                     pdPowerBottom += bottomPDController.update(rpmBottomSetpoint - motorRpmBottom)
                     power = pdPowerBottom + ffBottomPower
                     if (rpmBottomSetpoint == 0.0) { // ramp down
+                        pdPowerBottom = 0.0
                         power = if (motorRpmBottom > 1.0 && motorRpmBottom < 4000.0
                             && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorBottom.current > 3.0))
                             NEG_POWER else 0.0
