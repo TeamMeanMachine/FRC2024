@@ -47,8 +47,8 @@ object Shooter: Subsystem("Shooter") {
     val RPM15Entry = table.getEntry("RPM15Entry")
     val RPM17Entry = table.getEntry("RPM17Entry")
 
-    const val NEG_POWER = -0.001
-
+    const val NEG_POWER = -0.001 //min for falcon to even consider
+    const val MAXRPM = 5800.0
 
     val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
     val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
@@ -83,10 +83,6 @@ object Shooter: Subsystem("Shooter") {
     private var pdPowerTop = 0.0
     private var pdPowerBottom = 0.0
 
-    private var prevPowerTop = 0.0
-    private var prevPowerBottom = 0.0
-
-    const val MAXRPM = 5800.0
     var rpmTopSetpoint: Double = 0.0
         set(value) {
             val capped = value.coerceIn(0.0, MAXRPM)
@@ -162,7 +158,7 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorBottom.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            currentLimit(30, 30, 1)
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
@@ -170,7 +166,7 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorTop.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            currentLimit(30, 30, 1)
+            currentLimit(30, 40, 1)
             coastMode()
             inverted(true)
             followersInverted(true)
@@ -212,26 +208,26 @@ object Shooter: Subsystem("Shooter") {
                 if (Robot.isEnabled || Robot.isAutonomous) {
                     pdPowerTop += topPDController.update(rpmTopSetpoint - motorRpmTop)
                     var power = pdPowerTop + ffTopPower
-                    if (rpmTopSetpoint == 0.0) {
-                        power = if (motorRpmTop > 1.0 && motorRpmTop < 4000.0 && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING)) NEG_POWER else 0.0
+                    if (rpmTopSetpoint == 0.0) { // ramp down
+                        power = if (motorRpmTop > 1.0 && motorRpmTop < 4000.0
+                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorTop.current > 3.0))
+                            NEG_POWER else 0.0
                     }
                     power = power.coerceIn(NEG_POWER, 1.0)
                     if (rpmTopSetpoint > 0.0) power = power.coerceIn(0.0, 1.0)
                     shooterMotorTop.setPercentOutput(power)
-                    print("pow top: $power prev top: $prevPowerTop")
-                    prevPowerTop = power
 
 
                     pdPowerBottom += bottomPDController.update(rpmBottomSetpoint - motorRpmBottom)
                     power = pdPowerBottom + ffBottomPower
-                    if (rpmBottomSetpoint == 0.0) {
-                        power = if (motorRpmBottom > 1.0 && motorRpmBottom < 4000.0 && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING)) NEG_POWER else 0.0
+                    if (rpmBottomSetpoint == 0.0) { // ramp down
+                        power = if (motorRpmBottom > 1.0 && motorRpmBottom < 4000.0
+                            && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING || Intake.intakeMotorBottom.current > 3.0))
+                            NEG_POWER else 0.0
                     }
                     power = power.coerceIn(NEG_POWER, 1.0)
                     if (rpmTopSetpoint > 0.0) power = power.coerceIn(0.0, 1.0)
                     shooterMotorBottom.setPercentOutput(power)
-                    println("pow bottom: $power prev bottom: $prevPowerBottom")
-                    prevPowerBottom = power
 
 //                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
                 }
