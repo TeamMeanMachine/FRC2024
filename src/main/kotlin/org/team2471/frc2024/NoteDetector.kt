@@ -276,11 +276,11 @@ object NoteDetector {
 //        return false
     }
 
-    fun closestIsMiddleAdjust(maximumErr: Double = 3.5) : Boolean {
+    fun closestIsMiddleAdjust(maximumErr: Double = 2.5) : Boolean {
         val n = closestNote
         if (n != null) {
 //            println("Closest is middle: ${(26.135 - maximumErr < n.fieldCoords.x && n.fieldCoords.x < 26.135 + maximumErr)} x: ${n.fieldCoords.x}")
-            return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
+            return (26.135 - maximumErr < n.fieldCoords.x && n.fieldCoords.x < 26.135 + maximumErr) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
         }
         return false
     }

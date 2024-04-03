@@ -155,6 +155,12 @@ object Intake: Subsystem("Intake") {
         feederMotor.setPercentOutput(value)
     }
 
+    override fun preEnable() {
+        GlobalScope.launch {
+            println("inside intake preEnable ${Robot.recentTimeTaken()}")
+        }
+    }
+
     enum class IntakeState {
         EMPTY,
         INTAKING,
