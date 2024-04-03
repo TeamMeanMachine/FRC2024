@@ -18,7 +18,6 @@ import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
@@ -27,7 +26,6 @@ import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
 import java.util.*
-import kotlin.math.abs
 import kotlin.math.absoluteValue
 
 private lateinit var autonomi: Autonomi
@@ -433,7 +431,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             var finishedPath = false
             var noCargo = false
 
-            shootThenIntake(auto?.get("nuh uhhh"), true, { noCargo }, auto?.get("1-GrabSecond"), { it > 0.5 && NoteDetector.closestIsMiddleAdjust(2.5) }, skipShoot = true)
+            shootThenIntake(auto?.get("nuh uhhh"), true, { noCargo }, auto?.get("1-GrabSecond"), { it > 0.5 && NoteDetector.closestIsMiddleAdjust(2.5) }, skipShoot = true, grabNoteAtPosition = NoteDetector.middleNote(0))
             finishedPath = true
 
             if (noCargo) {
@@ -446,7 +444,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             noCargo = false
             finishedPath = false
             parallel({
-                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) })
+                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(1))
                 finishedPath = true
             }, {
                 t.start()
@@ -471,7 +469,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             noCargo = false
             finishedPath = false
             parallel({
-                shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) })
+                shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(2))
                 finishedPath = true
             }, {
                 t.start()
@@ -511,7 +509,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         }
     }
 
-    suspend fun shootThenIntake(shootPath: Path2D?, aimWhileDriving: Boolean, missedPiece: () -> Boolean, intakePath: Path2D?, intakeEarlyExit: (Double) -> Boolean, skipShoot: Boolean = false) = use(Drive, name = "driveAlongPathThenShoot") {
+    suspend fun shootThenIntake(shootPath: Path2D?, aimWhileDriving: Boolean, missedPiece: () -> Boolean, intakePath: Path2D?, intakeEarlyExit: (Double) -> Boolean, skipShoot: Boolean = false, grabNoteAtPosition: Vector2? = null) = use(Drive, name = "driveAlongPathThenShoot") {
         var finishedPath = false
         var missedPieceFlag = false
         val t = Timer()
@@ -562,7 +560,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                     Intake.intakeState = Intake.IntakeState.INTAKING
                     Pivot.aimSpeaker = false
                 })
-                pickUpSeenNote(true)
+                pickUpSeenNote(true, getClosestNoteAtPosition = grabNoteAtPosition)
             } else {
                 println("INTAKE PATH IS NULL")
             }
@@ -617,7 +615,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             Intake.setIntakeMotorsPercent(1.0)
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(4)) && it > 0.5
+                    NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(4)) && it > 0.5
                 })
             }
             pickUpSeenNote(true, stopWhenBeamBreak = true)
@@ -686,7 +684,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             parallel({
                 if (path != null) {
                     Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(2), 5.0)
+                        it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(2), 5.0)
                     })
                 }
             }, {
@@ -709,7 +707,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             path = auto?.get("0.1-Mid1_GrabSecond") //Mid1 Third
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestNoteAtPosition(NoteDetector.middleNote( 0))
+                    NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote( 0))
                 })
             }
             pickUpSeenNote()
@@ -766,7 +764,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             parallel({
                 if (path != null) {
                     Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(1), 7.0)
+                        it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(1), 7.0)
                     })
                 }
             }, {
@@ -794,7 +792,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             path = auto?.get("5-GrabFourth") //FirSe Third
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(2))
+                    it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(2))
                 })
             }
             pickUpSeenNote()
@@ -812,7 +810,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             path = auto?.get("0.1-Mid1_GrabSecond") //FirSe Fourth
             if (path != null) {
                 Drive.driveAlongPath(path, false, earlyExit = {
-                    it > 0.5 && NoteDetector.closestNoteAtPosition(NoteDetector.middleNote(0))
+                    it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0))
                 })
             }
             pickUpSeenNote()

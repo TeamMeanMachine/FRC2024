@@ -9,10 +9,8 @@ import org.photonvision.PhotonCamera
 import org.photonvision.targeting.PhotonTrackedTarget
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
-import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.asFeet
-import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.poseDiff
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
@@ -74,16 +72,6 @@ object NoteDetector {
                 } else {
                     return n.fieldCoords.x < 26.135 + 1.5 //if x < middle of the field + offset 1.5 feet
                 }
-            }
-            return false
-        }
-
-    val closestIsMiddle: Boolean
-        get() {
-            val n = closestNote
-            if (n != null) {
-//                println("Closest is middle: ${(26.135 - 4.0 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 4.0)} x: ${n.fieldCoords.x}")
-                return (26.135 - 2.5 < n.fieldCoords.x && n.fieldCoords.x < 26.135 + 2.5) //middle of the field - offset 2.5 feet < x < middle of the field + offset 1.5 feet
             }
             return false
         }
@@ -253,7 +241,7 @@ object NoteDetector {
         return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition.asFeet
     }
 
-    fun closestNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
+    fun closestNoteIsAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
         var note = closestNote
 
         if (seesNote) {
@@ -274,6 +262,18 @@ object NoteDetector {
         return seesNoteCounter > 1
 
 //        return false
+    }
+
+    fun getNearNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Note? {
+        if (notes.isNotEmpty()) {
+            for (note in notes) {
+                println("Expected: $expectedPos   Note: ${note.fieldCoords}   Distance from expected: ${note.fieldCoords.distance(expectedPos).absoluteValue}")
+                if (note.fieldCoords.distance(expectedPos).absoluteValue < maximumErr) {
+                    return note
+                }
+            }
+        }
+        return null
     }
 
     fun closestIsMiddleAdjust(maximumErr: Double = 2.5) : Boolean {

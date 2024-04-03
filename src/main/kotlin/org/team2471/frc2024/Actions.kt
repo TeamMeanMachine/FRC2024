@@ -166,11 +166,11 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
     }
 
     if (seesNote) {
-        pickUpSeenNote(cautious = false, teleopTranslation = true)
+        pickUpSeenNote(cautious = true)
     }
 }
 
-suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null, teleopTranslation: Boolean = false, stopWhenBeamBreak: Boolean = false, ignoreWrongSide: Boolean = false, overrideTimeout: Double? = null) = use(Drive, name = "pick up note") {
+suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = null, doTurn: Boolean = true, wantedApproachAngle: Double? = null, stopWhenBeamBreak: Boolean = false, ignoreWrongSide: Boolean = false, overrideTimeout: Double? = null, getClosestNoteAtPosition: Vector2? = null) = use(Drive, name = "pick up note") {
 //    try {
     println("inside \"pickUpSeenNote\"")
 
@@ -216,12 +216,26 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
         }
 
         var noteFound = false
+        var newNoteList = NoteDetector.notes
 
-        if (NoteDetector.notes.isEmpty()) {
+        if (newNoteList.isEmpty()) {
             println("there are no notes inside the note list")
+        } else {
+            if (getClosestNoteAtPosition != null) {
+                val n = NoteDetector.getNearNoteAtPosition(getClosestNoteAtPosition)
+
+                if (n != null) {
+                    newNoteList = listOf(n)
+                } else {
+                    println("i see note but not in expected position")
+                    newNoteList = listOf()
+                }
+            }
         }
+
+
         //checking if note is in expected range and setting its position
-        for (note in  NoteDetector.notes) {
+        for (note in newNoteList) {
             val latency = Timer.getFPGATimestamp() - note.timestampSeconds
             val previousPose = Drive.lookupPose(note.timestampSeconds)
             val poseDiff = Drive.poseDiff(latency)
@@ -288,7 +302,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
         if (!noteFound && !noteFoundFlag) {
             println("pick up seen note did not see any note to pickup")
-            println("notes: ${NoteDetector.notes}")
+            println("notes: $newNoteList")
 
             noNoteCounter += 1
 
@@ -340,7 +354,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
                 if (cautious) {
                     driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((targetPose.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
-                    val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
+                    val driveD = (driveVelocity / targetPose.length * 0.15).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
                     driveSpeed -= driveD
                 }
                 if (targetPose.x < 3.0 && !intakeTurnedOn) {
@@ -358,7 +372,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
                 if (cautious) {
                     val driveDirection = Vector2(-0.85 * targetPose.y, targetPose.x).normalize()
 
-                    Drive.drive(if (teleopTranslation) OI.driveTranslation else driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, teleopTranslation, closedLoopHeading = !doTurn)
+                    Drive.drive(driveDirection * driveSpeed, if (turnSpeed == 0.0) OI.driveRotation else turnSpeed, false, closedLoopHeading = !doTurn)
                 } else {
                     val driveDirection = Vector2(-targetPose.y, targetPose.x).normalize().rotateDegrees(-Drive.heading.asDegrees)
 
