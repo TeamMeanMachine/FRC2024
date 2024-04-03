@@ -230,7 +230,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         get() = if (isRedAlliance) Vector2(652.76.inches.asFeet - 7.0.inches.asFeet, 218.5.inches.asFeet) else Vector2(-1.575.inches.asFeet + 7.0.inches.asFeet, 218.5.inches.asFeet) //orig 218.5 for both -- aiming left   3/28 642.73.inches.asFeet
 
     val offsetSpeakerPose
-        get() = speakerPos + Vector2(0.0, linearMap(218.42.inches.asFeet + 13.0, 218.42.inches.asFeet - 13.0, -20.75.inches.asFeet, 20.75.inches.asFeet, combinedPosition.y.asFeet))
+        get() = speakerPos + Vector2(
+            0.0,
+            linearMap(
+                218.42.inches.asFeet - 13.0,
+                218.42.inches.asFeet + 13.0,
+                12.0.inches.asFeet, -12.0.inches.asFeet,
+                combinedPosition.y.asFeet)
+        )
 
     val ampPos = Vector2(0.0, 0.0) //TODO
 
@@ -687,7 +694,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {
-            AimTarget.SPEAKER -> getAngleToSpeaker(true)
+            AimTarget.SPEAKER -> getAngleToSpeaker(true) + if (DriverStation.isAutonomous()) 4.0.degrees else 2.7.degrees
             AimTarget.AMP -> 90.0.degrees
             AimTarget.GAMEPIECE -> -NoteDetector.angleToClosestNote()!!
             AimTarget.PODIUM -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
@@ -732,7 +739,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             speakerPos
         }
 
-        val dVector = combinedPosition - point.feet
+        val dVector = if (Robot.isAutonomousEnabled) {
+            positionInTime(0.3)
+        } else {
+            combinedPosition
+        } - point.feet
         return if (AprilTag.aprilTagsEnabled) atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
@@ -840,6 +851,10 @@ fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
 
 fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
     return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
+}
+
+fun Drive.positionInTime(seconds: Double): Vector2L {
+    return combinedPosition + (deltaPos * (seconds / 50))
 }
 
 enum class AimTarget {

@@ -1,10 +1,6 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.math.geometry.Rotation3d
-import edu.wpi.first.math.geometry.Transform3d
-import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.GlobalScope
@@ -13,19 +9,18 @@ import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.math.linearMap
-import org.team2471.frc.lib.math.round
-import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.combinedPosition
-import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Drive.getAngleToSpeaker
+import org.team2471.frc2024.Drive.offsetSpeakerPose
 import org.team2471.frc2024.Drive.speakerPos
+import org.team2471.frc2024.Robot.isAutonomous
+import org.team2471.frc2024.Robot.isAutonomousEnabled
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.abs
 import kotlin.math.absoluteValue
@@ -88,7 +83,7 @@ object Pivot: Subsystem("Pivot") {
             }
         }
 
-    var aimSpeakerDistanceOffset: Double = 0.0 //feet
+    var speakerDistPitchOffset: Double = 0.0 //feet
 
     val pivotTicks: Int
         get() = pivotEncoder.value
@@ -123,7 +118,15 @@ object Pivot: Subsystem("Pivot") {
         get() = (pivotEncoderAngle - angleSetpoint).asDegrees.absoluteValue
 
     val distFromSpeaker: Double
-        get() = if (AprilTag.aprilTagsEnabled) combinedPosition.distance(speakerPos.feet).asFeet else Drive.position.distance(speakerPos)
+        get() = if (AprilTag.aprilTagsEnabled) {
+            if (isAutonomousEnabled()) {
+                Drive.positionInTime(0.3).distance(offsetSpeakerPose.feet).asFeet
+            } else {
+                combinedPosition.distance(offsetSpeakerPose.feet).asFeet
+            }
+        } else {
+            Drive.position.distance(offsetSpeakerPose)
+        } - cubicMap(0.0, 70.0, 0.0, 1.4, getAngleToSpeaker(false).asDegrees.absoluteValue)
 
     val readyToShootTimer = Timer()
     var rpmReady = false
@@ -149,7 +152,7 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.setRawOffset(pivotEncoderAngle.asDegrees)
         pivotAmpRate.setDouble(80.0)
-        aimSpeakerDistanceOffset = 0.0
+        speakerDistPitchOffset = 0.0
 
 
         GlobalScope.launch {
@@ -178,7 +181,7 @@ object Pivot: Subsystem("Pivot") {
                         39.0.degrees
                     } else if (AprilTag.aprilTagsEnabled) {
 //                        println("dist: $distFromSpeaker off: $aimSpeakerDistanceOffset angle: $angleFudge")
-                        Shooter.pitchCurve.getValue(distFromSpeaker + aimSpeakerDistanceOffset).degrees + angleFudge
+                        Shooter.pitchCurve.getValue(distFromSpeaker + speakerDistPitchOffset).degrees + angleFudge
                     } else {
                         PODIUMPOSE
                     }

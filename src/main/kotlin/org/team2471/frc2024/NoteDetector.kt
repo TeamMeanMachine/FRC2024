@@ -176,10 +176,11 @@ object NoteDetector {
                 val tempNotes : ArrayList<Note> = arrayListOf()
                 notePosAdv = mutableListOf()
 
-                if (camera.isConnected && camera.latestResult != null) {
-                    for (target in camera.latestResult.targets) {
+                var tempLatestResult = camera.latestResult
+                if (camera.isConnected && tempLatestResult != null) {
+                    for (target in tempLatestResult.targets) {
                         val robotCoords = getTargetRobotCoords(target)
-                        val poseDiff = Drive.poseDiff(camera.latestResult.latencyMillis/1000)
+                        val poseDiff = Drive.poseDiff(tempLatestResult.latencyMillis / 1000.0)
                         var fieldCoords = robotCoordsToFieldCoords(robotCoords)
                         if (poseDiff != null) {
                             fieldCoords -= poseDiff.position
@@ -189,7 +190,7 @@ object NoteDetector {
                                 robotCoords,
                                 fieldCoords,
                                 target.yaw,
-                                Timer.getFPGATimestamp() - camera.latestResult.latencyMillis/1000
+                                Timer.getFPGATimestamp() - tempLatestResult.latencyMillis / 1000.0
                             )
                         )
 //                        println(("pitch: ${target.pitch}"))
@@ -253,11 +254,12 @@ object NoteDetector {
         if (note != null) {
             println("Expected: $expectedPos   Note: ${note.fieldCoords}   Length: ${(expectedPos - note.fieldCoords).length}")
 
-//            if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
-//                return true
-//            } else {
-//                println("Note: ${note.fieldCoords}  Pos: $expectedPos")
-//            }
+            if ((expectedPos - note.fieldCoords).length < maximumErr) { // is it a different note
+                return true
+            } else {
+                println("Note: ${note.fieldCoords}  Pos: $expectedPos")
+                return false
+            }
         }
         return seesNoteCounter > 1
 
@@ -267,8 +269,10 @@ object NoteDetector {
     fun getNearNoteAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Note? {
         if (notes.isNotEmpty()) {
             for (note in notes) {
-                println("Expected: $expectedPos   Note: ${note.fieldCoords}   Distance from expected: ${note.fieldCoords.distance(expectedPos).absoluteValue}")
-                if (note.fieldCoords.distance(expectedPos).absoluteValue < maximumErr) {
+                val hi = note.fieldCoords.distance(expectedPos).absoluteValue
+                println("Expected: $expectedPos   Note: ${note.fieldCoords}   Distance from expected: $hi")
+                if (hi < maximumErr) {
+                    println("less than maxError")
                     return note
                 }
             }

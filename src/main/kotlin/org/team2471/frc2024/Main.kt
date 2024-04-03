@@ -13,6 +13,8 @@ import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.steeringTests
 import java.net.NetworkInterface
 
 
@@ -122,11 +124,10 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-
-//        Drive.driveTests()
-//        Drive.steeringTests()
+        Drive.driveTests()
+        Drive.steeringTests()
 //        Pivot.feedForwardTest()
-        Drive.setAngleOffsets()
+//        Drive.setAngleOffsets()
         println("test mode done")
     }
 

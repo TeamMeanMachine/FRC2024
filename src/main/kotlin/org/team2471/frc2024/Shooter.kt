@@ -55,6 +55,7 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmTop
         get() = shooterMotorTop.velocity
 
+
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
@@ -73,8 +74,8 @@ object Shooter: Subsystem("Shooter") {
     val pitchCurve = MotionCurve()
     val rpmCurve = MotionCurve()
 
-    private val topPDController = PDController(0.00015, 0.0002)
-    private val bottomPDController = PDController(0.00015, 0.0002)
+    private val topPDController = PDController(0.0002, 0.0002)
+    private val bottomPDController = PDController(0.0002, 0.0002)
 
     private var ffTopPower: Double = 0.0
     private var ffBottomPower: Double = 0.0
@@ -209,9 +210,10 @@ object Shooter: Subsystem("Shooter") {
                         power = if (motorRpmTop > 1.0 && motorRpmTop < 4000.0
                             && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING))
                             NEG_POWER else 0.0
+                        power = power.coerceIn(NEG_POWER, 1.0)
+                    } else {
+                        if (pdPowerTop + ffTopPower > 1.0) pdPowerTop = 1.0 - ffTopPower
                     }
-                    power = power.coerceIn(NEG_POWER, 1.0)
-                    if (rpmTopSetpoint > 0.0) power = power.coerceIn(0.0, 1.0)
                     shooterMotorTop.setPercentOutput(power)
 
 
@@ -222,9 +224,10 @@ object Shooter: Subsystem("Shooter") {
                         power = if (motorRpmBottom > 1.0 && motorRpmBottom < 4000.0
                             && (Intake.intakeState == Intake.IntakeState.INTAKING || Intake.intakeState == Intake.IntakeState.SLOWING))
                             NEG_POWER else 0.0
+                        power = power.coerceIn(NEG_POWER, 1.0)
+                    } else {
+                        if (pdPowerBottom + ffBottomPower > 1.0) pdPowerBottom = 1.0 - ffBottomPower
                     }
-                    power = power.coerceIn(NEG_POWER, 1.0)
-                    if (rpmTopSetpoint > 0.0) power = power.coerceIn(0.0, 1.0)
                     shooterMotorBottom.setPercentOutput(power)
 
 //                    println("topPower: $ffTopPower   bottomPower: $ffBottomPower")
