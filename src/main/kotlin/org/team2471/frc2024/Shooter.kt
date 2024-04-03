@@ -29,13 +29,12 @@ object Shooter: Subsystem("Shooter") {
     private val shootingEntry = table.getEntry("shooting")
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
     val topAmpRPMEntry = table.getEntry("Top Amp RPM")
-    val Pitch4_2Entry = table.getEntry("Pitch4.2Entry")
+    val Pitch3_5Entry = table.getEntry("Pitch3.5Entry")
     val Pitch5Entry = table.getEntry("Pitch5Entry")
     val Pitch7Entry = table.getEntry("Pitch7Entry")
     val Pitch9Entry = table.getEntry("Pitch9Entry")
     val Pitch11Entry = table.getEntry("Pitch11Entry")
     val Pitch13Entry = table.getEntry("Pitch13Entry")
-    val Pitch13_7Entry = table.getEntry("Pitch13.7Entry")
     val Pitch15Entry = table.getEntry("Pitch15Entry")
     val Pitch17Entry = table.getEntry("Pitch17Entry")
 //    val Pitch19Entry = table.getEntry("Pitch19Entry")
@@ -99,16 +98,15 @@ object Shooter: Subsystem("Shooter") {
     init {
 
 //        if (!Robot.inComp) {
-            if (!Pitch17Entry.exists() || !Pitch4_2Entry.exists()) {
-                Pitch4_2Entry.setDouble(60.0)
-                Pitch5Entry.setDouble(56.4)
-                Pitch7Entry.setDouble(46.8)
-                Pitch9Entry.setDouble(40.4)
-                Pitch11Entry.setDouble(35.0)
+            if (!Pitch17Entry.exists() || !Pitch3_5Entry.exists()) {
+                Pitch3_5Entry.setDouble(57.0)
+                Pitch5Entry.setDouble(52.0)
+                Pitch7Entry.setDouble(43.0)
+                Pitch9Entry.setDouble(38.0)
+                Pitch11Entry.setDouble(34.0)
                 Pitch13Entry.setDouble(31.0)
-                Pitch13_7Entry.setDouble(30.5)
-                Pitch15Entry.setDouble(29.7)
-                Pitch17Entry.setDouble(27.0)
+                Pitch15Entry.setDouble(30.0)
+                Pitch17Entry.setDouble(29.0)
 //                Pitch19Entry.setDouble(0.0)
 //                Pitch21Entry.setDouble(0.0)
 
@@ -118,13 +116,12 @@ object Shooter: Subsystem("Shooter") {
                 RPM15Entry.setDouble(5000.0)
                 RPM17Entry.setDouble(5000.0)
 
-                Pitch4_2Entry.setPersistent()
+                Pitch3_5Entry.setPersistent()
                 Pitch5Entry.setPersistent()
                 Pitch7Entry.setPersistent()
                 Pitch9Entry.setPersistent()
                 Pitch11Entry.setPersistent()
                 Pitch13Entry.setPersistent()
-                Pitch13_7Entry.setPersistent()
                 Pitch15Entry.setPersistent()
                 Pitch17Entry.setPersistent()
 //                Pitch19Entry.setPersistent()
@@ -187,13 +184,12 @@ object Shooter: Subsystem("Shooter") {
 //                println("entry: ${RPM3Entry.getDouble(5.0)}   curve: ${RPMCurve.getValue(3.0)}")
 
 //                if (!inComp) {
-                if (Pitch4_2Entry.getDouble(0.0)!=pitchCurve.getValue(3.7)) rebuildCurves()
+                if (Pitch3_5Entry.getDouble(0.0)!=pitchCurve.getValue(3.5)) rebuildCurves()
                 if (Pitch5Entry.getDouble(0.0)!=pitchCurve.getValue(5.0)) rebuildCurves()
                 if (Pitch7Entry.getDouble(0.0)!=pitchCurve.getValue(7.0)) rebuildCurves()
                 if (Pitch9Entry.getDouble(0.0)!=pitchCurve.getValue(9.0)) rebuildCurves()
                 if (Pitch11Entry.getDouble(0.0)!=pitchCurve.getValue(11.0)) rebuildCurves()
                 if (Pitch13Entry.getDouble(0.0)!=pitchCurve.getValue(13.0)) rebuildCurves()
-                if (Pitch13_7Entry.getDouble(0.0)!=pitchCurve.getValue(13.7)) rebuildCurves()
                 if (Pitch15Entry.getDouble(0.0)!=pitchCurve.getValue(15.0)) rebuildCurves()
                 if (Pitch17Entry.getDouble(0.0)!=pitchCurve.getValue(17.0)) rebuildCurves()
 //                if (Pitch19Entry.getDouble(0.0)!=pitchCurve.getValue(19.0)) rebuildCurves()
@@ -278,13 +274,12 @@ object Shooter: Subsystem("Shooter") {
     fun rebuildCurves() {
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-        pitchCurve.storeValue(4.2, Pitch4_2Entry.getDouble(70.0))
+        pitchCurve.storeValue(4.2, Pitch3_5Entry.getDouble(70.0))
         pitchCurve.storeValue(5.0, Pitch5Entry.getDouble(70.0))
         pitchCurve.storeValue(7.0, Pitch7Entry.getDouble(70.0))
         pitchCurve.storeValue(9.0, Pitch9Entry.getDouble(70.0))
         pitchCurve.storeValue(11.0, Pitch11Entry.getDouble(70.0))
         pitchCurve.storeValue(13.0, Pitch13Entry.getDouble(70.0))
-        pitchCurve.storeValue(13.7, Pitch13_7Entry.getDouble(70.0))
         pitchCurve.storeValue(15.0, Pitch15Entry.getDouble(70.0))
         pitchCurve.storeValue(17.0, Pitch17Entry.getDouble(70.0))
 
@@ -296,8 +291,15 @@ object Shooter: Subsystem("Shooter") {
         rpmCurve.storeValue(13.7, RPM15Entry.getDouble(5800.0))
         rpmCurve.storeValue(17.0, RPM17Entry.getDouble(5800.0))
 
-
-
+//        println("3.5: ${pitchCurve.getValue(3.5)}")
+//        println("5.0: ${pitchCurve.getValue(5.0)}")
+//        println("6.0: ${pitchCurve.getValue(6.0)}")
+//        println("7.0: ${pitchCurve.getValue(7.0)}")
+//        println("9.0: ${pitchCurve.getValue(9.0)}")
+//        println("11.0: ${pitchCurve.getValue(11.0)}")
+//        println("13.0: ${pitchCurve.getValue(13.0)}")
+//        println("15.0: ${pitchCurve.getValue(15.0)}")
+//        println("17.0: ${pitchCurve.getValue(17.0)}")
 
 //        println("1: ${pitchCurve.getValue(3.7 - 7.0.inches.asFeet).round(1)} 2: ${pitchCurve.getValue(5.0 - 7.0.inches.asFeet).round(1)} 3: ${pitchCurve.getValue(7.0 - 7.0.inches.asFeet).round(1)} 4: ${pitchCurve.getValue(9.0 - 7.0.inches.asFeet).round(1)} 5: ${pitchCurve.getValue(11.0 - 7.0.inches.asFeet).round(1)} 6: ${pitchCurve.getValue(13.0 - 7.0.inches.asFeet).round(1)} 7: ${pitchCurve.getValue(13.7 - 7.0.inches.asFeet).round(1)} 8: ${pitchCurve.getValue(15.0 - 7.0.inches.asFeet).round(1)} 9: ${pitchCurve.getValue(17.0 - 7.0.inches.asFeet).round(1)}")
 

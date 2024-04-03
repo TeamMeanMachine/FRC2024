@@ -5,10 +5,7 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.*
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.cube
-import org.team2471.frc.lib.math.deadband
-import org.team2471.frc.lib.math.squareWithSign
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.AprilTag.resetCameras

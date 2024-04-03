@@ -209,8 +209,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(-1.0, 0.0)
-    override val kCarpet = 0.0212 //0.052 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
-    override val kTread = 0.035 //.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
+    override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kTread = 0.04 // 0.035 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
@@ -228,6 +228,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val speakerPos
         get() = if (isRedAlliance) Vector2(652.76.inches.asFeet - 7.0.inches.asFeet, 218.5.inches.asFeet) else Vector2(-1.575.inches.asFeet + 7.0.inches.asFeet, 218.5.inches.asFeet) //orig 218.5 for both -- aiming left   3/28 642.73.inches.asFeet
+
+    val offsetSpeakerPose
+        get() = speakerPos + Vector2(0.0, linearMap(218.42.inches.asFeet + 13.0, 218.42.inches.asFeet - 13.0, -20.75.inches.asFeet, 20.75.inches.asFeet, combinedPosition.y.asFeet))
 
     val ampPos = Vector2(0.0, 0.0) //TODO
 
@@ -304,7 +307,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
-                val aimTargetPoint = if (aimTarget == AimTarget.SPEAKER) arrayOf(Vector2L(speakerPos.x.feet, speakerPos.y.feet))else(arrayOf())
+                val aimTargetPoint = if (aimTarget == AimTarget.SPEAKER) arrayOf(offsetSpeakerPose.feet)else(arrayOf())
                 aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
                 advantageCombinedPoseEntry.setAdvantagePose(combinedPosition, heading)
@@ -631,8 +634,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0)
+                //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor   * more fudge
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(60, 68, 1)
                 openLoopRamp(0.1)
             }
@@ -684,7 +687,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {
-            AimTarget.SPEAKER -> getAngleToSpeaker()
+            AimTarget.SPEAKER -> getAngleToSpeaker(true)
             AimTarget.AMP -> 90.0.degrees
             AimTarget.GAMEPIECE -> -NoteDetector.angleToClosestNote()!!
             AimTarget.PODIUM -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
@@ -720,8 +723,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         return null
     }
 
-    fun getAngleToSpeaker(): Angle {
-        val point = if (Pivot.pivotEncoderAngle > 90.0.degrees) ampPos else speakerPos
+    fun getAngleToSpeaker(useSpinCompensation: Boolean = false): Angle {
+        var point = if (Pivot.pivotEncoderAngle > 90.0.degrees) {
+            ampPos
+        } else if (useSpinCompensation) {
+            offsetSpeakerPose
+        } else {
+            speakerPos
+        }
+
         val dVector = combinedPosition - point.feet
         return if (AprilTag.aprilTagsEnabled) atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
