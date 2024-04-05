@@ -94,7 +94,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val actualRouteEntry = table.getEntry("Actual Route")
     val distanceEntry = table.getEntry("Distance From Speaker Drive")
 
+//    val carpetFlowsRBEntry = table.getEntry("Practice Field?")
+
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
+    private val predictedAdvantagePoseEntry = table.getEntry("Predicted Advantage Pose")
+
+    private val deltaPosEntry = table.getEntry("DeltaPos")
+    private val deltaPosSecEntry = table.getEntry("DeltaPos 2")
 
     val advantageWheelPoseEntry = table.getEntry("Test Wheel Advantage Pose")
 
@@ -208,7 +214,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0)
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(-1.0, 0.0)
+    override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
     override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
     override val kTread = 0.04 // 0.035 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
@@ -279,6 +285,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val yEntry = table.getEntry("Y")
             val poseEntry = table.getEntry("advantageScopePose")
 
+//            carpetFlowsRBEntry.setBoolean(false)
+
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
 
@@ -314,6 +322,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
+
+                deltaPosEntry.setAdvantagePose(deltaPos, heading)
+                deltaPosSecEntry.setAdvantagePose((deltaPos * (0.5 / 50)), heading)
+
                 val aimTargetPoint = if (aimTarget == AimTarget.SPEAKER) arrayOf(offsetSpeakerPose.feet)else(arrayOf())
                 aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
@@ -739,11 +751,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             speakerPos
         }
 
-        val dVector = if (Robot.isAutonomousEnabled) {
-            positionInTime(0.3)
-        } else {
-            combinedPosition
-        } - point.feet
+        val dVector = combinedPosition - point.feet
         return if (AprilTag.aprilTagsEnabled) atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
     }
 }
@@ -853,9 +861,6 @@ fun timeAdjust(vector: Vector2L, timestampSeconds: Double): Vector2L {
     return vector + position.feet - (Drive.lookupPose(timestampSeconds)?.position ?: position).feet
 }
 
-fun Drive.positionInTime(seconds: Double): Vector2L {
-    return combinedPosition + (deltaPos * (seconds / 50))
-}
 
 enum class AimTarget {
     SPEAKER,

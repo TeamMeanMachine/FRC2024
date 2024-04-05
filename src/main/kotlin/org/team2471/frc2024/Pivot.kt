@@ -17,6 +17,7 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.getAngleToSpeaker
+import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.offsetSpeakerPose
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isAutonomous
@@ -119,14 +120,10 @@ object Pivot: Subsystem("Pivot") {
 
     val distFromSpeaker: Double
         get() = if (AprilTag.aprilTagsEnabled) {
-            if (isAutonomousEnabled()) {
-                Drive.positionInTime(0.3).distance(offsetSpeakerPose.feet).asFeet
-            } else {
                 combinedPosition.distance(offsetSpeakerPose.feet).asFeet
-            }
         } else {
             Drive.position.distance(offsetSpeakerPose)
-        } - cubicMap(0.0, 70.0, 0.0, 1.4, getAngleToSpeaker(false).asDegrees.absoluteValue)
+        } - cubicMap(0.0, 70.0, 0.0, 2.2, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)
 
     val readyToShootTimer = Timer()
     var rpmReady = false

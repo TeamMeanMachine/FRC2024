@@ -98,7 +98,7 @@ object Intake: Subsystem("Intake") {
                 }
                 IntakeState.SPITTING -> {}
                 IntakeState.INTAKING -> {
-                    Pivot.angleSetpoint = 20.0.degrees
+                    Pivot.angleSetpoint = 22.0.degrees
                     Shooter.manualShootState = false
                     Shooter.setRpms(0.0)
                     setIntakeMotorsPercent(0.9)
@@ -113,7 +113,7 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.SLOWING -> {
-                    Pivot.angleSetpoint = 20.0.degrees
+                    Pivot.angleSetpoint = 22.0.degrees
                     if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(0.05)
                     } else {

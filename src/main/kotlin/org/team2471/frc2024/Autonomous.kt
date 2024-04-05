@@ -356,12 +356,12 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 }
                 path = auto?.get("2-GrabThird")
                 if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 35.0.degrees else 38.0.degrees
+                    Pivot.angleSetpoint = if (isRedAlliance) 35.0.degrees else 36.5.degrees
                     Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
                 }
                 path = auto?.get("3-GrabFourth")
                 if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 34.0.degrees else 38.5.degrees
+                    Pivot.angleSetpoint = if (isRedAlliance) 33.0.degrees else 34.0.degrees
                     Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
                 }
                 delay(1.0)
@@ -420,19 +420,20 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
 
             if (shootFirstEntry.getBoolean(true)) {
-                Pivot.angleFudge = 2.0.degrees
+                Pivot.angleFudge = 0.4.degrees
                 Shooter.setRpms(Shooter.getRpmFromPosition(Drive.combinedPosition.asFeet))
                 aimAndShoot()
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Shooter.setRpms(0.0)
-                Pivot.angleFudge = 0.0.degrees
+                Pivot.angleFudge = -0.2.degrees
             }
 
             var finishedPath = false
             var noCargo = false
 
-            shootThenIntake(auto?.get("nuh uhhh"), true, { noCargo }, auto?.get("1-GrabSecond"), { it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0), 2.0) }, skipShoot = true, grabNoteAtPosition = NoteDetector.middleNote(0))
+            shootThenIntake(auto?.get("nuh uhhh"), true, { noCargo }, auto?.get("1-GrabSecond"), { it > 0.6 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0), 2.5) }, skipShoot = true, grabNoteAtPosition = NoteDetector.middleNote(0))
             finishedPath = true
+            Pivot.angleFudge = 1.8.degrees
 
             if (noCargo) {
                 println("didn't pick up cargo")
@@ -444,7 +445,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             noCargo = false
             finishedPath = false
             parallel({
-                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(1))
+                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { it > 0.5 && NoteDetector.closestIsMiddleAdjust(2.0) }, grabNoteAtPosition = NoteDetector.middleNote(1))
                 finishedPath = true
             }, {
                 t.start()
@@ -468,7 +469,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
             noCargo = false
             finishedPath = false
-            Pivot.angleFudge = 1.0.degrees
             parallel({
                 shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(2))
                 finishedPath = true
@@ -508,6 +508,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             Drive.xPose()
             Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
+            Pivot.angleFudge = 0.0.degrees
         }
     }
 
