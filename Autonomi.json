@@ -3842,12 +3842,12 @@
 								},
 								"m_nextSlopeMethod": "SLOPE_SMOOTH",
 								"m_nextTangent": {
-									"x": 3.999861304441283,
-									"y": -2.1474808280341096
+									"x": 4.408200881766023,
+									"y": -1.3530755840005884
 								},
 								"m_position": {
-									"x": 8.818396436195428,
-									"y": 13.49582505633299
+									"x": 9.754797816171665,
+									"y": 13.411181476944263
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": 67.9610308865073,
@@ -3855,14 +3855,14 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_SMOOTH",
 								"m_prevTangent": {
-									"x": 11.414349560332685,
-									"y": -6.1282367011268075
+									"x": 12.579622633608446,
+									"y": -3.8612533090047636
 								}
 							},
 							"m_nextSlopeMethod": "SLOPE_SMOOTH",
 							"m_nextTangent": {
-								"x": -10.627936305909785,
-								"y": -2.737383790064319
+								"x": -10.051979397615282,
+								"y": -4.8184094613546655
 							},
 							"m_position": {
 								"x": 9.33383381095404,
@@ -3874,8 +3874,8 @@
 							},
 							"m_prevSlopeMethod": "SLOPE_SMOOTH",
 							"m_prevTangent": {
-								"x": -4.396399531972182,
-								"y": -1.1323583870911056
+								"x": -4.15814662856947,
+								"y": -1.9932047474701713
 							}
 						}
 					},
@@ -3957,7 +3957,32 @@
 									"x": 0.0,
 									"y": 1.0
 								},
-								"m_nextSlopeMethod": "SLOPE_FLAT",
+								"m_nextKey": {
+									"m_markBeginOrEndKeysToZeroSlope": true,
+									"m_nextAngleAndMagnitude": {
+										"x": 0.0,
+										"y": 1.0
+									},
+									"m_nextSlopeMethod": "SLOPE_FLAT",
+									"m_nextTangent": {
+										"x": 0.0,
+										"y": 0.0
+									},
+									"m_prevAngleAndMagnitude": {
+										"x": 0.0,
+										"y": 1.0
+									},
+									"m_prevSlopeMethod": "SLOPE_FLAT",
+									"m_prevTangent": {
+										"x": 0.0,
+										"y": 0.0
+									},
+									"m_timeAndValue": {
+										"x": 3.5,
+										"y": 30.0
+									}
+								},
+								"m_nextSlopeMethod": "SLOPE_SMOOTH",
 								"m_nextTangent": {
 									"x": 0.0,
 									"y": 0.0
@@ -3966,7 +3991,7 @@
 									"x": 0.0,
 									"y": 1.0
 								},
-								"m_prevSlopeMethod": "SLOPE_FLAT",
+								"m_prevSlopeMethod": "SLOPE_SMOOTH",
 								"m_prevTangent": {
 									"x": 1.125,
 									"y": 0.0
@@ -3996,7 +4021,7 @@
 							}
 						},
 						"m_markBeginOrEndKeysToZeroSlope": true,
-						"m_maxValue": 28.0,
+						"m_maxValue": 30.0,
 						"m_minValue": -30.0,
 						"m_postExtrapolation": "EXTRAPOLATION_CONSTANT",
 						"m_preExtrapolation": "EXTRAPOLATION_CONSTANT"
@@ -4016,12 +4041,12 @@
 								},
 								"m_nextSlopeMethod": "SLOPE_SMOOTH",
 								"m_nextTangent": {
-									"x": 8.294511867959121,
-									"y": 4.1146020876545
+									"x": 8.962086699610255,
+									"y": 4.57705918292185
 								},
 								"m_position": {
-									"x": 10.241546341318765,
-									"y": 23.1376656635436
+									"x": 10.967983401082293,
+									"y": 23.907874146388384
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": -55.219365239005185,
@@ -4029,18 +4054,18 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_SMOOTH",
 								"m_prevTangent": {
-									"x": 18.89759950795269,
-									"y": 9.374403656886056
+									"x": 20.418552399570665,
+									"y": 10.428031539405904
 								}
 							},
 							"m_nextSlopeMethod": "SLOPE_SMOOTH",
 							"m_nextTangent": {
-								"x": -9.038385413557517,
-								"y": 7.315335473889092
+								"x": -9.915717224911548,
+								"y": 7.835382916634727
 							},
 							"m_position": {
-								"x": 8.818396436195428,
-								"y": 13.49582505633299
+								"x": 9.543809018795905,
+								"y": 13.411181476944263
 							},
 							"m_prevAngleAndMagnitude": {
 								"x": 59.4108869247375,
@@ -4048,8 +4073,8 @@
 							},
 							"m_prevSlopeMethod": "SLOPE_SMOOTH",
 							"m_prevTangent": {
-								"x": -7.197067387995267,
-								"y": 5.825040641926929
+								"x": -7.895667401054639,
+								"y": 6.239142975379181
 							}
 						}
 					},
