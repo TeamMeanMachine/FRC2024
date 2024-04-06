@@ -56,7 +56,7 @@ object Climb: Subsystem("Climb") {
             currentLimit(39, 60, 1)
             inverted(true)
             pid {
-                p(0.0004)
+                p(0.0006)
             }
             coastMode()
         }

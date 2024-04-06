@@ -413,27 +413,45 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
 
             println("starting auto stuff now ${Robot.totalTimeTaken()}")
-
-            var path = auto?.get("0-ShootFirst")
-            if (path != null) {
-                Drive.driveAlongPath(path, true, inResetGyro = false, turnOverride = { Drive.aimSpeakerAmpLogic() })
-            }
-
-            if (shootFirstEntry.getBoolean(true)) {
-                Pivot.angleFudge = 0.4.degrees
-                Shooter.setRpms(Shooter.getRpmFromPosition(Drive.combinedPosition.asFeet))
-                aimAndShoot()
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Shooter.setRpms(0.0)
-                Pivot.angleFudge = -0.2.degrees
-            }
+            var path = auto?.get("1.2-GrabSecondSpit")
 
             var finishedPath = false
             var noCargo = false
 
-            shootThenIntake(auto?.get("nuh uhhh"), true, { noCargo }, auto?.get("1-GrabSecond"), { it > 0.6 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0), 2.5) }, skipShoot = true, grabNoteAtPosition = NoteDetector.middleNote(0))
+            if (shootFirstEntry.getBoolean(true)) {
+                path = auto?.get("1-GrabSecond")
+                if (path != null) Drive.driveAlongPath(path, true, inResetGyro = false, turnOverride = { Drive.aimSpeakerAmpLogic() })
+
+                Shooter.setRpms(Shooter.getRpmFromPosition(combinedPosition.asFeet))
+                aimAndShoot()
+                Intake.intakeState = Intake.IntakeState.INTAKING
+                Shooter.setRpms(0.0)
+                shootThenIntake(
+                    auto?.get("nuh uhhh"),
+                    true,
+                    { noCargo },
+                    auto?.get("1-GrabSecond"),
+                    { it > 0.6 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0), 2.5) },
+                    skipShoot = true,
+                    grabNoteAtPosition = NoteDetector.middleNote(0)
+                )
+            } else {
+                Pivot.aimSpeaker = true
+                path = auto?.get("1.2-GrabSecondSpit")
+                parallel({
+                    delay(1.0)
+                    fire()
+                    delay(0.2)
+                    Shooter.setRpms(0.0)
+                }, {
+                    Intake.intakeState = Intake.IntakeState.INTAKING
+                    if (path != null) Drive.driveAlongPath(path as Path2D, true, inResetGyro = false)
+                })
+            }
+
+            Pivot.angleFudge = 2.0.degrees
             finishedPath = true
-            Pivot.angleFudge = 1.8.degrees
+//            Pivot.angleFudge = 1.8.degrees
 
             if (noCargo) {
                 println("didn't pick up cargo")
@@ -470,7 +488,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             noCargo = false
             finishedPath = false
             parallel({
+                Pivot.angleFudge = 1.0.degrees
                 shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(2))
+                Pivot.angleFudge = 0.0.degrees
                 finishedPath = true
             }, {
                 t.start()
@@ -483,7 +503,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                     }
                 }
             })
-            Pivot.angleFudge = 0.0.degrees
+//            Pivot.angleFudge = 0.0.degrees
 
             if (noCargo) {
                 println("didn't pick up cargo")
@@ -540,7 +560,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 if (missedPieceFlag) {
                     println("shootThenIntake: exiting driveAlongPathThenShoot because we missed a piece")
                 } else {
-                    aimAndShoot(true)
+                    aimAndShoot(true, delay= 0.75)
                     Shooter.setRpms(0.0)
 //                fire()
                 }

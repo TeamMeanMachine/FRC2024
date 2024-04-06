@@ -123,7 +123,7 @@ object Pivot: Subsystem("Pivot") {
                 combinedPosition.distance(offsetSpeakerPose.feet).asFeet
         } else {
             Drive.position.distance(offsetSpeakerPose)
-        } - cubicMap(0.0, 70.0, 0.0, 2.2, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)
+        } - cubicMap(0.0, 70.0, 0.0, 1.0, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)
 
     val readyToShootTimer = Timer()
     var rpmReady = false
@@ -189,7 +189,7 @@ object Pivot: Subsystem("Pivot") {
 
     }
 
-    fun speakerIsReady(rpmTol: Double = 400.0, pitchTol: Double = 1.0, aimTol: Double = 3.0, debug: Boolean = false): Boolean {
+    fun speakerIsReady(rpmTol: Double = 400.0, pitchTol: Double = 1.0, aimTol: Double = 2.0, debug: Boolean = false): Boolean {
         val wasRpmReady = rpmReady
         val wasPitchReady = pitchReady
         val wasAimReady = aimReady

@@ -117,12 +117,13 @@ suspend fun aimFromPodium() {
 
 }
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, angleFudge: Angle = 0.0.degrees) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0) {
 
     println("Aiming...")
 
     val t = Timer()
     aimAtSpeaker()
+    delay(delay)
     t.start()
     Pivot.readyToShootTimer.start()
     suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
@@ -354,7 +355,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
                 if (cautious) {
                     driveSpeed *= linearMap(0.0, 1.0, 0.7, 1.0, ((targetPose.length - 1.5) / 5.5).coerceIn(0.0, 1.0))
-                    val driveD = (driveVelocity / targetPose.length * 0.15).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
+                    val driveD = (driveVelocity / targetPose.length * 0.1).coerceIn(0.0, 1.0)//linearMap(0.0, 4.5, 0.0, 1.0, 1.0 - ((notePos.length/5.0).coerceIn(0.0, 1.0))))
                     driveSpeed -= driveD
                 }
                 if (targetPose.x < 3.0 && !intakeTurnedOn) {

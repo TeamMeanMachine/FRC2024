@@ -409,7 +409,7 @@ class Camera(val name: String, val robotToCamera: Transform3d, val singleTagStra
 
             avgAreaAmbiguityMultiplierEntry.setDouble(5.0 * avgArea)
 
-            if (numTargets < 2) stDev *= 8.0
+            if (numTargets < 2) stDev *= 3.0
 
             stDev.coerceIn(0.000001, 1000.0)
 
