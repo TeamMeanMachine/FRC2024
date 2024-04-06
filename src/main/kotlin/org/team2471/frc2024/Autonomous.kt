@@ -356,12 +356,12 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 }
                 path = auto?.get("2-GrabThird")
                 if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 35.0.degrees else 36.5.degrees
+                    Pivot.angleSetpoint = if (isRedAlliance) 36.5.degrees else 36.5.degrees //35.0 for red
                     Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
                 }
                 path = auto?.get("3-GrabFourth")
                 if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 33.0.degrees else 34.0.degrees
+                    Pivot.angleSetpoint = if (isRedAlliance) 34.0.degrees else 34.0.degrees //33.0 for red
                     Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
                 }
                 delay(1.0)
@@ -438,14 +438,20 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             } else {
                 Pivot.aimSpeaker = true
                 path = auto?.get("1.2-GrabSecondSpit")
+                var t = Timer()
+                t.start()
+                var shot = false
                 parallel({
-                    delay(1.0)
+                    suspendUntil{ Shooter.motorRpmTop > 4500.0 && Shooter.motorRpmBottom > 4500.0 || t.get() > 1.0 }
                     fire()
                     delay(0.2)
+                    shot = true
                     Shooter.setRpms(0.0)
                 }, {
-                    Intake.intakeState = Intake.IntakeState.INTAKING
                     if (path != null) Drive.driveAlongPath(path as Path2D, true, inResetGyro = false)
+                }, {
+                    suspendUntil{ shot || t.get() > 1.5 }
+                    Intake.intakeState = Intake.IntakeState.INTAKING
                 })
             }
 
@@ -510,7 +516,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 dynamicDriveToMissedPiece(NoteDetector.middleNote(3))
             }
 
-            println("going to shoot sixth piece. noCargo: $noCargo")
+            println("going to shoot fourth piece. noCargo: $noCargo")
 
             path = auto?.get("6-ShootFourth")
             parallel({
