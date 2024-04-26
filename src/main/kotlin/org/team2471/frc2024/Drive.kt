@@ -133,7 +133,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
             Vector2(-10.75, 10.75),
-            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) -141.55 else -85.34).degrees,
+            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 98.75 else -85.34).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -142,7 +142,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
             Vector2(10.75, 10.75),
-            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -21.4 else 41.66).degrees,
+            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -20.37 else 41.66).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -151,7 +151,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
             Vector2(10.75, -10.75),
-            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 36.5 else 152.65).degrees,
+            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 38.24 else 152.65).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -160,7 +160,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
             Vector2(-10.75, -10.75),
-            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 165.2 else 105.99).degrees,
+            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 164.98 else 105.99).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -337,6 +337,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 motorAngle3Entry.setDouble((modules[3] as Module).angle.wrap().asDegrees)
 
                 absoluteAngle0Entry.setDouble((modules[0] as Module).absoluteAngle.asDegrees)
+                absoluteAngle1Entry.setDouble((modules[1] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
@@ -654,7 +655,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor   * more fudge
-                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
+                feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
             }
