@@ -9,6 +9,7 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -254,6 +255,9 @@ object Shooter: Subsystem("Shooter") {
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
+                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.FARSTAGELEG) {
+                    rpmTopSetpoint = 1500.0
+                    rpmBottomSetpoint = 1500.0
                 } else {
                     if (AprilTag.aprilTagsEnabled) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
