@@ -20,8 +20,6 @@ import org.team2471.frc2024.Drive.getAngleToSpeaker
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.offsetSpeakerPose
 import org.team2471.frc2024.Drive.speakerPos
-import org.team2471.frc2024.Robot.isAutonomous
-import org.team2471.frc2024.Robot.isAutonomousEnabled
 import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.abs
 import kotlin.math.absoluteValue
@@ -52,7 +50,7 @@ object Pivot: Subsystem("Pivot") {
 
     val TESTPOSE = 30.5.degrees //18 //32
     val PODIUMPOSE = 37.0.degrees
-    val FARSTAGELEG = 29.0.degrees
+    val DEMO_POSE = 45.0.degrees
     val CLOSESPEAKERPOSE = 59.0.degrees
     val MINHARDSTOP = 5.5.degrees
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees

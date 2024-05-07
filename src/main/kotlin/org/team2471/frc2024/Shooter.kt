@@ -255,9 +255,9 @@ object Shooter: Subsystem("Shooter") {
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
-                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.FARSTAGELEG) {
-                    rpmTopSetpoint = 1500.0
-                    rpmBottomSetpoint = 1500.0
+                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.DEMO_POSE) {
+                    rpmTopSetpoint = 2500.0
+                    rpmBottomSetpoint = 2500.0
                 } else {
                     if (AprilTag.aprilTagsEnabled) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)

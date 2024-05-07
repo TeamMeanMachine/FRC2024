@@ -90,7 +90,7 @@ object OI : Subsystem("OI") {
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.FARSTAGELEG }
+        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.DEMO_POSE }
 
         operatorController::leftTriggerFullPress.whenTrue { holdRampUpShooter() }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
