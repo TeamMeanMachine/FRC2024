@@ -720,7 +720,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val angleError = (heading - aimHeadingSetpoint).wrap()
 
         if (abs(angleError.asDegrees) > 2.0 || Robot.isAutonomous) {
-            return aimPDController.update(angleError.asDegrees)
+            return aimPDController.update(angleError.asDegrees) / maxRotation //dividing by maxRotation for demo mode to have no effect
         }
         return null
     }
