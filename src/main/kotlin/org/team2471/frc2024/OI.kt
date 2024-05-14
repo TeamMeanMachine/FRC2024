@@ -90,19 +90,33 @@ object OI : Subsystem("OI") {
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint = Pivot.DEMO_POSE }
+        operatorController::x.whenTrue { Pivot.angleSetpoint =
+            Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees
+        }
 
         operatorController::leftTriggerFullPress.whenTrue { holdRampUpShooter() }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
         ({ operatorController.dPad == Controller.Direction.UP}).whenTrue {
-            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
-            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
+            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees)+1
+            Pivot.demoAngleEntry.setDouble(newAngle)
+            Pivot.angleSetpoint = newAngle.degrees
+//            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
+//            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
         }
         ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
-            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
-            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
+            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees)-1
+            Pivot.demoAngleEntry.setDouble(newAngle)
+            Pivot.angleSetpoint = newAngle.degrees
+//            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
+//            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
+        }
+        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue {
+            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)+250.0)
+        }
+        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue {
+            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)-250.0)
         }
 
         ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }

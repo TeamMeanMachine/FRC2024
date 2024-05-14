@@ -40,7 +40,7 @@ object Pivot: Subsystem("Pivot") {
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
 //    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
-
+    val demoAngleEntry = table.getEntry("Demo Angle")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 

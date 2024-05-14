@@ -1,6 +1,7 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -47,6 +48,8 @@ object Shooter: Subsystem("Shooter") {
     val RPM15Entry = table.getEntry("RPM15Entry")
     val RPM17Entry = table.getEntry("RPM17Entry")
 
+    val demoRPMEntry = table.getEntry("DemoRPM")
+
     const val NEG_POWER = -0.001 //min for falcon to even consider
     const val MAXRPM = 5800.0
 
@@ -60,6 +63,7 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
+    @OptIn(DelicateCoroutinesApi::class)
     var manualShootState = false
         set(value) {
             field = value
@@ -98,6 +102,7 @@ object Shooter: Subsystem("Shooter") {
         }
 
     init {
+        demoRPMEntry.setDouble(2500.0)
 
 //        if (!Robot.inComp) {
             if (!Pitch17Entry.exists() || !Pitch3_5Entry.exists()) {
@@ -255,9 +260,9 @@ object Shooter: Subsystem("Shooter") {
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                     rpmTopSetpoint = 3500.0
                     rpmBottomSetpoint = 3500.0
-                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.DEMO_POSE) {
-                    rpmTopSetpoint = 2500.0
-                    rpmBottomSetpoint = 2500.0
+                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees) {
+                    rpmTopSetpoint = demoRPMEntry.getDouble(2500.0)
+                    rpmBottomSetpoint = demoRPMEntry.getDouble(2500.0)
                 } else {
                     if (AprilTag.aprilTagsEnabled) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
