@@ -6,6 +6,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.*
 import org.team2471.frc.lib.math.*
+import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.AprilTag.resetCameras
@@ -66,7 +67,7 @@ object OI : Subsystem("OI") {
             Drive.zeroGyro()
             Drive.initializeSteeringMotors() //not needed 02/05
         }
-        driverController::x.whenTrue { Drive.xPose() }
+//        driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue {
             if (Intake.intakeState == Intake.IntakeState.EMPTY) {
@@ -80,7 +81,12 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
-        driverController::x.whenTrue { aimFromPodium() }
+        driverController::x.whenTrue {
+            if (Drive.demoMode) {
+                Pivot.angleSetpoint = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees }
+            else {
+                aimFromPodium() }
+        }
         driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
@@ -90,37 +96,34 @@ object OI : Subsystem("OI") {
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
         operatorController::a.whenTrue { Pivot.angleSetpoint = Pivot.DRIVEPOSE }
-        operatorController::x.whenTrue { Pivot.angleSetpoint =
-            Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees
-        }
 
         operatorController::leftTriggerFullPress.whenTrue { holdRampUpShooter() }
         ({operatorRightTrigger > 0.03}).whenTrue { println("climbinggggggggggggggggggg"); climbWithTrigger() }
         ({operatorController.leftBumper && operatorController.rightBumper}).whenTrue { println("LOCKING NOWWWWWWWWWWWW!!!!"); Climb.activateRelay() }
 
-        ({ operatorController.dPad == Controller.Direction.UP}).whenTrue {
-            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees)+1
+        ({ driverController.dPad == Controller.Direction.UP}).whenTrue {
+            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees) + 2.0
             Pivot.demoAngleEntry.setDouble(newAngle)
             Pivot.angleSetpoint = newAngle.degrees
 //            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
 //            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
         }
-        ({ operatorController.dPad == Controller.Direction.DOWN}).whenTrue {
-            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees)-1
+        ({ driverController.dPad == Controller.Direction.DOWN}).whenTrue {
+            val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees) - 2.0
             Pivot.demoAngleEntry.setDouble(newAngle)
             Pivot.angleSetpoint = newAngle.degrees
 //            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
 //            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
         }
-        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue {
+        ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue {
             Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)+250.0)
         }
-        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue {
+        ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue {
             Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)-250.0)
         }
 
-        ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
-        ({ driverController.dPad == Controller.Direction.DOWN }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
+//        ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
+//        ({ driverController.dPad == Controller.Direction.DOWN }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
 //        ({ operatorController.dPad == Controller.Direction.RIGHT}).whenTrue { println("hiing"); println("end of hiing"); AutoChooser.hii() }
 //        ({ operatorController.dPad == Controller.Direction.LEFT}).whenTrue { println("byeing"); AutoChooser.bye() }
 
