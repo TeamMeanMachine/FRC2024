@@ -103,23 +103,27 @@ object OI : Subsystem("OI") {
 
         ({ driverController.dPad == Controller.Direction.UP}).whenTrue {
             val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees) + 2.0
-            Pivot.demoAngleEntry.setDouble(newAngle)
-            Pivot.angleSetpoint = newAngle.degrees
+            if (newAngle < 90.0) {
+                Pivot.demoAngleEntry.setDouble(newAngle)
+                Pivot.angleSetpoint = newAngle.degrees
+            }
 //            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) + 100.0)
 //            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) + 100.0)
         }
         ({ driverController.dPad == Controller.Direction.DOWN}).whenTrue {
             val newAngle = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees) - 2.0
-            Pivot.demoAngleEntry.setDouble(newAngle)
-            Pivot.angleSetpoint = newAngle.degrees
+            if (newAngle < 90.0) {
+                Pivot.demoAngleEntry.setDouble(newAngle)
+                Pivot.angleSetpoint = newAngle.degrees
+            }
 //            Shooter.topAmpRPMEntry.setDouble(Shooter.topAmpRPMEntry.getDouble(1200.0) - 100.0)
 //            Shooter.bottomAmpRPMEntry.setDouble(Shooter.bottomAmpRPMEntry.getDouble(1200.0) - 100.0)
         }
         ({ driverController.dPad == Controller.Direction.RIGHT}).whenTrue {
-            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)+250.0)
+            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0) + 250.0)
         }
         ({ driverController.dPad == Controller.Direction.LEFT}).whenTrue {
-            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0)-250.0)
+            Shooter.demoRPMEntry.setDouble(Shooter.demoRPMEntry.getDouble(2500.0) - 250.0)
         }
 
 //        ({ driverController.dPad == Controller.Direction.UP }).whenTrue { Pivot.angleSetpoint += 1.0.degrees }
