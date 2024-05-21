@@ -33,7 +33,6 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -301,6 +300,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             rateCurve.storeValue(1.0, 2.0)  // distance, rate
             rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
+            val encoderCounterList = arrayOf(0, 0, 0, 0)
+            val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
+
             println("in init just before periodic")
             val t = Timer()
             t.start()
@@ -340,6 +342,28 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle1Entry.setDouble((modules[1] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
+
+
+                if (Robot.isDisabled) {
+                    for (i in modules.indices) {
+                        val absoluteAngle = (modules[i] as Module).absoluteAngle
+                        if (absoluteAngle == previousAngles[i]) {
+                            //no encoder update, +1 to the counter
+                            encoderCounterList[i]++
+                        } else {
+                            //encoder has updated, it is connected. reset the counter.
+                            (modules[i] as Module).encoderConnected = true
+                            encoderCounterList[i] = 0
+                        }
+                        if (encoderCounterList[i] >= 40) {
+                            //encoder has not sent updates after a certain threshold
+                            (modules[i] as Module).encoderConnected = false
+//                            println("module #$i absolute encoder has been static for more then 40 ticks")
+                        }
+                        previousAngles[i] = absoluteAngle
+                    }
+                }
+
 
                 gyroIsConnectedEntry.setBoolean(gyro.isConnected())
 
@@ -594,12 +618,17 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val angle: Angle
             get() = turnMotor.position.degrees * parameters.invertSteerFactor
 
+        var encoderConnected: Boolean = true
+
         val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
 
         val absoluteAngle: Angle
-            get() {
-                return (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
-            }
+            get() = /*if (encoderConnected) {*/
+                    (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
+//                } else {
+//                    //encoder not connected, assume wheel is zeroed
+//                    (0.0.degrees - angleOffset).wrap()
+//                }
 
         override val treadWear: Double
             get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
