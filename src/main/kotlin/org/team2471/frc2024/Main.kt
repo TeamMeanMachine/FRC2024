@@ -8,18 +8,26 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.littletonrobotics.junction.LogFileUtil
+import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.littletonrobotics.junction.wpilog.WPILOGReader
+import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
+import org.team2471.frc.lib.framework.LoggedMeanlibRobot
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.RobotMode
+import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc2024.testing.driveTests
 import org.team2471.frc2024.testing.steeringTests
 import java.net.NetworkInterface
 
 
 @DelicateCoroutinesApi
-object Robot : MeanlibRobot() {
+object Robot : LoggedMeanlibRobot() {
     var startMeasureTime = getSystemTimeSeconds()
     var lastMeasureTime = startMeasureTime
     var isCompBot = true
@@ -27,6 +35,21 @@ object Robot : MeanlibRobot() {
     val inComp = false
 
     init {
+        if (robotMode != RobotMode.REPLAY) {
+            Logger.addDataReceiver(WPILOGWriter())
+            Logger.addDataReceiver(NT4Publisher())
+        } else {
+            val logPath = LogFileUtil.findReplayLog()
+            Logger.setReplaySource(WPILOGReader(logPath))
+            Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
+        }
+
+        Logger.start()
+
+
+
+
+
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
         for (iFace in networkInterfaces) {

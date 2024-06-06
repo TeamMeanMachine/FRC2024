@@ -2,6 +2,7 @@ package org.team2471.frc2024
 
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -129,8 +130,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
      * **/
     override val modules: Array<SwerveDrive.Module> = arrayOf(
         Module(
-            MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE)),
-            MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER)),
+            MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "FLD")),
+            MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "FLS")),
             Vector2(-10.75, 10.75),
             Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 98.75 else -85.34).degrees,
             DigitalSensors.FRONT_LEFT,
@@ -138,8 +139,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             0
         ),
         Module(
-            MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE)),
-            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER)),
+            MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "FRD")),
+            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "FRS")),
             Vector2(10.75, 10.75),
             Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -20.37 else 41.66).degrees,
             DigitalSensors.FRONT_RIGHT,
@@ -147,8 +148,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             1
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE)),
-            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER)),
+            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "BRD")),
+            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "BRS")),
             Vector2(10.75, -10.75),
             Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 38.24 else 152.65).degrees,
             DigitalSensors.BACK_RIGHT,
@@ -156,8 +157,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             2
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE)),
-            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER)),
+            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "BLD")),
+            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "BLS")),
             Vector2(-10.75, -10.75),
             Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 164.98 else 105.99).degrees,
             DigitalSensors.BACK_LEFT,
@@ -530,7 +531,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
             }
-            val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
+            val useGyro2 = false//useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
             drive(
                 translation * maxTranslation,
                 turn * maxRotation,
@@ -687,6 +688,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
+                setSimMotorAndMOI(DCMotor.getKrakenX60Foc(1), 1.0)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
@@ -699,6 +701,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     p(0.006)
 //                    d(0.0000025)
                 }
+                setSimMotorAndMOI(DCMotor.getNeo550(1), 1.0)
             }
 //            GlobalScope.launch {
 //                periodic {

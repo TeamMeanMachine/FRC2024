@@ -53,8 +53,8 @@ object Shooter: Subsystem("Shooter") {
     const val NEG_POWER = -0.001 //min for falcon to even consider
     const val MAXRPM = 5800.0
 
-    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
-    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM, "Shooter Top"))
+    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP, "Shooter Bottom"))
 
     val motorRpmTop
         get() = shooterMotorTop.velocity
