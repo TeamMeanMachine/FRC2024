@@ -16,13 +16,10 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.LoggedMeanlibRobot
-import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
-import org.team2471.frc2024.testing.driveTests
-import org.team2471.frc2024.testing.steeringTests
 import java.net.NetworkInterface
 
 
@@ -35,10 +32,13 @@ object Robot : LoggedMeanlibRobot() {
     val inComp = false
 
     init {
+        println("robotMode == $robotMode")
         if (robotMode != RobotMode.REPLAY) {
+            //sim or real
             Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
+            setUseTiming(false) // Run as fast as possible
             val logPath = LogFileUtil.findReplayLog()
             Logger.setReplaySource(WPILOGReader(logPath))
             Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
