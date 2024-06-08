@@ -24,7 +24,7 @@ object Climb: Subsystem("Climb") {
     private val relayOnEntry = table.getEntry("Relay On")
     private val matchTimeLeft = table.getEntry("Match time left")
 
-    val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER, "Climb"))
+    val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER, "Climb/Climb"))
     val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
     private val relay = Relay(Solenoids.CLIMB_SWITCH)
 

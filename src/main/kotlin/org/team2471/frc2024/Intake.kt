@@ -24,9 +24,9 @@ object Intake: Subsystem("Intake") {
     private val intakeCurrentEntry = table.getEntry("Intake Current")
     private val feederCurrentEntry = table.getEntry("Feeder Current")
 
-    val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP, "Intake Top"))
-    val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM, "Intake Bottom"))
-    val feederMotor = MotorController(FalconID(Falcons.FEEDER, "Feeder"))
+    val intakeMotorTop = MotorController(FalconID(Falcons.INTAKE_TOP, "Intake/Top"))
+    val intakeMotorBottom = MotorController(FalconID(Falcons.INTAKE_BOTTOM, "Intake/Bottom"))
+    val feederMotor = MotorController(FalconID(Falcons.FEEDER, "Intake/Feeder"))
 
     private val bottomBreakSensor = DigitalInput(DigitalSensors.BOTTOM_BREAK)
     private val topBreakSensor = DigitalInput(DigitalSensors.TOP_BREAK)

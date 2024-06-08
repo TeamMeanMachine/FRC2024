@@ -2,6 +2,7 @@ package org.team2471.frc2024
 
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
@@ -10,6 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.littletonrobotics.junction.Logger
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.SparkMaxID
@@ -130,8 +132,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
      * **/
     override val modules: Array<SwerveDrive.Module> = arrayOf(
         Module(
-            MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "FLD")),
-            MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "FLS")),
+            MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
+            MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75),
             Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 98.75 else -85.34).degrees,
             DigitalSensors.FRONT_LEFT,
@@ -139,8 +141,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             0
         ),
         Module(
-            MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "FRD")),
-            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "FRS")),
+            MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
+            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75),
             Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -20.37 else 41.66).degrees,
             DigitalSensors.FRONT_RIGHT,
@@ -148,8 +150,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             1
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "BRD")),
-            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "BRS")),
+            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
+            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75),
             Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 38.24 else 152.65).degrees,
             DigitalSensors.BACK_RIGHT,
@@ -157,8 +159,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             2
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "BLD")),
-            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "BLS")),
+            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
+            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75),
             Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 164.98 else 105.99).degrees,
             DigitalSensors.BACK_LEFT,
@@ -344,6 +346,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
+                val optimizedSetpointStates = arrayOfNulls<SwerveModuleState>(4)
+                val absoluteStates = arrayOfNulls<SwerveModuleState>(4)
 
                 if (Robot.isDisabled) {
                     for (i in modules.indices) {
@@ -363,6 +367,21 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         }
                         previousAngles[i] = absoluteAngle
                     }
+                    Logger.recordOutput("SwerveStates/SetpointsOptimized", *arrayOf<SwerveModuleState>())
+                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *arrayOf<SwerveModuleState>())
+                } else {
+                    for (i in modules.indices) {
+                        val module = (modules[i] as Module)
+                        val absoluteAngle = module.absoluteAngle
+                        val absoluteSpeed = (module.speed / 12.0).coerceIn(-1.0, 1.0)
+                        val angleSetpoint = module.angleSetpoint
+                        val speedSetpoint = module.power
+
+                        optimizedSetpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
+                        absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
+                    }
+                    Logger.recordOutput("SwerveStates/SetpointsOptimized", *optimizedSetpointStates)
+                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
                 }
 
 

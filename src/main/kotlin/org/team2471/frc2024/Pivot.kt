@@ -42,7 +42,7 @@ object Pivot: Subsystem("Pivot") {
 //    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
     val demoAngleEntry = table.getEntry("Demo Angle")
 
-    val pivotMotor = MotorController(FalconID(Falcons.PIVOT, "Pivot"))
+    val pivotMotor = MotorController(FalconID(Falcons.PIVOT, "Pivot/Pivot"))
 
     private val pivotEncoder = AnalogInput(AnalogSensors.PIVOT)
 
