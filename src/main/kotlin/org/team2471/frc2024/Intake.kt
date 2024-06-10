@@ -1,7 +1,6 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DigitalInput
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -11,7 +10,6 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2024.Robot.isCompBot
 
 object Intake: Subsystem("Intake") {
     private val table = NetworkTableInstance.getDefault().getTable("Intake")

@@ -133,8 +133,8 @@ object Pivot: Subsystem("Pivot") {
 
         pivotMotor.config {
             pid {
-                p(0.00022)
-                d(0.000005)
+                p(0.00022 * 1024.0)
+                d(0.000005 * 1024.0)
             }
 
             //                              ticks / gear ratio   fudge factor
