@@ -6,7 +6,10 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DutyCycleEncoder
+import edu.wpi.first.wpilibj.Preferences
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -36,6 +39,7 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
+import org.team2471.frc2024.gyro.Gyro
 import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -169,15 +173,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         )
     )
 
-    private var navX: NavxWrapper = NavxWrapper()
-    val gyro = navX
+    val gyro = Gyro
     private var gyroOffset = 0.0.degrees
 
     override var heading: Angle
-        get() = (gyroOffset - gyro.angle.degrees).wrap()
+        get() = (gyroOffset - gyro.angle).wrap()
         set(value) {
             gyro.reset()
-            gyroOffset = gyro.angle.degrees + value
+            gyroOffset = gyro.angle + value
         }
 
     private var prevSpeed = 0.0
@@ -385,7 +388,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
 
 
-                gyroIsConnectedEntry.setBoolean(gyro.isConnected())
+                gyroIsConnectedEntry.setBoolean(gyro.isConnected)
 
                 if (!Robot.inComp) {
                     turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)

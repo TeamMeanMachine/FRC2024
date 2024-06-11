@@ -405,11 +405,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             val t = Timer()
             t.start()
             periodic {
-                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && Drive.gyro.isConnected()) {
+                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && Drive.gyro.isConnected) {
                     println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
                     this.stop()
                 }
-                if (!Drive.gyro.isConnected()) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
+                if (!Drive.gyro.isConnected) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
             }
 
             println("starting auto stuff now ${Robot.totalTimeTaken()}")
