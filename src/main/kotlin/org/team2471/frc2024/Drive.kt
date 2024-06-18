@@ -1,7 +1,12 @@
 package org.team2471.frc2024
 
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig
+import com.pathplanner.lib.util.PIDConstants
+import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -109,6 +114,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val rateCurve = MotionCurve()
 
+    val maxVel = 25.0.feet.asMeters
+    val maxRot = 1000.0.degrees.asRadians
 
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
@@ -302,6 +309,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             val encoderCounterList = arrayOf(0, 0, 0, 0)
             val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
+
+            AutoBuilder.configureHolonomic(
+                Drive::getPose,
+                Drive::resetPose,
+                Drive::getRobotRelativeSpeeds,
+                Drive::driveRobotRelative,
+                HolonomicPathFollowerConfig(
+                    PIDConstants(parameters.kpPosition, 0.0, parameters.kdPosition),
+                    PIDConstants(parameters.kpHeading, 0.0, parameters.kdHeading),
+                    maxVel,
+                    maxRot,
+                    ReplanningConfig(false, true, 100.0, 100.0)
+                ),
+                {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
+                null
+            )
 
             println("in init just before periodic")
             val t = Timer()
@@ -508,6 +531,24 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val modY = x.asMeters + fieldCenterOffsetInMeters.x
         return Pose2d(modX,modY, Rotation2d((-heading+180.0.degrees).wrap().asRadians))
     }
+
+    fun getPose(): Pose2d {
+        return Pose2d(combinedPosition.x.asMeters, combinedPosition.y.asMeters, Rotation2d(heading.asRadians))
+    }
+
+    fun resetPose(pose: Pose2d) {
+        combinedPosition = Vector2L(pose.x.meters, pose.y.meters)
+        heading = pose.rotation.radians.radians
+    }
+
+    fun getRobotRelativeSpeeds(): ChassisSpeeds {
+        return ChassisSpeeds(velocity.x.feet.asMeters, velocity.y.feet.asMeters, headingRate.changePerSecond.asRadians)
+    }
+
+    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
+        drive(Vector2(chassisSpeeds.vxMetersPerSecond/maxVel, chassisSpeeds.vyMetersPerSecond/maxVel),chassisSpeeds.omegaRadiansPerSecond/maxRot, fieldCentric = false)
+    }
+
 
     override suspend fun default() {
 
