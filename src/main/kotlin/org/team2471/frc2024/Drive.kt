@@ -316,14 +316,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 Drive::getRobotRelativeSpeeds,
                 Drive::driveRobotRelative,
                 HolonomicPathFollowerConfig(
-                    PIDConstants(parameters.kpPosition, 0.0, parameters.kdPosition),
-                    PIDConstants(parameters.kpHeading, 0.0, parameters.kdHeading),
+                    PIDConstants(parameters.kpPosition.feet.asMeters, 0.0, parameters.kdPosition.feet.asMeters),
+                    PIDConstants(parameters.kpHeading.degrees.asRadians, 0.0, parameters.kdHeading.degrees.asRadians),
                     maxVel,
                     maxRot,
                     ReplanningConfig(false, true, 100.0, 100.0)
                 ),
                 {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
-                null
+                object: edu.wpi.first.wpilibj2.command.Subsystem {}// What does pathplanner do with this driveSubsystem reference?  Can we create a fake drive subsystem with just enough implemented to work?
             )
 
             println("in init just before periodic")
@@ -595,10 +595,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
         Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
     }
-
-
-
-
 
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested

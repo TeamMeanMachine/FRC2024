@@ -2,6 +2,7 @@
 
 package org.team2471.frc2024
 
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -9,13 +10,17 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.parallel
+import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.Drive.isRedAlliance
 import org.team2471.frc2024.testing.driveTests
 import org.team2471.frc2024.testing.steeringTests
 import java.net.NetworkInterface
+import kotlin.math.absoluteValue
 
 
 @DelicateCoroutinesApi
@@ -104,6 +109,9 @@ object Robot : MeanlibRobot() {
 
     override suspend fun autonomous() {
         println("autonomous starting")
+
+        AutoChooser.pathPlannerAuto()
+/*
         if (!Drive.demoMode) {
             initTimeMeasurement()
 //            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
@@ -114,6 +122,7 @@ object Robot : MeanlibRobot() {
         } else {
             println("CANNOT RUN AUTO IN DEMO MODE!!!!!! (you're welcome for not killing anyone)")
         }
+*/
     }
 
     override suspend fun teleop() {

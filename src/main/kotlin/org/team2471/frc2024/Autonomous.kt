@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.networktables.NetworkTableEvent
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
@@ -611,7 +612,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         pickUpSeenNote()
     }
 
-    suspend fun pileAuto() = use(Drive, Shooter, Intake, name = "Shoot Pile") {
+    suspend fun pileAuto() = use(Drive, Shooter, Intake) {
         try {
             println("inside pile ${Robot.totalTimeTaken()}")
             parallel({
@@ -946,6 +947,22 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 //        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
 //        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
 //    }
+
+    suspend fun pathPlannerAuto() = use(Drive, name = "Path Planner Auto")
+    {
+        val autoCommand = PathPlannerAuto("Example Auto")
+        var interrupted = false
+
+        autoCommand.initialize()
+        periodic {
+            autoCommand.execute()
+
+            if (autoCommand.isFinished) {
+                this.stop()
+            }
+        }
+        autoCommand.end(interrupted)
+    }
 }
 
 
