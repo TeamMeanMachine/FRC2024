@@ -354,6 +354,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val optimizedSetpointStates = arrayOfNulls<SwerveModuleState>(4)
                 val absoluteStates = arrayOfNulls<SwerveModuleState>(4)
+                val motorAngleStates = arrayOfNulls<SwerveModuleState>(4)
 
                 if (Robot.isDisabled) {
                     for (i in modules.indices) {
@@ -375,19 +376,23 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     }
                     Logger.recordOutput("SwerveStates/SetpointsOptimized", *arrayOf<SwerveModuleState>())
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *arrayOf<SwerveModuleState>())
+                    Logger.recordOutput("SwerveStates/MotorAngles", *arrayOf<SwerveModuleState>())
                 } else {
                     for (i in modules.indices) {
                         val module = (modules[i] as Module)
                         val absoluteAngle = module.absoluteAngle
+                        val angle = module.angle
                         val absoluteSpeed = (module.speed / 12.0).coerceIn(-1.0, 1.0)
                         val angleSetpoint = module.angleSetpoint
                         val speedSetpoint = module.power
 
                         optimizedSetpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
                         absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
+                        motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
                     }
                     Logger.recordOutput("SwerveStates/SetpointsOptimized", *optimizedSetpointStates)
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
+                    Logger.recordOutput("SwerveStates/MotorAngles", *absoluteStates)
                 }
 
 
@@ -714,7 +719,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 setSimMotorAndMOI(DCMotor.getKrakenX60Foc(1), 0.02)
-                setSimFeedbackCoefficient(1.0)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
@@ -727,7 +731,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     p(0.006 * 1024.0)
 //                    d(0.0000025 * 1024.0)
                 }
-                setSimMotorAndMOI(DCMotor.getNeo550(1), 1.0)
+                setSimMotorAndMOI(DCMotor.getNeo550(1), 0.002)
             }
 //            GlobalScope.launch {
 //                periodic {
