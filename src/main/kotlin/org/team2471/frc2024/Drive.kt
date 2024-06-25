@@ -713,8 +713,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
-                setSimMotorAndMOI(DCMotor.getKrakenX60Foc(1), 0.001)
-                setSimFeedbackCoefficient(2.9)
+                setSimMotorAndMOI(DCMotor.getNeoVortex(1), 0.025)
+                setSimFeedbackCoefficient(6.12)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
