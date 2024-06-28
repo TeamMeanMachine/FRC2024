@@ -950,7 +950,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     suspend fun pathPlannerAuto() = use(Drive, name = "Path Planner Auto")
     {
-        val autoCommand = PathPlannerAuto("Exit")
+        val autoCommand = PathPlannerAuto("4 Piece Center 0 Far")
         var interrupted = false
 
         autoCommand.initialize()
