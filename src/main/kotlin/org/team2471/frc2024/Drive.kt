@@ -533,7 +533,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun getPose(): Pose2d {
-        return Pose2d(combinedPosition.x.asMeters, combinedPosition.y.asMeters, Rotation2d(heading.asRadians))
+//        println("x=${position.x.feet.asMeters} y=${position.y.feet.asMeters} angle=${heading.asRadians}")
+        return Pose2d(position.x.feet.asMeters, position.y.feet.asMeters, Rotation2d(heading.asRadians))
     }
 
     fun resetPose(pose: Pose2d) {
@@ -546,7 +547,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
-        drive(Vector2(chassisSpeeds.vxMetersPerSecond/maxVel, chassisSpeeds.vyMetersPerSecond/maxVel),chassisSpeeds.omegaRadiansPerSecond/maxRot, fieldCentric = false)
+        drive(Vector2(chassisSpeeds.vyMetersPerSecond/maxVel, chassisSpeeds.vxMetersPerSecond/maxVel),chassisSpeeds.omegaRadiansPerSecond/maxRot, fieldCentric = false)
     }
 
 
