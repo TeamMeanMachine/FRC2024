@@ -563,7 +563,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
             }
-            val useGyro2 = false//useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
+            val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
             drive(
                 translation * maxTranslation,
                 turn * maxRotation,
