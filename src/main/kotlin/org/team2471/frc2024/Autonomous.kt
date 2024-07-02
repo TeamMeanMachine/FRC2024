@@ -1,11 +1,14 @@
 package org.team2471.frc2024
 
+import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.networktables.NetworkTableEvent
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -28,6 +31,7 @@ import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
 import java.util.*
 import kotlin.math.absoluteValue
+
 
 private lateinit var autonomi: Autonomi
 
@@ -71,6 +75,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("take me home", "take me home")
     }
 
+    private var autoChooser: SendableChooser<Command> = AutoBuilder.buildAutoChooser()
+
+
     private val testAutoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
         addOption("20 Foot Test", "20 Foot Test")
@@ -104,6 +111,28 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     }
 
     init {
+
+//        autoChooser.addOption("6 Piece", PathPlannerAuto("6 Piece 60 Amps"))
+//        autoChooser.addOption("6 Piece Vision", PathPlannerAuto("6 Piece Vision"))
+//        autoChooser.addOption("5 Piece Amp Race", PathPlannerAuto("5 Piece Amp 3 Far"))
+//        autoChooser.addOption("5 Piece Amp Race Vision", PathPlannerAuto("5 Piece Amp 3 Far Vision"))
+//        //autoChooser.addOption("6 Piece Original", PathPlannerAuto("6 Piece Center 2 Far"))
+//        //autoChooser.addOption("6 Piece New Order", PathPlannerAuto("6 Piece New Order"))
+//        autoChooser.addOption("4 Piece Source", PathPlannerAuto("4 Piece Source 3 Far"))
+//        autoChooser.addOption("4 Race", PathPlannerAuto("4 Race"))
+//        autoChooser.addOption("5 Piece 3-1-2", PathPlannerAuto("5 Race 3-1-2"))
+//        autoChooser.addOption("5 Piece 3-2-1", PathPlannerAuto("5 Race 3-2-1"))
+//        autoChooser.addOption("5 Piece 2-3-1 (F3)", PathPlannerAuto("5 Race 2-3-1"))
+//        autoChooser.addOption("4 Piece Source Vision", PathPlannerAuto("4 Piece Source Vision"))
+//        autoChooser.addOption("4 Close", PathPlannerAuto("4 Piece Center 0 Far"))
+////        autoChooser.addOption("4 Race 2-1-Exit", PathPlannerAuto("4 Race 2-1-Exit"))
+//        //autoChooser.addOption("Amp Race 3rd Mid First", PathPlannerAuto("5 Amp Race 3rd First"))
+//        autoChooser.addOption("4Close", PathPlannerAuto("4Close"))
+//        autoChooser.setDefaultOption("None", Commands.none())
+
+
+        SmartDashboard.putData("AutoChooser", autoChooser)
+
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
@@ -950,19 +979,26 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     suspend fun pathPlannerAuto() = use(Drive, name = "Path Planner Auto")
     {
-        val autoCommand = PathPlannerAuto("4 Piece Center 0 Far")
+        println("Entered pathPlanner Auto. Getting command")
+        val autoCommand = /*PathPlannerAuto("4Close")*/ autoChooser.selected
+//        val autoCommand = PathPlannerAuto(tempCommand.name)
+
+        println("Got command: ${autoCommand.name}")
+
         var interrupted = false
 
+        println("Initializing...")
         autoCommand.initialize()
+
+        println("Right before periodic")
         periodic {
             autoCommand.execute()
 
             if (autoCommand.isFinished) {
+                println("Finished!")
                 this.stop()
             }
         }
         autoCommand.end(interrupted)
     }
 }
-
-
