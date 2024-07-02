@@ -1,0 +1,194 @@
+[
+  {
+    "name": "/SmartDashboard/DemoSpeed",
+    "type": "double",
+    "value": 1.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch3.5Entry",
+    "type": "double",
+    "value": 57.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch5Entry",
+    "type": "double",
+    "value": 52.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch7Entry",
+    "type": "double",
+    "value": 43.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch9Entry",
+    "type": "double",
+    "value": 38.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch11Entry",
+    "type": "double",
+    "value": 34.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch13Entry",
+    "type": "double",
+    "value": 31.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch15Entry",
+    "type": "double",
+    "value": 30.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Pitch17Entry",
+    "type": "double",
+    "value": 29.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/RPM3Entry",
+    "type": "double",
+    "value": 3500.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/RPM6Entry",
+    "type": "double",
+    "value": 3750.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/RPM9Entry",
+    "type": "double",
+    "value": 5000.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/RPM15Entry",
+    "type": "double",
+    "value": 5000.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/RPM17Entry",
+    "type": "double",
+    "value": 5000.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Shooting RPM Top",
+    "type": "double",
+    "value": 5000.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Shooter/Shooting RPM Bottom",
+    "type": "double",
+    "value": 5000.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/odometer 0",
+    "type": "double",
+    "value": 9914.757091117932,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/odometer 1",
+    "type": "double",
+    "value": 9834.71135216606,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/odometer 2",
+    "type": "double",
+    "value": 10060.487493189778,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/odometer 3",
+    "type": "double",
+    "value": 9795.025691743118,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/Angle Offset 0",
+    "type": "double",
+    "value": -0.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/Angle Offset 1",
+    "type": "double",
+    "value": -0.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/Angle Offset 2",
+    "type": "double",
+    "value": -0.0,
+    "properties": {
+      "persistent": true
+    }
+  },
+  {
+    "name": "/Preferences/Angle Offset 3",
+    "type": "double",
+    "value": -0.0,
+    "properties": {
+      "persistent": true
+    }
+  }
+]
