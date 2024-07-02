@@ -116,7 +116,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }
         }
         try {
-            cacheFile = File("/home/lvuser/autonomi.json")
+            cacheFile = File("/Users/justin/IdeaProjects/FRC2024/Autonomi.json")//File("/home/lvuser/autonomi.json")
             if (cacheFile != null) {
                 autonomi = Autonomi.fromJsonString(cacheFile?.readText())!!
                 println("Autonomi cache loaded.")
@@ -910,21 +910,12 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         Drive.zeroGyro()
         Drive.combinedPosition =
             if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-        val auto = autonomi["SafeSubSide"]
-        auto?.isReflected = isBlueAlliance
-        var path = auto?.get("0-Mid1_Grab1.5")
-
-        val t = Timer()
-        t.start()
-
-        val startingPosition = Drive.combinedPosition
-
-        println("line in front of driveAlongPath ${Robot.totalTimeTaken()}")
-        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
-        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
-
-
-
+        val path = autonomi["SafeSubSide"]?.get("1-GrabSecond")
+        if (path != null) {
+            Drive.driveAlongPath(path)
+        } else {
+            println("path is null!!!!!!!!!!!!!")
+        }
     }
 //
 //    suspend fun bye() {

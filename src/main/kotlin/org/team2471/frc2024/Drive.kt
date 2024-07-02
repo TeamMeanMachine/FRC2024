@@ -314,6 +314,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val t = Timer()
             t.start()
             periodic {
+                recordOdometry()
+
                 val batteryVolt = RobotController.getBatteryVoltage() > 12.7
                 SmartDashboard.putBoolean("Battery Good", batteryVolt)
                 val demoDisabled = demoSpeed == 1.0
@@ -392,7 +394,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     }
                     Logger.recordOutput("SwerveStates/SetpointsOptimized", *optimizedSetpointStates)
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
-                    Logger.recordOutput("SwerveStates/MotorAngles", *absoluteStates)
+                    Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
                 }
 
 
@@ -718,7 +720,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
-                setSimMotorAndMOI(DCMotor.getKrakenX60Foc(1), 0.02)
+                setSimMotorAndMOI(DCMotor.getKrakenX60Foc(1), 0.004)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
@@ -731,7 +733,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     p(0.006 * 1024.0)
 //                    d(0.0000025 * 1024.0)
                 }
-                setSimMotorAndMOI(DCMotor.getNeo550(1), 0.002)
+                setSimMotorAndMOI(DCMotor.getNeo550(1), 0.000006)
             }
 //            GlobalScope.launch {
 //                periodic {

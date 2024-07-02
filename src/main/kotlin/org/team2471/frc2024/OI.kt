@@ -146,6 +146,8 @@ object OI : Subsystem("OI") {
                     driverController.rumble = 0.0
                 }
 
+//                println("driveRotation $driveRotation driveTranslation ${driveTranslation}")
+
                 // Operator Rumble
                 if (Shooter.manualShootState && Robot.isTeleopEnabled) {
                     operatorController.rumble = 1.0

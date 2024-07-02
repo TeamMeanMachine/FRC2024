@@ -38,7 +38,7 @@ object Robot : LoggedMeanlibRobot() {
             Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
-            setUseTiming(false) // Run as fast as possible
+            setUseTiming(true) // Run as fast as possible
             val logPath = LogFileUtil.findReplayLog()
             Logger.setReplaySource(WPILOGReader(logPath))
             Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
