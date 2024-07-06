@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DriverStation
@@ -10,6 +11,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
+import org.team2471.frc.lib.sensors.AnalogInput.LoggedAnalogInput
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
@@ -24,6 +26,7 @@ import org.team2471.frc2024.Robot.isCompBot
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.cos
+import kotlin.math.roundToInt
 
 
 object Pivot: Subsystem("Pivot") {
@@ -44,7 +47,7 @@ object Pivot: Subsystem("Pivot") {
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT, "Pivot/Pivot"))
 
-    private val pivotEncoder = AnalogInput(AnalogSensors.PIVOT)
+    private val pivotEncoder = LoggedAnalogInput(AnalogSensors.PIVOT, "PivotEncoder") { linearMap(MINHARDSTOP.asDegrees, MAXHARDSTOP.asDegrees, MINTICKS, MAXTICKS, pivotMotorAngle.asDegrees).roundToInt() }
 
     private const val GEARRATIO = 1 / 61.71
 
@@ -121,7 +124,7 @@ object Pivot: Subsystem("Pivot") {
                 combinedPosition.distance(offsetSpeakerPose.feet).asFeet
         } else {
             Drive.position.distance(offsetSpeakerPose)
-        } - cubicMap(0.0, 70.0, 0.0, 1.0, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)
+        }// - cubicMap(0.0, 70.0, 0.0, 1.0, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)
 
     val readyToShootTimer = Timer()
     var rpmReady = false
@@ -142,6 +145,7 @@ object Pivot: Subsystem("Pivot") {
             coastMode()
             inverted(true)
             currentLimit(35, 40, 20)
+            configSim(DCMotor.getFalcon500(1), 0.0001)
         }
 
 
