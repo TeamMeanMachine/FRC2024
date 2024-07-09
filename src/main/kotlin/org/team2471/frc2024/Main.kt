@@ -46,26 +46,24 @@ object Robot : LoggedMeanlibRobot() {
 
         Logger.start()
 
+        if (robotMode == RobotMode.REAL) {
+            val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
+            println("retrieving network interfaces")
+            for (iFace in networkInterfaces) {
+                println(iFace.name)
+                if (iFace.name == "eth0") {
+                    println("NETWORK NAME--->${iFace.name}<----")
+                    var macString = ""
+                    for (byteVal in iFace.hardwareAddress){
+                        macString += String.format("%s", byteVal)
+                    }
+                    println("FORMATTED---->$macString<-----")
 
-
-
-
-        val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
-        println("retrieving network interfaces")
-        for (iFace in networkInterfaces) {
-            println(iFace.name)
-            if (iFace.name == "eth0") {
-                println("NETWORK NAME--->${iFace.name}<----")
-                var macString = ""
-                for (byteVal in iFace.hardwareAddress){
-                    macString += String.format("%s", byteVal)
+                    isCompBot = (macString != "0-1284751573")
                 }
-                println("FORMATTED---->$macString<-----")
-
-                isCompBot = (macString != "0-1284751573")
-                println("I am compbot = $isCompBot")
             }
         }
+        println("I am compbot = $isCompBot")
 
         // i heard the first string + double concatenations were expensive...
 //        repeat(25) {

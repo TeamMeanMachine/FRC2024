@@ -724,7 +724,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
-                inverted(false)
+                inverted(true)
                 brakeMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
