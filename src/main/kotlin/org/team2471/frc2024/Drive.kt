@@ -521,9 +521,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
             if (aimTarget != AimTarget.NONE) {
-                val aimTurn = aimSpeakerAmpLogic()
-                if (aimTurn != null) {
-                    turn = aimTurn
+                if (demoMode) {
+                    if ( aimTarget == AimTarget.DEMOTAG) {
+                        turn = aimPDController.update(Limelight.limelight.tx.asDegrees) / maxRotation
+                    }
+                } else {
+                    val aimTurn = aimSpeakerAmpLogic()
+                    if (aimTurn != null) {
+                        turn = aimTurn
+                    }
                 }
             }
 
@@ -897,6 +903,7 @@ enum class AimTarget {
     AMP,
     GAMEPIECE,
     PODIUM,
+    DEMOTAG,
     NONE
 }
 

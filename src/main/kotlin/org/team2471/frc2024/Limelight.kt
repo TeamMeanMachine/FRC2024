@@ -2,6 +2,7 @@ package org.team2471.frc2024
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTable
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -68,6 +69,11 @@ object Limelight {
         limelightDistCurve.storeValue(6.0, 0.04) // 0.03
     }
 
+    fun getAngleToDemoTag(): Angle {
+        return Drive.heading - limelight.tx
+    }
+
+
 }
 
 class LimelightCamera(
@@ -87,6 +93,15 @@ class LimelightCamera(
 
     var newHeartbeat = false
     var connectedDebouncer = Debouncer(0.1, Debouncer.DebounceType.kFalling)
+
+    private var tyEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("ty")
+    private var txEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("tx")
+
+    val ty: Angle
+        get() = tyEntry.getDouble(0.0).degrees + robotToCamera.rotation.y.radians
+
+    val tx: Angle
+        get() = txEntry.getDouble(0.0).degrees - 6.0.degrees
 
 
     init {
