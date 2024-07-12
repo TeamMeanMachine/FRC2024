@@ -67,7 +67,6 @@ object OI : Subsystem("OI") {
             Drive.zeroGyro()
             Drive.initializeSteeringMotors() //not needed 02/05
         }
-//        driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue {
             if (Intake.intakeState == Intake.IntakeState.EMPTY) {
@@ -81,7 +80,14 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue { aimAtSpeaker() }
-        driverController::x.whenTrue { println("x"); Drive.xPose() }
+        driverController::x.whenTrue {
+            if (Drive.demoMode) {
+                Pivot.angleSetpoint = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees }
+            else {
+                aimFromPodium() }
+        }
+//        driverController::x.whenTrue { Drive.xPose(); println("xpose") }
+
         driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
