@@ -16,6 +16,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.LoggedMeanlibRobot
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.RobotMode

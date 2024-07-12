@@ -43,14 +43,10 @@ object Gyro  {
     fun headingFromSwerve(): Angle {
         //somehow calculate robot angle from swerve odometry
 
-        val foo = Drive.modules[0].modulePosition - Drive.modules[3].modulePosition
+        val foo = Drive.modules[0].modulePosition// - Drive.modules[3].modulePosition
+
 
 //        println("angle ${foo.angle.asDegrees.round(2)} vector $foo")
-
-
-
-
-
         return foo.angle
     }
 

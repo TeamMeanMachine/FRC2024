@@ -128,7 +128,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kHeadingFeedForward = 0.001,
         kMoveWhileSpin = 27.0,
         invertDriveFactor = 1.0,
-        invertSteerFactor = -1.0
+        invertSteerFactor = 1.0
     )
 
 
@@ -351,6 +351,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle1Entry.setDouble((modules[1] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
+
+//                println("0: ${(modules[0] as Module).angle.asDegrees.round(1)} 1: ${(modules[1] as Module).angle.asDegrees.round(1)} 2: ${(modules[2] as Module).angle.asDegrees.round(1)} 3: ${(modules[3] as Module).angle.asDegrees.round(1)} ")
 
                 velocityEntry.setDouble(velocity.length)
 
