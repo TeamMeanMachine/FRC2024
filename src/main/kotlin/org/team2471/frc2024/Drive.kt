@@ -68,6 +68,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val motorAngle2Entry = table.getEntry("Motor Angle 2")
     val motorAngle3Entry = table.getEntry("Motor Angle 3")
 
+    val modulePosition0Entry = table.getEntry("Module Position 0")
+    val modulePosition1Entry = table.getEntry("Module Position 1")
+    val modulePosition2Entry = table.getEntry("Module Position 2")
+    val modulePosition3Entry = table.getEntry("Module Position 3")
+
     val turnMotor0CurrentEntry = table.getEntry("Turn Current 0")
     val turnMotor1CurrentEntry = table.getEntry("Turn Current 1")
     val turnMotor2CurrentEntry = table.getEntry("Turn Current 2")
@@ -341,6 +346,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
                 advantageCombinedPoseEntry.setAdvantagePose(combinedPosition, heading)
+
+                modulePosition0Entry.setAdvantagePose((modules[0] as Module).fieldPosition.feet, 0.0.degrees)
+                modulePosition1Entry.setAdvantagePose((modules[1] as Module).fieldPosition.feet, 0.0.degrees)
+                modulePosition2Entry.setAdvantagePose((modules[2] as Module).fieldPosition.feet, 0.0.degrees)
+                modulePosition3Entry.setAdvantagePose((modules[3] as Module).fieldPosition.feet, 0.0.degrees)
+
 
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
@@ -685,6 +696,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = driveMotor.position * parameters.invertDriveFactor
 
         override var prevDistance: Double = 0.0
+        override var fieldPosition: Vector2 = Vector2(0.0, 0.0)
 
         override var odometer: Double
             get() {
@@ -719,7 +731,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor   * more fudge
-                feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.004)
