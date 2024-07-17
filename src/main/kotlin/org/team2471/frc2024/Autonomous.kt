@@ -75,8 +75,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("take me home", "take me home")
     }
 
-    private var autoChooser: SendableChooser<Command> = AutoBuilder.buildAutoChooser()
-
+    private val autoChooser = AutoBuilder.buildAutoChooser()
 
     private val testAutoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
@@ -140,6 +139,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         shootFirstEntry.setBoolean(true)
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
+                SmartDashboard.updateValues()
+
                 val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
 
                 SmartDashboard.putBoolean("Auto is selected", autoChosen)
@@ -985,7 +986,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
         println("Got command: ${autoCommand.name}")
 
-        var interrupted = false
+        var interrupted = true
 
         println("Initializing...")
         autoCommand.initialize()
@@ -995,6 +996,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             autoCommand.execute()
 
             if (autoCommand.isFinished) {
+                interrupted = false
                 println("Finished!")
                 this.stop()
             }
