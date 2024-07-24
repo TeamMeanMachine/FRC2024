@@ -11,6 +11,10 @@ import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.isBlueAlliance
+import org.team2471.frc2024.Shooter.manualShootState
+import org.team2471.frc2024.Shooter.rpmBottomSetpoint
+import org.team2471.frc2024.Shooter.rpmCurve
+import org.team2471.frc2024.Shooter.rpmTopSetpoint
 import kotlin.math.absoluteValue
 
 object OI : Subsystem("OI") {
@@ -80,7 +84,18 @@ object OI : Subsystem("OI") {
         driverController::a.whenTrue { spit() }
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
-        driverController::y.whenTrue { if (Drive.demoMode) aimAtTagDemo() else aimAtSpeaker() }
+        driverController::y.whenTrue {
+            aimAtSpeaker();
+//            if (Drive.demoMode) aimAtTagDemo() else aimAtSpeaker();
+//            Shooter.manualShootState = !Shooter.manualShootState
+        }
+        driverController::y.whileTrue {
+            manualShootState = true
+//            println("aargh why")
+        }
+        driverController::y.whenFalse {
+            manualShootState = false
+        }
         driverController::x.whenTrue {
             if (Drive.demoMode) {
                 Pivot.angleSetpoint = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees }
@@ -91,7 +106,7 @@ object OI : Subsystem("OI") {
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
         }
-        driverController::b.whenTrue { println("driver B pressed trying to drive to amp"); lockToAmp() }
+        driverController::b.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }//println("driver B pressed trying to drive to amp"); lockToAmp() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }

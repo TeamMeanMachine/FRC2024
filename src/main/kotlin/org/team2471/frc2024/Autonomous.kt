@@ -84,8 +84,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("Auto Length", "Auto Length")
         addOption("Back Auto Length", "Back Auto Length")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
-
-
     }
 
     private val autonomousChooser = SendableChooser<String?>().apply {

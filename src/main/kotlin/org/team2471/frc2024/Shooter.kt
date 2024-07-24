@@ -68,6 +68,7 @@ object Shooter: Subsystem("Shooter") {
     var manualShootState = false
         set(value) {
             field = value
+//            println("Shootstate: ${value}")
             if (!value && !Robot.isAutonomous) {
                 rpmTopSetpoint = 0.0
                 rpmBottomSetpoint = 0.0
@@ -259,6 +260,9 @@ object Shooter: Subsystem("Shooter") {
                     if (Drive.aimTarget == AimTarget.DEMOTAG) {
                         rpmTopSetpoint = demoTagRPMEntry.getDouble(1500.0)
                         rpmBottomSetpoint = demoTagRPMEntry.getDouble(1500.0)
+                    } else if (Drive.aimTarget == AimTarget.SPEAKER) {
+                        rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                        rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                     } else if (Pivot.angleSetpoint > 90.0.degrees) {
                         rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
                         rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
