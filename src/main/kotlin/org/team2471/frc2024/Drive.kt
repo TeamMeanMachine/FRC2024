@@ -188,6 +188,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             gyro.reset()
             gyroOffset = gyro.angle + value
         }
+    override val gyroConnected: Boolean get() = Gyro.isConnected
 
     private var prevSpeed = 0.0
     private var prevRotationalSpeed = 0.0
@@ -289,6 +290,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         println("drive init")
         initializeSteeringMotors()
 
+        val startHeading = heading
+        for (i in modules.indices) {
+            val position = modules[i].modulePosition.inches.asFeet
+            modules[i].fieldPosition += Vector2(position.x, -position.y)
+            println("Module $i  modulePosition ${modules[i].modulePosition} fieldPosition: ${modules[i].fieldPosition}")
+        }
+
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
             val headingEntry = table.getEntry("Heading")
@@ -338,6 +346,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
+//                println("pos: ${position.round(3)} heading: ${heading.asDegrees.round(2)}")
 
                 deltaPosEntry.setAdvantagePose(deltaPos, heading)
                 deltaPosSecEntry.setAdvantagePose((deltaPos * (0.5 / 50)), heading)
@@ -697,6 +706,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override var prevDistance: Double = 0.0
         override var fieldPosition: Vector2 = Vector2(0.0, 0.0)
+        override var prevAngleInFieldSpace: Angle = angle
+        override var prevAngle: Angle = angle
 
         override var odometer: Double
             get() {
@@ -734,7 +745,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 feedbackCoefficient = 3.0 / 12.0 * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
-                configSim(DCMotor.getKrakenX60Foc(1), 0.004)
+                configSim(DCMotor.getKrakenX60Foc(1), 0.006)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)

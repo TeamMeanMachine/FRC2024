@@ -47,8 +47,10 @@ object Gyro  {
 //        val fooTwo = Drive.modules[1].fieldPosition - Drive.modules[2].fieldPosition
 
 
-        println("angle ${foo.angle.asDegrees.round(2)} vector $foo")
-        return foo.angle// + fooTwo.angle) / 2.0
+        val angle = -foo.angle
+
+//        println("angle ${angle.asDegrees.round(2)} vector $foo")
+        return angle// + fooTwo.angle) / 2.0
     }
 
     fun headingVelocityFromSwerve(): Double {
