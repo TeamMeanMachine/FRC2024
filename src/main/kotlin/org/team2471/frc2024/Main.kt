@@ -16,9 +16,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.LoggedMeanlibRobot
-import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion.following.demoMode
-import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
 import java.net.NetworkInterface
@@ -31,6 +30,8 @@ object Robot : LoggedMeanlibRobot() {
     var isCompBot = true
 
     val inComp = false
+
+    val subsystems: Array<Subsystem> = arrayOf(OI, Drive, Intake, Pivot, Shooter, Climb)
 
     init {
         println("robotMode == $robotMode")
@@ -72,28 +73,9 @@ object Robot : LoggedMeanlibRobot() {
 //        }
         println("NEVER GONNA GIVE YOU UP")
 
-        OI
-        println("Activating OI! ${OI.driverController.leftThumbstickX}")
-        Drive
-        Drive.zeroGyro()
-        Drive.heading = 0.0.degrees
-        println("Activating Drive! heading = ${Drive.heading}")
-        Intake
-        println("Activating Intake! bottomBreak = ${Intake.bottomBreak}")
-        Shooter
-        println("Activating Shooter! rpmError = ${(Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint) - (Shooter.motorRpmTop + Shooter.motorRpmBottom)}")
-        Climb
-        println("Activating Climb! climberHeight = ${Climb.climberHeight}")
-        Pivot
-        println("Activating Pivot! pivotEncoderAngle = ${Pivot.pivotEncoderAngle}")
-        AutoChooser
-        println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
-        AprilTag
-        println("Activating Apriltag! backCamsConnected = ${AprilTag.backCamsConnected}")
-        NoteDetector
-        println("Activating NoteDetector! noteCam isConnected = ${NoteDetector.camera.isConnected}")
-        Limelight
-        println("Activating Limelight! limelight isConnected = ${Limelight.isConnected}")
+        for (subsystem in subsystems) {
+            println("activating subsystem ${subsystem.name}")
+        }
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {
@@ -108,14 +90,9 @@ object Robot : LoggedMeanlibRobot() {
         println("starting enable")
         var done = false
         GlobalScope.launch {
+            //creates a list of enable functions for each subsystem, then run them in parallel. Tested in sim and was same speed as old code -Justin
             parallel(
-                {Drive.enable(); println("after drive ${totalTimeTaken()}")},
-                {Shooter.enable(); println("after shooter ${totalTimeTaken()}")},
-                {Climb.enable(); println("after climb ${totalTimeTaken()}")},
-                {Intake.enable(); println("after intake ${totalTimeTaken()}")},
-                {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
-                {AprilTag.backgroundReset(); println("after aprilTag ${totalTimeTaken()}")}
-
+                *subsystems.map { suspend { it.enable(); println("after ${it.name} ${totalTimeTaken()}") } }.toTypedArray()
             )
             done = true
         }
@@ -157,11 +134,8 @@ object Robot : LoggedMeanlibRobot() {
     override suspend fun disable() {
         Shooter.manualShootState = false
         Intake.intakeState = Intake.IntakeState.EMPTY
-        Drive.disable()
-        Climb.disable()
-        Intake.disable()
-        Pivot.disable()
-        Shooter.disable()
+
+        subsystems.map { suspend { it.disable() } }.toTypedArray()
 
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
@@ -187,7 +161,7 @@ object Robot : LoggedMeanlibRobot() {
     fun recentTimeTaken(): Double {
         val timeTaken = getSystemTimeSeconds() - lastMeasureTime
         updateSecondsTaken()
-        return timeTaken.toDouble()
+        return timeTaken
     }
 }
 
