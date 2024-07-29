@@ -21,7 +21,7 @@ object Gyro  {
 
     val isConnected: Boolean get() = inputs.isConnected
 
-    val angle: Angle get() = if (isConnected) inputs.angle.degrees else headingFromSwerve()
+    val angle: Angle get() = if (isConnected) inputs.angle.degrees else 0.0.degrees
 
     val roll: Angle get() = inputs.roll.degrees
 

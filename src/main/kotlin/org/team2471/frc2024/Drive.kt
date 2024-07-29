@@ -144,7 +144,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
-            Vector2(-10.75, 10.75),
+            Vector2(-10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 98.75 else -85.34).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
@@ -153,7 +153,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
-            Vector2(10.75, 10.75),
+            Vector2(10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -20.37 else 41.66).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
@@ -162,7 +162,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
-            Vector2(10.75, -10.75),
+            Vector2(10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 38.24 else 152.65).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
@@ -171,7 +171,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
-            Vector2(-10.75, -10.75),
+            Vector2(-10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 164.98 else 105.99).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
@@ -223,7 +223,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val driveStDevM = (2.5 / 30.0 / 50.0 * 15.0).feet.asMeters
 
 
-    override var robotPivot = Vector2(0.0, 0.0)
+    override var robotPivot = Vector2(0.0, 0.0).inches
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
@@ -292,7 +292,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val startHeading = heading
         for (i in modules.indices) {
-            val position = modules[i].modulePosition.inches.asFeet
+            val position = modules[i].modulePosition.asFeet
             modules[i].fieldPosition += Vector2(position.x, -position.y)
             println("Module $i  modulePosition ${modules[i].modulePosition} fieldPosition: ${modules[i].fieldPosition}")
         }
@@ -656,7 +656,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     class Module(
         val driveMotor: MotorController,
         val turnMotor: MotorController,
-        override val modulePosition: Vector2,
+        override val modulePosition: Vector2L,
         override var angleOffset: Angle,
         digitalInputID: Int,
         private val odometerEntry: NetworkTableEntry,
