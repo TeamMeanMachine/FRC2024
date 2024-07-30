@@ -4,9 +4,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.littletonrobotics.junction.Logger
 import org.team2471.frc.lib.coroutines.periodic
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.AngularAcceleration
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
@@ -33,7 +31,7 @@ object Gyro  {
         GlobalScope.launch {
             periodic(0.02) {
                 io.updateInputs(inputs)
-                Logger.processInputs("Gyro", inputs)
+                Logger.processInputs("Sensors/Gyro", inputs)
             }
         }
     }
