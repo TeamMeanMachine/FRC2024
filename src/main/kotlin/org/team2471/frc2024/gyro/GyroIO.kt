@@ -20,11 +20,11 @@ interface GyroIO {
         }
 
         override fun fromLog(table: LogTable) {
-            table.get("isConnected", isConnected)
-            table.get("Angle", angle)
-            table.get("Roll", roll)
-            table.get("Pitch", pitch)
-            table.get("Rate", rate)
+            isConnected = table.get("isConnected", isConnected)
+            angle = table.get("Angle", angle)
+            roll = table.get("Roll", roll)
+            pitch = table.get("Pitch", pitch)
+            rate = table.get("Rate", rate)
         }
     }
 
