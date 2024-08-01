@@ -17,7 +17,6 @@ import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.getAngleToSpeaker
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.offsetSpeakerPose
@@ -121,7 +120,7 @@ object Pivot: Subsystem("Pivot") {
 
     val distFromSpeaker: Double
         get() = if (AprilTag.aprilTagsEnabled) {
-                combinedPosition.distance(offsetSpeakerPose.feet).asFeet
+            AprilTag.position.distance(offsetSpeakerPose.feet).asFeet
         } else {
             Drive.position.distance(offsetSpeakerPose)
         }// - cubicMap(0.0, 70.0, 0.0, 1.0, if (isBlueAlliance) getAngleToSpeaker(false).asDegrees.absoluteValue else getAngleToSpeaker(false).asDegrees.absoluteValue - 180.0)

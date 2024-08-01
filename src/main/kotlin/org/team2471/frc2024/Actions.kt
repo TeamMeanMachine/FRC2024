@@ -319,7 +319,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
             if (!noteFound) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
-                notePos = (estimatedFieldPos - Drive.combinedPosition.asFeet).rotateDegrees(-Drive.heading.asDegrees)
+                notePos = (estimatedFieldPos - AprilTag.position.asFeet).rotateDegrees(-Drive.heading.asDegrees)
                 fieldPos = estimatedFieldPos
             }
 

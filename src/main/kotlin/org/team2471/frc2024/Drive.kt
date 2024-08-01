@@ -31,14 +31,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.vision.GlobalPose
-import org.team2471.frc2024.Drive.advantageWheelPoseEntry
-import org.team2471.frc2024.Drive.combinedPosition
-import org.team2471.frc2024.Drive.deltaPos
-import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
-import org.team2471.frc2024.Drive.prevCombinedPosition
-import org.team2471.frc2024.Drive.testWheelPosition
 import org.team2471.frc2024.gyro.Gyro
 import kotlin.math.*
 
@@ -211,12 +204,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var tickVelocity = Vector2(0.0, 0.0)
     var prevTickVelocity = Vector2(0.0, 0.0)
 
-    override var combinedPosition: Vector2L = position.feet
-//        set(value) {
-//            field = value
-//        }
-    var prevCombinedPosition: Vector2L = position.feet
-
 
     var testWheelPosition: Vector2L = position.feet
 //                   feet seconds fps fudge
@@ -254,7 +241,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 218.42.inches.asFeet - 13.0,
                 218.42.inches.asFeet + 13.0,
                 12.0.inches.asFeet, -12.0.inches.asFeet,
-                combinedPosition.y.asFeet)
+                AprilTag.position.y.asFeet)
         )
 
     val ampPos = Vector2(0.0, 0.0) //TODO
@@ -354,7 +341,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 val aimTargetPoint = if (aimTarget == AimTarget.SPEAKER) arrayOf(offsetSpeakerPose.feet)else(arrayOf())
                 aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
-                advantageCombinedPoseEntry.setAdvantagePose(combinedPosition, heading)
+                advantageCombinedPoseEntry.setAdvantagePose(AprilTag.position, heading)
 
                 modulePosition0Entry.setAdvantagePose((modules[0] as Module).fieldPosition.feet, 0.0.degrees)
                 modulePosition1Entry.setAdvantagePose((modules[1] as Module).fieldPosition.feet, 0.0.degrees)
@@ -476,7 +463,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 
-                updatePos(driveStDevM, *AprilTag.getCurrentGlobalPoses())
 
 
                 if (Robot.isAutonomous && aimTarget == AimTarget.SPEAKER) {
@@ -552,7 +538,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             resetPose = resetPose.reflectAcrossField()
         }
 
-        combinedPosition = resetPose.feet
+        AprilTag.position = resetPose.feet
         position = resetPose
         prevPosition = resetPose
         println("resetting to front speaker pos. $position")
@@ -815,8 +801,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun aim(): Double? {
-        if (combinedPosition.x < 29.0.feet && combinedPosition.x > 25.0.feet) {
-            val dVector = combinedPosition - Vector2L(if (isBlueAlliance) 25.0.feet else 29.0.feet, 27.0.feet)
+        if (AprilTag.position.x < 29.0.feet && AprilTag.position.x > 25.0.feet) {
+            val dVector = AprilTag.position - Vector2L(if (isBlueAlliance) 25.0.feet else 29.0.feet, 27.0.feet)
             aimHeadingSetpoint = atan2(dVector.y.asFeet, dVector.x.asFeet).radians
         } else if (isRedAlliance) {
             aimHeadingSetpoint = 180.0.degrees
@@ -841,8 +827,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             speakerPos
         }
 
-        val dVector = combinedPosition - point.feet
-        return if (AprilTag.aprilTagsEnabled) atan2(dVector.y.asFeet, dVector.x.asFeet).radians else if (isRedAlliance) 180.0.degrees + AprilTag.last2DSpeakerAngle.degrees else AprilTag.last2DSpeakerAngle.degrees
+        val dVector = AprilTag.position - point.feet
+        return atan2(dVector.y.asFeet, dVector.x.asFeet).radians
     }
 }
 
@@ -884,58 +870,6 @@ suspend fun Drive.currentTest() = use(this) {
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
-}
-
-fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
-    val pos = combinedPosition
-    prevCombinedPosition = pos
-//                                            measurement, stdev
-    val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
-
-
-//    if (DriverStation.isEnabled()) {
-
-        testWheelPosition = pos + deltaPos
-        deltaPos = Vector2L(0.0.inches, 0.0.inches)
-//       testWheelPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches), Vector2L(1654.0.cm, 821.0.cm))
-
-        advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
-
-        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
-//    }
-
-    if (Limelight.isConnected) {
-        var globalPose = Limelight.getCurrentGlobalPose(deltaPos.asFeet.length < 0.1)
-        if (globalPose != null) measurementsAndStDevs.add(Pair(globalPose.pose, globalPose.stDev))
-    }
-
-
-    if (AprilTag.aprilTagsEnabled) {
-        for (i in aprilPoses) {
-            measurementsAndStDevs.add(Pair(i.pose, i.stDev))
-        }
-    }
-
-    var totalPos = Vector2L(0.0.inches, 0.0.inches)
-    var totalStDev = 0.0
-
-    for (posAndStDev in measurementsAndStDevs) {
-        val editedStDev = posAndStDev.second.pow(-2)
-        totalPos += posAndStDev.first.asMeters.times(editedStDev).meters
-        totalStDev += editedStDev
-    }
-//    if (pos != combinedPosition) {
-//        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-//    }
-
-
-
-    //                       breaks apriltags for some reason
-    if (totalStDev != 0.0 /*&& totalStDev < 1000000000.0*/) {
-        combinedPosition = totalPos.asMeters.div(totalStDev).meters
-//        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
-    }
-    prevCombinedPosition = pos
 }
 
 fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
