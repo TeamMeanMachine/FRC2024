@@ -279,8 +279,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val startHeading = heading
         for (i in modules.indices) {
-            val position = modules[i].modulePosition.asFeet
-            modules[i].fieldPosition += Vector2(position.x, -position.y)
+            val position = modules[i].modulePosition.asFeet.mirrorYAxis()
+            modules[i].fieldPosition += position
             println("Module $i  modulePosition ${modules[i].modulePosition} fieldPosition: ${modules[i].fieldPosition}")
         }
 
@@ -405,6 +405,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
                     Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
                 }
+                Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
 
 
                 gyroIsConnectedEntry.setBoolean(gyro.isConnected)
