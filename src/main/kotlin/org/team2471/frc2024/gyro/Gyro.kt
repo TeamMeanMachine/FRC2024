@@ -8,7 +8,6 @@ import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
-import org.team2471.frc2024.Drive
 
 object Gyro  {
     private val io: GyroIO = when (robotMode) {
@@ -37,19 +36,6 @@ object Gyro  {
     }
 
     fun reset() = io.reset()
-
-    fun headingFromSwerve(): Angle {
-        //somehow calculate robot angle from swerve odometry
-
-        val foo = Drive.modules[0].fieldPosition - Drive.modules[3].fieldPosition
-//        val fooTwo = Drive.modules[1].fieldPosition - Drive.modules[2].fieldPosition
-
-
-        val angle = -foo.angle
-
-//        println("angle ${angle.asDegrees.round(2)} vector $foo")
-        return angle// + fooTwo.angle) / 2.0
-    }
 
     fun headingVelocityFromSwerve(): Double {
 

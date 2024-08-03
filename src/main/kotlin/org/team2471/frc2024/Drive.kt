@@ -276,14 +276,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     init {
         println("drive init")
         initializeSteeringMotors()
-
-        val startHeading = heading
-        for (i in modules.indices) {
-            val position = modules[i].modulePosition.asFeet.mirrorYAxis()
-            modules[i].fieldPosition += position
-            println("Module $i  modulePosition ${modules[i].modulePosition} fieldPosition: ${modules[i].fieldPosition}")
-        }
-
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
             val headingEntry = table.getEntry("Heading")
@@ -342,12 +334,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 aimTargetEntry.setAdvantagePoses(aimTargetPoint)
 
                 advantageCombinedPoseEntry.setAdvantagePose(AprilTag.position, heading)
-
-                modulePosition0Entry.setAdvantagePose((modules[0] as Module).fieldPosition.feet, 0.0.degrees)
-                modulePosition1Entry.setAdvantagePose((modules[1] as Module).fieldPosition.feet, 0.0.degrees)
-                modulePosition2Entry.setAdvantagePose((modules[2] as Module).fieldPosition.feet, 0.0.degrees)
-                modulePosition3Entry.setAdvantagePose((modules[3] as Module).fieldPosition.feet, 0.0.degrees)
-
 
                 motorAngle0Entry.setDouble((modules[0] as Module).angle.wrap().asDegrees)
                 motorAngle1Entry.setDouble((modules[1] as Module).angle.wrap().asDegrees)
@@ -520,7 +506,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         if (odometer3Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(0.0))
     }
 
-    override fun poseUpdate(poseTwist: SwerveDrive.Pose) {
+    override fun poseUpdate(pose: SwerveDrive.Pose) {
         //MAPoseEstimator.addDriveData(Timer.getFPGATimestamp(), Twist2d(poseTwist.position.y, poseTwist.position.x, -poseTwist.heading.asRadians))
     }
 
@@ -692,8 +678,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = driveMotor.position * parameters.invertDriveFactor
 
         override var prevDistance: Double = 0.0
-        override var fieldPosition: Vector2 = Vector2(0.0, 0.0)
-        override var prevAngleInFieldSpace: Angle = angle
         override var prevAngle: Angle = angle
 
         override var odometer: Double
