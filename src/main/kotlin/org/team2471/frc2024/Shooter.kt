@@ -28,6 +28,8 @@ object Shooter: Subsystem("Shooter") {
     private val shootingRpmTopEntry = table.getEntry("Shooting RPM Top")
     private val shootingRpmBottomEntry = table.getEntry("Shooting RPM Bottom")
     private val shootingEntry = table.getEntry("shooting")
+    private val closeSpeakerRpmEntry = table.getEntry("closeSpeakerRPM")
+
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
     val topAmpRPMEntry = table.getEntry("Top Amp RPM")
     val Pitch3_5Entry = table.getEntry("Pitch3.5Entry")
@@ -146,6 +148,10 @@ object Shooter: Subsystem("Shooter") {
                 shootingRpmBottomEntry.setPersistent()
             }
 
+        if (!closeSpeakerRpmEntry.exists()) {
+            closeSpeakerRpmEntry.setDouble(3500.0)
+        }
+
             if (isRedAlliance) {
                 topAmpRPMEntry.setDouble(2000.0)
                 bottomAmpRPMEntry.setDouble(2000.0)
@@ -253,8 +259,8 @@ object Shooter: Subsystem("Shooter") {
                     rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
                     rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                 } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
-                    rpmTopSetpoint = 3500.0
-                    rpmBottomSetpoint = 3500.0
+                    rpmTopSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                    rpmBottomSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
                 } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.DEMO_POSE) {
                     rpmTopSetpoint = 2500.0
                     rpmBottomSetpoint = 2500.0
