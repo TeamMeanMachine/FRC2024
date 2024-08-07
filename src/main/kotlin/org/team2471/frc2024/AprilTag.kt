@@ -79,7 +79,7 @@ object AprilTag {
 
 
     init {
-        println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        println("AprilTag init")
 
         resetCameras()
 
