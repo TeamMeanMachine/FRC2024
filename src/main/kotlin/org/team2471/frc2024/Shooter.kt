@@ -30,6 +30,8 @@ object Shooter: Subsystem("Shooter") {
     private val shootingRpmTopEntry = table.getEntry("Shooting RPM Top")
     private val shootingRpmBottomEntry = table.getEntry("Shooting RPM Bottom")
     private val shootingEntry = table.getEntry("shooting")
+    private val closeSpeakerRpmEntry = table.getEntry("closeSpeakerRPM")
+
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
     val topAmpRPMEntry = table.getEntry("Top Amp RPM")
     val Pitch3_5Entry = table.getEntry("Pitch3.5Entry")
@@ -156,6 +158,10 @@ object Shooter: Subsystem("Shooter") {
                 shootingRpmBottomEntry.setPersistent()
             }
 
+        if (!closeSpeakerRpmEntry.exists()) {
+            closeSpeakerRpmEntry.setDouble(3500.0)
+        }
+
             if (isRedAlliance) {
                 topAmpRPMEntry.setDouble(2000.0)
                 bottomAmpRPMEntry.setDouble(2000.0)
@@ -259,37 +265,24 @@ object Shooter: Subsystem("Shooter") {
     override suspend fun default() {
         periodic {
             if (manualShootState) {
-                if (Drive.demoMode) {
-                    if (Drive.aimTarget == AimTarget.DEMOTAG) {
-                        rpmTopSetpoint = demoTagRPMEntry.getDouble(1500.0)
-                        rpmBottomSetpoint = demoTagRPMEntry.getDouble(1500.0)
-                    } else if (Drive.aimTarget == AimTarget.SPEAKER) {
+                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
+                // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
+                if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
+                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
+                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
+                } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
+                    rpmTopSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                    rpmBottomSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.DEMO_POSE) {
+                    rpmTopSetpoint = 2500.0
+                    rpmBottomSetpoint = 2500.0
+                } else {
+                    if (AprilTag.aprilTagsEnabled) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                         rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
-                    } else if (Pivot.angleSetpoint > 90.0.degrees) {
-                        rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
-                        rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                     } else {
-                        rpmTopSetpoint = demoRPMEntry.getDouble(2500.0)
-                        rpmBottomSetpoint = demoRPMEntry.getDouble(2500.0)
-                    }
-                } else {
-                    // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
-                    // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                    if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                        rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
-                        rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
-                    } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
-                        rpmTopSetpoint = 3500.0
-                        rpmBottomSetpoint = 3500.0
-                    } else {
-                        if (AprilTag.aprilTagsEnabled) {
-                            rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
-                            rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
-                        } else {
-                            rpmTopSetpoint = 5000.0
-                            rpmBottomSetpoint = 5000.0
-                        }
+                        rpmTopSetpoint = 5000.0
+                        rpmBottomSetpoint = 5000.0
                     }
                 }
 
