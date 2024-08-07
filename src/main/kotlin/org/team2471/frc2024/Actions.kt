@@ -102,6 +102,21 @@ suspend fun aimAtSpeaker() {
     }
 }
 
+suspend fun aimAtTagDemo() {
+    Drive.aimTarget = AimTarget.DEMOTAG
+    Pivot.demoAim = true
+
+    suspendUntil(20) { !OI.driverController.y }
+
+    Drive.aimTarget = AimTarget.NONE
+    Pivot.demoAim = false
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
+
+}
+
 suspend fun aimFromPodium() {
     Drive.aimTarget = AimTarget.PODIUM
     Pivot.aimSpeaker = true

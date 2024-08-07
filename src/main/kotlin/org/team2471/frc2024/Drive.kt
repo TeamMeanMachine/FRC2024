@@ -33,7 +33,6 @@ import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.Drive.prevCombinedPosition
 import org.team2471.frc2024.Drive.testWheelPosition
-import org.team2471.frc2024.Drive.tickVelocity
 import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -215,8 +214,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
-    override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
-    override val kTread = 0.04 // 0.035 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
+    override val kCarpet = 0.0 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kTread = 0.0 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
@@ -301,6 +300,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             rateCurve.storeValue(1.0, 2.0)  // distance, rate
             rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
+            val encoderCounterList = arrayOf(0, 0, 0, 0)
+            val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
+
             println("in init just before periodic")
             val t = Timer()
             t.start()
@@ -340,6 +342,28 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle1Entry.setDouble((modules[1] as Module).absoluteAngle.asDegrees)
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
+
+
+                if (Robot.isDisabled) {
+                    for (i in modules.indices) {
+                        val absoluteAngle = (modules[i] as Module).absoluteAngle
+                        if (absoluteAngle == previousAngles[i]) {
+                            //no encoder update, +1 to the counter
+                            encoderCounterList[i]++
+                        } else {
+                            //encoder has updated, it is connected. reset the counter.
+                            (modules[i] as Module).encoderConnected = true
+                            encoderCounterList[i] = 0
+                        }
+                        if (encoderCounterList[i] >= 40) {
+                            //encoder has not sent updates after a certain threshold
+                            (modules[i] as Module).encoderConnected = false
+//                            println("module #$i absolute encoder has been static for more then 40 ticks")
+                        }
+                        previousAngles[i] = absoluteAngle
+                    }
+                }
+
 
                 gyroIsConnectedEntry.setBoolean(gyro.isConnected())
 
@@ -497,10 +521,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 
             if (aimTarget != AimTarget.NONE) {
-                val aimTurn = aimSpeakerAmpLogic()
-                if (aimTurn != null) {
-                    turn = aimTurn
-                }
+//                if (demoMode) {
+//                    if ( aimTarget == AimTarget.DEMOTAG) {
+//                        turn = aimPDController.update(Limelight.limelight.tx.asDegrees) / maxRotation
+//                    }
+//                } else {
+                    val aimTurn = aimSpeakerAmpLogic()
+                    if (aimTurn != null) {
+                        turn = aimTurn
+                    }
+//                }
             }
 
             if (!useGyroEntry.exists()) {
@@ -594,12 +624,17 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val angle: Angle
             get() = turnMotor.position.degrees * parameters.invertSteerFactor
 
+        var encoderConnected: Boolean = true
+
         val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
 
         val absoluteAngle: Angle
-            get() {
-                return (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
-            }
+            get() = /*if (encoderConnected) {*/
+                    (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
+//                } else {
+//                    //encoder not connected, assume wheel is zeroed
+//                    (0.0.degrees - angleOffset).wrap()
+//                }
 
         override val treadWear: Double
             get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
@@ -654,8 +689,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor   * more fudge
-                feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
+                //                    wheel diam / 12 in per foot * pi / gear ratio                                               * fudge
+            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
             }
@@ -812,7 +847,7 @@ fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
 
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
-        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
+        measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters * 10000))
 //    }
 
     if (Limelight.isConnected) {
@@ -868,6 +903,7 @@ enum class AimTarget {
     AMP,
     GAMEPIECE,
     PODIUM,
+    DEMOTAG,
     NONE
 }
 

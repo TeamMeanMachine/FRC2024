@@ -51,7 +51,7 @@ repositories {
     maven { setUrl("https://plugins.gradle.org/m2/")}
     maven { setUrl("https://maven.ctr-electronics.com/release/") }
     maven { setUrl("https://www.revrobotics.com/content/sw/max/sdk/maven/")}
-    maven { setUrl("https://maven.photonvision.org/repository/internal")}
+//    maven { setUrl("https://maven.photonvision.org/repository/internal")}
 //    maven { url 'https://nexus.otake.pw/repository/maven-public/' }
 
 }
@@ -99,8 +99,8 @@ dependencies {
     compileOnly 'com.github.gmazzo.buildconfig:com.github.gmazzo.buildconfig.gradle.plugin:3.0.0'
 
 //    implementation 'pw.otake.pseudoresonance:pixy2-java-api:1.4.1'
-    implementation("org.photonvision:photonlib-java:v2024.2.8")
-    implementation("org.photonvision:photontargeting-java:v2024.2.8")
+//    implementation("org.photonvision:photonlib-java:v2024.2.8")
+//    implementation("org.photonvision:photontargeting-java:v2024.2.8")
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')

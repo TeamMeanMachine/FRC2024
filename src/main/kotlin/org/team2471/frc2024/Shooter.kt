@@ -1,6 +1,7 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -49,6 +50,9 @@ object Shooter: Subsystem("Shooter") {
     val RPM15Entry = table.getEntry("RPM15Entry")
     val RPM17Entry = table.getEntry("RPM17Entry")
 
+    val demoRPMEntry = table.getEntry("DemoRPM")
+    val demoTagRPMEntry = table.getEntry("Demo Tag RPM")
+
     const val NEG_POWER = -0.001 //min for falcon to even consider
     const val MAXRPM = 5800.0
 
@@ -62,9 +66,11 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
+    @OptIn(DelicateCoroutinesApi::class)
     var manualShootState = false
         set(value) {
             field = value
+//            println("Shootstate: ${value}")
             if (!value && !Robot.isAutonomous) {
                 rpmTopSetpoint = 0.0
                 rpmBottomSetpoint = 0.0
@@ -100,6 +106,9 @@ object Shooter: Subsystem("Shooter") {
         }
 
     init {
+        demoRPMEntry.setDouble(2500.0)
+
+        demoTagRPMEntry.setDouble(1500.0)
 
 //        if (!Robot.inComp) {
             if (!Pitch17Entry.exists() || !Pitch3_5Entry.exists()) {
@@ -253,24 +262,37 @@ object Shooter: Subsystem("Shooter") {
     override suspend fun default() {
         periodic {
             if (manualShootState) {
-                // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
-                // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
-                if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
-                    rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
-                    rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
-                } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
-                    rpmTopSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
-                    rpmBottomSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
-                } else if (Drive.demoMode && Pivot.angleSetpoint == Pivot.DEMO_POSE) {
-                    rpmTopSetpoint = 2500.0
-                    rpmBottomSetpoint = 2500.0
-                } else {
-                    if (AprilTag.aprilTagsEnabled) {
+                if (Drive.demoMode) {
+                    if (Drive.aimTarget == AimTarget.DEMOTAG) {
+                        rpmTopSetpoint = demoTagRPMEntry.getDouble(1500.0)
+                        rpmBottomSetpoint = demoTagRPMEntry.getDouble(1500.0)
+                    } else if (Drive.aimTarget == AimTarget.SPEAKER) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                         rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                    } else if (Pivot.angleSetpoint > 90.0.degrees) {
+                        rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
+                        rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                     } else {
-                        rpmTopSetpoint = 5000.0
-                        rpmBottomSetpoint = 5000.0
+                        rpmTopSetpoint = demoRPMEntry.getDouble(2500.0)
+                        rpmBottomSetpoint = demoRPMEntry.getDouble(2500.0)
+                    }
+                } else {
+                    // AMP SHOT!!!!!!!!!!!!!!!!!!!!! Bottom: 12 Top: 14!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pivot Angle: 107.5
+                    // STAGE SHOT!!!!! Bottom 80: Top: 80   Pivot Angle: 32
+                    if (Pivot.pivotEncoderAngle > Pivot.CLOSESPEAKERPOSE + 5.0.degrees || Pivot.angleSetpoint > Pivot.CLOSESPEAKERPOSE + 5.0.degrees) {
+                        rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
+                        rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
+                    } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
+                        rpmTopSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                        rpmBottomSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                    } else {
+                        if (AprilTag.aprilTagsEnabled) {
+                            rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                            rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
+                        } else {
+                            rpmTopSetpoint = 5000.0
+                            rpmBottomSetpoint = 5000.0
+                        }
                     }
                 }
             }

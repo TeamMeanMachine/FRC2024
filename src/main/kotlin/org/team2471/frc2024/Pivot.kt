@@ -40,7 +40,7 @@ object Pivot: Subsystem("Pivot") {
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
 //    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
-
+    val demoAngleEntry = table.getEntry("Demo Angle")
 
     val pivotMotor = MotorController(FalconID(Falcons.PIVOT))
 
@@ -80,6 +80,14 @@ object Pivot: Subsystem("Pivot") {
                 Shooter.rpmTopSetpoint = 0.0
                 Shooter.rpmBottomSetpoint = 0.0
             }
+        }
+
+    var demoAim = false
+        set(value) {
+            field = value
+
+            Shooter.rpmTopSetpoint = 1000.0
+            Shooter.rpmBottomSetpoint = 1000.0
         }
 
     var speakerDistPitchOffset: Double = 0.0 //feet
@@ -181,6 +189,12 @@ object Pivot: Subsystem("Pivot") {
                         PODIUMPOSE
                     }
 //                    println("Angle: ${angle}")
+                }
+
+                if (demoAim) {
+                    if (Limelight.limelight.ty != 0.0.degrees) {
+                        angleSetpoint = Limelight.limelight.ty + 25.0.degrees
+                    }
                 }
             }
         }
