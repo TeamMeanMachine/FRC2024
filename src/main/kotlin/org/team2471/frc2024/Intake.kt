@@ -1,7 +1,6 @@
 package org.team2471.frc2024
 
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DigitalInput
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -11,7 +10,6 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2024.Robot.isCompBot
 
 object Intake: Subsystem("Intake") {
     private val table = NetworkTableInstance.getDefault().getTable("Intake")
@@ -46,8 +44,6 @@ object Intake: Subsystem("Intake") {
     init {
         manualIntake.setBoolean(false)
 
-        var x = feederCurrentEntry.getDouble(0.0)
-
         intakeMotorTop.config {
             currentLimit(35, 60, 1)
             coastMode()
@@ -71,8 +67,6 @@ object Intake: Subsystem("Intake") {
         GlobalScope.launch {
             val t = Timer()
             t.start()
-            var stagedT= 0.0
-
             periodic {
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
@@ -91,7 +85,7 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         var bottomBreakCounter = 0
-        periodic {
+        periodic(0.01) {
             when(intakeState) {
                 IntakeState.EMPTY -> {
                     setIntakeMotorsPercent(0.0)
