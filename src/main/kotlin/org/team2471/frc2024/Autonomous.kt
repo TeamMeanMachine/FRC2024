@@ -1,14 +1,11 @@
 package org.team2471.frc2024
 
 import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.networktables.NetworkTableEvent
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -21,6 +18,7 @@ import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.testing.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
@@ -921,18 +919,17 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     }
 
     private suspend fun testAuto() = use(Drive, name = "test") {
-        val testPath = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
+        val testPathName = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
+        val testPathList = listOf(EightFootStraight, EightFootCircle, TwoFootCircle, FourFootCircle, HookPath)
+
+        val testPath = testPathList.find { it.name == testPathName }
+
+        println(testPathName)
         if (testPath != null) {
-            val testAutonomous = autonomi["Tests"]
-            testAutonomous?.isReflected = isRedAlliance
-            val path = testAutonomous?.get(testPath)
-            println(testPath)
-            if (path != null) {
-                println("Path is not null")
-                Drive.driveAlongPath(path, true)
-            } else {
-                println("Path is null!!! :(")
-            }
+            println("Path is not null")
+            Drive.driveAlongPath(testPath, true, useCombinedPosition = false)
+        } else {
+            println("Test Path is null!!! :(")
         }
     }
 

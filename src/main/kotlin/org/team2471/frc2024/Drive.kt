@@ -114,8 +114,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val rateCurve = MotionCurve()
 
-    val maxVel = 25.0.feet.asMeters
-    val maxRot = 1000.0.degrees.asRadians
 
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
@@ -129,6 +127,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         invertDriveFactor = 1.0,
         invertSteerFactor = -1.0
     )
+
+    val maxVel = parameters.maxVelocity.lengthPerSecond.asMeters//25.0.feet.asMeters
+    val maxRot = parameters.maxRotateVelocity.changePerSecond.asRadians//1000.0.degrees.asRadians
 
 
     /**
@@ -221,8 +222,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
-    override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
-    override val kTread = 0.04 // 0.035 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
+    override val kCarpet = 0.0//0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kTread = 0.0//0.04 // 0.035 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
 
@@ -308,7 +309,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
             val encoderCounterList = arrayOf(0, 0, 0, 0)
-            val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
+            val previousAngles = arrayOf(0.0, 0.0, 0.0, 0.0)
 
             AutoBuilder.configureHolonomic(
                 Drive::getPose,
@@ -318,8 +319,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 HolonomicPathFollowerConfig(
                     PIDConstants(parameters.kpPosition.feet.asMeters, 0.0, parameters.kdPosition.feet.asMeters),
                     PIDConstants(parameters.kpHeading.degrees.asRadians, 0.0, parameters.kdHeading.degrees.asRadians),
-                    maxVel,
-                    maxRot,
+                    parameters.maxVelocity.lengthPerSecond.asMeters,
+                    parameters.maxRotateVelocity.changePerSecond.asRadians,
                     ReplanningConfig(false, true, 100.0, 100.0)
                 ),
                 {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
@@ -369,7 +370,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 if (Robot.isDisabled) {
                     for (i in modules.indices) {
-                        val absoluteAngle = (modules[i] as Module).absoluteAngle
+                        val absoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition
                         if (absoluteAngle == previousAngles[i]) {
                             //no encoder update, +1 to the counter
                             encoderCounterList[i]++
@@ -382,6 +383,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                             //encoder has not sent updates after a certain threshold
                             (modules[i] as Module).encoderConnected = false
 //                            println("module #$i absolute encoder has been static for more then 40 ticks")
+                            DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
                         }
                         previousAngles[i] = absoluteAngle
                     }
@@ -418,16 +420,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 tickVelocity = position - prevPosition
 
 
-//                val speed = velocity.length
-//                speedEntry.setDouble(speed)
-//                val acceleration = (speed - prevSpeed) / dt
-//                accelerationEntry.setDouble(acceleration)
+                val speed = velocity.length
+                speedEntry.setDouble(speed)
+                val acceleration = (speed - prevSpeed) / dt
+                accelerationEntry.setDouble(acceleration)
 //                val rotationalSpeed = (heading.asDegrees - prevHeading) / dt
 //                rotationalSpeedEntry.setDouble(rotationalSpeed)
 //                val rotationalAcceleration = (rotationalSpeed - prevRotationalSpeed) / dt
 //                rotationalAccelerationEntry.setDouble(rotationalAcceleration)
 //                if (speed.round(2) != 0.0) println("t: ${time.round(2)}  position: ${position.round(2)}  speed: ${speed.round(2)}  accel: ${acceleration.round(2)}  heading ${heading.asDegrees.round(2)}  rSpeed: ${rotationalSpeed.round(2)}  rAccel: ${rotationalAcceleration.round(2)}")
-//                prevSpeed = speed
+                prevSpeed = speed
 //                prevRotationalSpeed = rotationalSpeed
 //                prevHeading = heading.asDegrees
                 prevPosition = position
@@ -662,12 +664,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
 
         val absoluteAngle: Angle
-            get() = /*if (encoderConnected) {*/
+            get() = if (encoderConnected) {
                     (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
-//                } else {
-//                    //encoder not connected, assume wheel is zeroed
-//                    (0.0.degrees - angleOffset).wrap()
-//                }
+                } else {
+//                    encoder not connected, assume wheel is zeroed
+                    0.0.degrees
+                }
 
         override val treadWear: Double
             get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
@@ -707,10 +709,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 field = value.unWrap(angle) * parameters.invertSteerFactor
                 turnMotor.setPositionSetpoint(field.asDegrees)
             }
+        override var drivePercent: Double = 0.0
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
             driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
+            drivePercent = power
         }
 
 
@@ -722,8 +726,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio              * fudge factor   * more fudge
-                feedbackCoefficient = 3.0 / (if (Robot.isCompBot) 11.0 else 12.0) * Math.PI * (13.0/22.0 * 15.0/45.0 * 21.0/12.0) * (93.02 / 96.0) * 1.04
+                //                    wheel diam / 12 in per foot * pi / gear ratio
+                feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
             }

@@ -110,8 +110,7 @@ object Robot : MeanlibRobot() {
     override suspend fun autonomous() {
         println("autonomous starting")
 
-        AutoChooser.pathPlannerAuto()
-/*
+//        AutoChooser.pathPlannerAuto()
         if (!Drive.demoMode) {
             initTimeMeasurement()
 //            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
@@ -122,7 +121,6 @@ object Robot : MeanlibRobot() {
         } else {
             println("CANNOT RUN AUTO IN DEMO MODE!!!!!! (you're welcome for not killing anyone)")
         }
-*/
     }
 
     override suspend fun teleop() {
