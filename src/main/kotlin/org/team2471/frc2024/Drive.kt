@@ -25,7 +25,6 @@ import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
-import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
@@ -112,9 +111,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val aimTargetEntry = table.getEntry("Aim Target")
 
-    val rateCurve = MotionCurve()
-
-
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
         kpPosition = 0.32,
@@ -197,9 +193,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
-        set(value) {
-            field = value
-        }
     override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
 
     // velocity over 0.02 seconds
@@ -207,9 +200,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var prevTickVelocity = Vector2(0.0, 0.0)
 
     override var combinedPosition: Vector2L = position.feet
-//        set(value) {
-//            field = value
-//        }
     var prevCombinedPosition: Vector2L = position.feet
 
 
@@ -233,10 +223,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var aimPDController = teleopPDController
 
-//    var aimSpeaker = false
-//    var aimNote = false
-//    var aimAmp = false
-
     var aimTarget: AimTarget = AimTarget.NONE
 
     val speakerPos
@@ -251,8 +237,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 12.0.inches.asFeet, -12.0.inches.asFeet,
                 combinedPosition.y.asFeet)
         )
-
-    val ampPos = Vector2(0.0, 0.0) //TODO
 
     var aimHeadingSetpoint = 0.0.radians
     val distanceFromSpeakerDrivePos: Double
@@ -278,8 +262,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
         }
 
-    val isBlueAlliance: Boolean
-        get() = !isRedAlliance
+    val isBlueAlliance: Boolean get() = !isRedAlliance
 
     init {
         println("drive init")
@@ -304,9 +287,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
             navXGyroEntry.setBoolean(true)
-            rateCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-            rateCurve.storeValue(1.0, 2.0)  // distance, rate
-            rateCurve.storeValue(8.0, 6.0)  // distance, rate
 
             val encoderCounterList = arrayOf(0, 0, 0, 0)
             val previousAngles = arrayOf(0.0, 0.0, 0.0, 0.0)
@@ -682,10 +662,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val speed: Double
             get() = driveMotor.velocity
 
+        override val acceleration: Double
+            get() = driveMotor.acceleration
+
         val power: Double
-            get() {
-                return driveMotor.output * parameters.invertDriveFactor
-            }
+            get() = driveMotor.output * parameters.invertDriveFactor
 
         override val currDistance: Double
             get() = driveMotor.position * parameters.invertDriveFactor
@@ -693,9 +674,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var prevDistance: Double = 0.0
 
         override var odometer: Double
-            get() {
-                return odometerEntry.getDouble(0.0)
-            }
+            get() = odometerEntry.getDouble(0.0)
             set(value) {
                 odometerEntry.setDouble(value)
             }
@@ -709,14 +688,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 field = value.unWrap(angle) * parameters.invertSteerFactor
                 turnMotor.setPositionSetpoint(field.asDegrees)
             }
-        override var drivePercent: Double = 0.0
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
             driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
-            drivePercent = power
         }
-
 
         val error: Angle
             get() = turnMotor.closedLoopError.degrees
@@ -743,12 +719,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                    d(0.0000025)
                 }
             }
-//            GlobalScope.launch {
-//                periodic {
-////                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
-//
-//                }
-//            }
         }
 
         override fun driveWithDistance(angle: Angle, distance: Length) {
@@ -816,9 +786,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun getAngleToSpeaker(useSpinCompensation: Boolean = false): Angle {
-        var point = if (Pivot.pivotEncoderAngle > 90.0.degrees) {
-            ampPos
-        } else if (useSpinCompensation) {
+        val point = if (useSpinCompensation) {
             offsetSpeakerPose
         } else {
             speakerPos
