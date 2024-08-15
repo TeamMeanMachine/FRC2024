@@ -61,11 +61,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val motorAngle2Entry = table.getEntry("Motor Angle 2")
     val motorAngle3Entry = table.getEntry("Motor Angle 3")
 
-    val modulePosition0Entry = table.getEntry("Module Position 0")
-    val modulePosition1Entry = table.getEntry("Module Position 1")
-    val modulePosition2Entry = table.getEntry("Module Position 2")
-    val modulePosition3Entry = table.getEntry("Module Position 3")
-
     val turnMotor0CurrentEntry = table.getEntry("Turn Current 0")
     val turnMotor1CurrentEntry = table.getEntry("Turn Current 1")
     val turnMotor2CurrentEntry = table.getEntry("Turn Current 2")
@@ -538,7 +533,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override suspend fun default() {
-
         periodic {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
