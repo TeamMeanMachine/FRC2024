@@ -5,6 +5,7 @@ package org.team2471.frc2024
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj.util.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -27,6 +28,7 @@ object Robot : MeanlibRobot() {
     val inComp = false
 
     init {
+        LedControl
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         println("retrieving network interfaces")
         for (iFace in networkInterfaces) {
@@ -79,6 +81,7 @@ object Robot : MeanlibRobot() {
             addOption("Drive Tests", "Drive Tests")
         }
         SmartDashboard.putData("RobotTests", testChooser)
+        LedControl.pattern = LedPatterns.DISABLED
     }
 
     override suspend fun enable() {
@@ -92,6 +95,7 @@ object Robot : MeanlibRobot() {
                 {Climb.enable(); println("after climb ${totalTimeTaken()}")},
                 {Intake.enable(); println("after intake ${totalTimeTaken()}")},
                 {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
+                {LedControl.enable(); println("after leds ${totalTimeTaken()}")},
                 {AprilTag.backgroundReset(); println("after aprilTag ${totalTimeTaken()}")}
 
             )
@@ -140,6 +144,7 @@ object Robot : MeanlibRobot() {
         Intake.disable()
         Pivot.disable()
         Shooter.disable()
+        LedControl.disable()
 
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
