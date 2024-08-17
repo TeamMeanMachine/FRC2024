@@ -31,6 +31,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc.lib.util.isReal
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.gyro.Gyro
 import kotlin.math.*
@@ -119,9 +120,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kpHeading = 0.005,
         kdHeading = 0.02,
         kHeadingFeedForward = 0.001,
-        kMoveWhileSpin = 27.0,
-        invertDriveFactor = 1.0,
-        invertSteerFactor = 1.0
+        kMoveWhileSpin = if (isReal) 27.0 else 59.0,
     )
 
 
@@ -638,7 +637,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         override val angle: Angle
-            get() = turnMotor.position.degrees * parameters.invertSteerFactor
+            get() = turnMotor.position.degrees
 
         var encoderConnected: Boolean = true
 
@@ -646,7 +645,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val absoluteAngle: Angle
             get() = /*if (encoderConnected) {*/
-                    (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
+                    (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
 //                } else {
 //                    //encoder not connected, assume wheel is zeroed
 //                    (0.0.degrees - angleOffset).wrap()
@@ -665,11 +664,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val power: Double
             get() {
-                return driveMotor.output * parameters.invertDriveFactor
+                return driveMotor.output
             }
 
         override val currDistance: Double
-            get() = driveMotor.position * parameters.invertDriveFactor
+            get() = driveMotor.position
 
         override var prevDistance: Double = 0.0
         override var prevAngle: Angle = angle
@@ -688,13 +687,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override var angleSetpoint: Angle = 0.0.degrees
             set(value) {
-                field = value.unWrap(angle) * parameters.invertSteerFactor
+                field = value.unWrap(angle)
                 turnMotor.setPositionSetpoint(field.asDegrees)
             }
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
-            driveMotor.setPercentOutput(power * parameters.invertDriveFactor)
+            driveMotor.setPercentOutput(power)
         }
 
 
@@ -744,7 +743,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         fun setAngleOffset() {
-            val digitalAngle = (digitalEncoder.absolutePosition * 360.0 * parameters.invertSteerFactor).degrees.wrap().asDegrees
+            val digitalAngle = (digitalEncoder.absolutePosition * 360.0).degrees.wrap().asDegrees
             angleOffset = digitalAngle.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
             println("Angle Offset $index = $digitalAngle")
