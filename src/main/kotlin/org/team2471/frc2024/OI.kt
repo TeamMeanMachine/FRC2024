@@ -7,14 +7,10 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.*
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.demoMode
-import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Shooter.manualShootState
-import org.team2471.frc2024.Shooter.rpmBottomSetpoint
-import org.team2471.frc2024.Shooter.rpmCurve
-import org.team2471.frc2024.Shooter.rpmTopSetpoint
 import kotlin.math.absoluteValue
 
 object OI : Subsystem("OI") {
@@ -84,7 +80,7 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue {
-            aimAtSpeaker();
+            aimAtSpeaker()
 //            if (Drive.demoMode) aimAtTagDemo() else aimAtSpeaker();
 //            Shooter.manualShootState = !Shooter.manualShootState
         }
@@ -107,7 +103,7 @@ object OI : Subsystem("OI") {
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
         }
-        driverController::b.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }//println("driver B pressed trying to drive to amp"); lockToAmp() }
+        driverController::b.whenTrue { if (!Drive.demoMode) lockToAmp() else Pivot.angleSetpoint = Pivot.AMPPOSE }// }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
