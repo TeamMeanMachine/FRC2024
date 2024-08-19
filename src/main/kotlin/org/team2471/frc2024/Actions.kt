@@ -37,12 +37,13 @@ suspend fun climbWithTrigger() = use(Climb) {
     }
 }
 
-suspend fun spit() = use(Intake) {
+suspend fun spit() = use(Intake, LedControl) {
     println("starting spit periodic")
     Intake.intakeState = Intake.IntakeState.SPITTING
     Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
     suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
+    LedControl.pattern = LedPatterns.INTAKE
     periodic {
         if (OI.driverController.a) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
@@ -100,6 +101,21 @@ suspend fun aimAtSpeaker() {
         Shooter.rpmTopSetpoint = 0.0
         Shooter.rpmBottomSetpoint = 0.0
     }
+}
+
+suspend fun aimAtTagDemo() {
+    Drive.aimTarget = AimTarget.DEMOTAG
+    Pivot.demoAim = true
+
+    suspendUntil(20) { !OI.driverController.y }
+
+    Drive.aimTarget = AimTarget.NONE
+    Pivot.demoAim = false
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
+
 }
 
 suspend fun aimFromPodium() {

@@ -84,6 +84,14 @@ object Pivot: Subsystem("Pivot") {
             }
         }
 
+    var demoAim = false
+        set(value) {
+            field = value
+
+            Shooter.rpmTopSetpoint = 1000.0
+            Shooter.rpmBottomSetpoint = 1000.0
+        }
+
     var speakerDistPitchOffset: Double = 0.0 //feet
 
     val pivotTicks: Int
@@ -184,6 +192,12 @@ object Pivot: Subsystem("Pivot") {
                         PODIUMPOSE
                     }
 //                    println("Angle: ${angle}")
+                }
+
+                if (demoAim) {
+                    if (Limelight.limelight.ty != 0.0.degrees) {
+                        angleSetpoint = Limelight.limelight.ty + 25.0.degrees
+                    }
                 }
             }
         }

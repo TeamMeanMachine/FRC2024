@@ -44,8 +44,6 @@ object Intake: Subsystem("Intake") {
     init {
         manualIntake.setBoolean(false)
 
-        var x = feederCurrentEntry.getDouble(0.0)
-
         intakeMotorTop.config {
             currentLimit(35, 60, 1)
             coastMode()
@@ -69,8 +67,6 @@ object Intake: Subsystem("Intake") {
         GlobalScope.launch {
             val t = Timer()
             t.start()
-            var stagedT= 0.0
-
             periodic {
                 intakeCurrentEntry.setDouble(intakeMotorTop.current)
                 feederCurrentEntry.setDouble(feederMotor.current)
@@ -89,14 +85,14 @@ object Intake: Subsystem("Intake") {
     override suspend fun default() {
         val t = Timer()
         var bottomBreakCounter = 0
-        periodic {
+        periodic(0.01) {
             when(intakeState) {
                 IntakeState.EMPTY -> {
                     setIntakeMotorsPercent(0.0)
                 }
                 IntakeState.SPITTING -> {}
                 IntakeState.INTAKING -> {
-                    Pivot.angleSetpoint = 22.0.degrees
+                    Pivot.angleSetpoint = 36.0.degrees
                     Shooter.manualShootState = false
                     Shooter.setRpms(0.0)
                     setIntakeMotorsPercent(0.9)
@@ -111,7 +107,7 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.SLOWING -> {
-                    Pivot.angleSetpoint = 22.0.degrees
+                    Pivot.angleSetpoint = 36.0.degrees
                     if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(0.05)
                     } else {
@@ -126,6 +122,7 @@ object Intake: Subsystem("Intake") {
                     Shooter.manualShootState = false
                 }
                 IntakeState.REVERSING -> {
+                    Pivot.angleSetpoint = Pivot.DRIVEPOSE
                     if (manualIntake.getBoolean(false)) {
                         feederMotor.setPercentOutput(-0.1)
                     } else {
