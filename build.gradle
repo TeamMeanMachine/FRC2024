@@ -44,6 +44,7 @@ deploy {
 }
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
+var advantageKitVersion = "3.2.0"
 
 repositories {
     mavenCentral()
@@ -67,26 +68,26 @@ repositories {
 dependencies {
     implementation project("meanlib")
 
-    implementation wpi.java.deps.wpilib()
-    implementation wpi.java.vendor.java()
+//    implementation wpi.java.deps.wpilib()
+//    implementation wpi.java.vendor.java()
+//
+//    roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
+//    roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
+//
+//    roborioRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
+//    roborioRelease wpi.java.vendor.jniRelease(wpi.platforms.roborio)
+//
+//    nativeDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.desktop)
+//    nativeDebug wpi.java.vendor.jniDebug(wpi.platforms.desktop)
+//    simulationDebug wpi.sim.enableDebug()
+//
+//    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
+//    nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
+//    simulationRelease wpi.sim.enableRelease()
 
-    roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
-    roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
-
-    roborioRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
-    roborioRelease wpi.java.vendor.jniRelease(wpi.platforms.roborio)
-
-    nativeDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.desktop)
-    nativeDebug wpi.java.vendor.jniDebug(wpi.platforms.desktop)
-    simulationDebug wpi.sim.enableDebug()
-
-    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
-    nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
-    simulationRelease wpi.sim.enableRelease()
-
-    implementation wpi.java.deps.wpilib()
-    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
-    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
+//    implementation wpi.java.deps.wpilib()
+//    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
+//    nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
 
    // testImplementation 'junit:junit:4.12'
    // simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)

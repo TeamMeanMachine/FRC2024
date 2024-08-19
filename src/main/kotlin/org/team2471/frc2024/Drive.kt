@@ -30,7 +30,6 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.isReal
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.gyro.Gyro
@@ -39,14 +38,7 @@ import kotlin.math.*
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
     val robotHalfWidth = (25.0/2.0).inches
-
-//    const val turnZero0 = -34.0
-//    const val turnZero1 = 321.5
-//    const val turnZero2 = 21.7
-//    const val turnZero3 = 17.2
-
     val table = NetworkTableInstance.getDefault().getTable(name)
-    val navXGyroEntry = table.getEntry("NavX Gyro")
 
     val odometer0Entry = table.getEntry("Odometer 0")
     val odometer1Entry = table.getEntry("Odometer 1")
@@ -79,8 +71,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val totalDriveCurretEntry = table.getEntry("Total Drive Current")
     val totalTurnCurrentEntry = table.getEntry("Total Turn Current")
 
-    val positionXEntry = table.getEntry("Position X")
-    val positionYEntry = table.getEntry("Position Y")
     val velocityEntry = table.getEntry("Velocity")
 
     val speedEntry = table.getEntry("Speed")
@@ -94,8 +84,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val plannedPathEntry = table.getEntry("Planned Path")
     val actualRouteEntry = table.getEntry("Actual Route")
     val distanceEntry = table.getEntry("Distance From Speaker Drive")
-
-//    val carpetFlowsRBEntry = table.getEntry("Practice Field?")
 
     private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
     private val predictedAdvantagePoseEntry = table.getEntry("Predicted Advantage Pose")
@@ -177,27 +165,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
     override val gyroConnected: Boolean get() = Gyro.isConnected
 
-    private var prevSpeed = 0.0
-    private var prevRotationalSpeed = 0.0
-    private var prevHeading = 0.0
-    private var prevPosition = Vector2(0.0, 0.0)
-    private var prevTime = 0.0
-//    private var velocityField = Vector2(0.0, 0.0)
-
     override val headingRate: AngularVelocity
         get() = -gyro.rate.degrees.perSecond
 
     override var velocity = Vector2(0.0, 0.0)
+    override var acceleration: Vector2 = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
-        set(value) {
-            field = value
-        }
     override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
-
-    // velocity over 0.02 seconds
-    var tickVelocity = Vector2(0.0, 0.0)
-    var prevTickVelocity = Vector2(0.0, 0.0)
-
 
     var testWheelPosition: Vector2L = position.feet
 //                   feet seconds fps fudge
@@ -238,8 +212,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 AprilTag.position.y.asFeet)
         )
 
-    val ampPos = Vector2(0.0, 0.0) //TODO
-
     var aimHeadingSetpoint = 0.0.radians
     val distanceFromSpeakerDrivePos: Double
         get() = (position - speakerPos).length
@@ -273,11 +245,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
             val headingEntry = table.getEntry("Heading")
-            val xEntry = table.getEntry("X")
-            val yEntry = table.getEntry("Y")
-            val poseEntry = table.getEntry("advantageScopePose")
-
-//            carpetFlowsRBEntry.setBoolean(false)
+            val headingRadEntry = table.getEntry("Heading Rad")
+            val xEntry = table.getEntry("Position X")
+            val yEntry = table.getEntry("Position Y")
 
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
@@ -288,17 +258,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 SmartDashboard.setPersistent("DemoSpeed")
             }
 
-            navXGyroEntry.setBoolean(true)
-            rateCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-            rateCurve.storeValue(1.0, 2.0)  // distance, rate
-            rateCurve.storeValue(8.0, 6.0)  // distance, rate
-
             val encoderCounterList = arrayOf(0, 0, 0, 0)
             val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
 
             println("in init just before periodic")
-            val t = Timer()
-            t.start()
             periodic {
                 recordOdometry()
 
@@ -311,6 +274,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
+                headingRadEntry.setDouble(heading.asRadians)
 
                 advantagePoseEntry.setDoubleArray(
                     doubleArrayOf(
@@ -319,7 +283,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                         heading.asDegrees
                     )
                 )
-//                println("pos: ${position.round(3)} heading: ${heading.asDegrees.round(2)}")
+
+//                Logger.recordOutput("deltaPos", deltaPos.length.asFeet)
+//                Logger.recordOutput("velocity", velocity.length)
+//                Logger.recordOutput("acceleration", acceleration.length)
 
                 deltaPosEntry.setAdvantagePose(deltaPos, heading)
                 deltaPosSecEntry.setAdvantagePose((deltaPos * (0.5 / 50)), heading)
@@ -339,54 +306,47 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle2Entry.setDouble((modules[2] as Module).absoluteAngle.asDegrees)
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
-//                println("0: ${(modules[0] as Module).angle.asDegrees.round(1)} 1: ${(modules[1] as Module).angle.asDegrees.round(1)} 2: ${(modules[2] as Module).angle.asDegrees.round(1)} 3: ${(modules[3] as Module).angle.asDegrees.round(1)} ")
-
                 velocityEntry.setDouble(velocity.length)
 
-                val optimizedSetpointStates = arrayOfNulls<SwerveModuleState>(4)
+                val setpointStates = arrayOfNulls<SwerveModuleState>(4)
                 val absoluteStates = arrayOfNulls<SwerveModuleState>(4)
                 val motorAngleStates = arrayOfNulls<SwerveModuleState>(4)
+                var totalDriveCurrent = 0.0
+                var totalTurnCurrent = 0.0
 
-                if (Robot.isDisabled) {
-                    for (i in modules.indices) {
-                        val absoluteAngle = (modules[i] as Module).absoluteAngle
+                for (i in modules.indices) {
+                    val m = modules[i] as Module
+                    val absoluteAngle = m.absoluteAngle
+                    val angle = m.angle
+                    val absoluteSpeed = (m.speed / 25.0).coerceIn(-1.0, 1.0)
+                    val angleSetpoint = m.angleSetpoint
+                    val speedSetpoint = m.power
+
+                    totalDriveCurrent += m.driveCurrent
+                    totalTurnCurrent += m.turnMotor.current
+
+                    if (Robot.isDisabled) {
                         if (absoluteAngle == previousAngles[i]) {
-                            //no encoder update, +1 to the counter
                             encoderCounterList[i]++
                         } else {
-                            //encoder has updated, it is connected. reset the counter.
-                            (modules[i] as Module).encoderConnected = true
+                            m.encoderConnected = true
                             encoderCounterList[i] = 0
                         }
                         if (encoderCounterList[i] >= 40) {
-                            //encoder has not sent updates after a certain threshold
-                            (modules[i] as Module).encoderConnected = false
-//                            println("module #$i absolute encoder has been static for more then 40 ticks")
+                            m.encoderConnected = false
                         }
                         previousAngles[i] = absoluteAngle
                     }
-                    Logger.recordOutput("SwerveStates/SetpointsOptimized", *arrayOf<SwerveModuleState>())
-                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *arrayOf<SwerveModuleState>())
-                    Logger.recordOutput("SwerveStates/MotorAngles", *arrayOf<SwerveModuleState>())
-                } else {
-                    for (i in modules.indices) {
-                        val module = (modules[i] as Module)
-                        val absoluteAngle = module.absoluteAngle
-                        val angle = module.angle
-                        val absoluteSpeed = (module.speed / 12.0).coerceIn(-1.0, 1.0)
-                        val angleSetpoint = module.angleSetpoint
-                        val speedSetpoint = module.power
-
-                        optimizedSetpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
-                        absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
-                        motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
-                    }
-                    Logger.recordOutput("SwerveStates/SetpointsOptimized", *optimizedSetpointStates)
-                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
-                    Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
+                    setpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
+                    absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
+                    motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
                 }
+                Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
+                Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
+                Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
                 Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
-
+                totalDriveCurretEntry.setDouble(totalDriveCurrent)
+                totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 
                 gyroIsConnectedEntry.setBoolean(gyro.isConnected)
 
@@ -406,50 +366,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 aimHeadingSetpointEntry.setDouble(aimHeadingSetpoint.asDegrees)
 
-                positionXEntry.setDouble(position.x)
-                positionYEntry.setDouble(position.y)
                 distanceEntry.setDouble(distanceFromSpeakerDrivePos)
-
-                val time = t.get()
-                val dt = time - prevTime
-                velocity = (position - prevPosition) / dt
-
-                prevTickVelocity = tickVelocity
-                tickVelocity = position - prevPosition
-
-
-//                val speed = velocity.length
-//                speedEntry.setDouble(speed)
-//                val acceleration = (speed - prevSpeed) / dt
-//                accelerationEntry.setDouble(acceleration)
-//                val rotationalSpeed = (heading.asDegrees - prevHeading) / dt
-//                rotationalSpeedEntry.setDouble(rotationalSpeed)
-//                val rotationalAcceleration = (rotationalSpeed - prevRotationalSpeed) / dt
-//                rotationalAccelerationEntry.setDouble(rotationalAcceleration)
-//                if (speed.round(2) != 0.0) println("t: ${time.round(2)}  position: ${position.round(2)}  speed: ${speed.round(2)}  accel: ${acceleration.round(2)}  heading ${heading.asDegrees.round(2)}  rSpeed: ${rotationalSpeed.round(2)}  rAccel: ${rotationalAcceleration.round(2)}")
-//                prevSpeed = speed
-//                prevRotationalSpeed = rotationalSpeed
-//                prevHeading = heading.asDegrees
-                prevPosition = position
-                prevTime = time
-
-                var totalDriveCurrent = 0.0
-                for (i in modules) {
-                    totalDriveCurrent += (i as Module).driveCurrent
-                }
-                totalDriveCurretEntry.setDouble(totalDriveCurrent)
-                var totalTurnCurrent = 0.0
-                for (i in modules) {
-                    totalTurnCurrent += (i as Module).turnMotor.current
-                }
-                totalTurnCurrentEntry.setDouble(totalTurnCurrent)
-
-
 
                 if (Robot.isAutonomous && aimTarget == AimTarget.SPEAKER) {
                     var turn = 0.0
                     val aimTurn = aimSpeakerAmpLogic()
-//                    println("$aimTurn")
 
                     if (aimTurn != null) {
                         turn = aimTurn
@@ -500,10 +421,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         if (odometer3Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(0.0))
     }
 
-    override fun poseUpdate(pose: SwerveDrive.Pose) {
-        //MAPoseEstimator.addDriveData(Timer.getFPGATimestamp(), Twist2d(poseTwist.position.y, poseTwist.position.x, -poseTwist.heading.asRadians))
-    }
-
     fun zeroGyro() {
         if (isBlueAlliance) {
             heading = 0.0.degrees
@@ -521,7 +438,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         AprilTag.position = resetPose.feet
         position = resetPose
-        prevPosition = resetPose
         println("resetting to front speaker pos. $position")
     }
 
@@ -668,6 +584,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val speed: Double
             get() = driveMotor.velocity
 
+        override val acceleration: Double
+            get() = driveMotor.acceleration
+
         val power: Double
             get() {
                 return driveMotor.output
@@ -712,7 +631,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio                                               * fudge
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
+            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.006)
@@ -803,9 +722,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun getAngleToSpeaker(useSpinCompensation: Boolean = false): Angle {
-        var point = if (Pivot.pivotEncoderAngle > 90.0.degrees) {
-            ampPos
-        } else if (useSpinCompensation) {
+        var point = if (useSpinCompensation) {
             offsetSpeakerPose
         } else {
             speakerPos
