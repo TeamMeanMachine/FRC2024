@@ -646,6 +646,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override val speed: Double
             get() = driveMotor.velocity
+        override val acceleration: Double
+            get() = driveMotor.acceleration
 
         val power: Double
             get() {
