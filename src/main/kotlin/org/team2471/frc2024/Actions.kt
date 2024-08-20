@@ -9,7 +9,6 @@ import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
@@ -17,13 +16,10 @@ import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
-import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.asFeet
-import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
-import kotlin.math.max
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -37,12 +33,13 @@ suspend fun climbWithTrigger() = use(Climb) {
     }
 }
 
-suspend fun spit() = use(Intake) {
+suspend fun spit() = use(Intake, LedControl) {
     println("starting spit periodic")
     Intake.intakeState = Intake.IntakeState.SPITTING
     Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
     suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
+    LedControl.pattern = LedPatterns.INTAKE
     periodic {
         if (OI.driverController.a) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
@@ -100,6 +97,21 @@ suspend fun aimAtSpeaker() {
         Shooter.rpmTopSetpoint = 0.0
         Shooter.rpmBottomSetpoint = 0.0
     }
+}
+
+suspend fun aimAtTagDemo() {
+    Drive.aimTarget = AimTarget.DEMOTAG
+    Pivot.demoAim = true
+
+    suspendUntil(20) { !OI.driverController.y }
+
+    Drive.aimTarget = AimTarget.NONE
+    Pivot.demoAim = false
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+    Shooter.rpmTopSetpoint = 0.0
+    Shooter.rpmBottomSetpoint = 0.0
+
 }
 
 suspend fun aimFromPodium() {
@@ -445,6 +457,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 }
 
 suspend fun lockToAmp() {
+    println("inside lockToAmp()")
     Drive.aimTarget = AimTarget.AMP
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
     suspendUntil(20) { !OI.driverController.b }

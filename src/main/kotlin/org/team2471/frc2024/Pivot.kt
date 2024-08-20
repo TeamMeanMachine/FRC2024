@@ -2,7 +2,6 @@ package org.team2471.frc2024
 
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -17,8 +16,6 @@ import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2024.Drive.getAngleToSpeaker
-import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.offsetSpeakerPose
 import org.team2471.frc2024.Drive.speakerPos
 import org.team2471.frc2024.Robot.isCompBot
@@ -82,6 +79,14 @@ object Pivot: Subsystem("Pivot") {
                 Shooter.rpmTopSetpoint = 0.0
                 Shooter.rpmBottomSetpoint = 0.0
             }
+        }
+
+    var demoAim = false
+        set(value) {
+            field = value
+
+            Shooter.rpmTopSetpoint = 1000.0
+            Shooter.rpmBottomSetpoint = 1000.0
         }
 
     var speakerDistPitchOffset: Double = 0.0 //feet
@@ -185,9 +190,9 @@ object Pivot: Subsystem("Pivot") {
                     }
 //                    println("Angle: ${angle}")
                 }
+
             }
         }
-
     }
 
     fun speakerIsReady(rpmTol: Double = 400.0, pitchTol: Double = 1.0, aimTol: Double = 2.0, debug: Boolean = false): Boolean {

@@ -89,14 +89,7 @@ dependencies {
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
 
-   // testImplementation 'junit:junit:4.12'
-   // simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
-
-    //testImplementation 'junit:junit:4.12'
-
-    // Enable simulation gui support. Must check the box in vscode to enable support
-    // upon debugging
-    //simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
+    testImplementation 'junit:junit:4.12'
 
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
     compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.5.31'

@@ -5,6 +5,7 @@ package org.team2471.frc2024
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj.util.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -31,7 +32,7 @@ object Robot : LoggedMeanlibRobot() {
 
     val inComp = false
 
-    val subsystems: Array<Subsystem> = arrayOf(OI, Drive, Intake, Pivot, Shooter, Climb, AprilTag)
+    val subsystems: Array<Subsystem> = arrayOf(OI, Drive, Intake, Pivot, Shooter, Climb, AprilTag, LedControl)
 
     init {
         println("robotMode == $robotMode")
@@ -40,7 +41,6 @@ object Robot : LoggedMeanlibRobot() {
             Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
-            println("aldkusfhaldskjfhalkdjfhalkdsjfhlaksjdfhalksjdhflakjsdhflaksjdfhlkajsdhflkajsdhflkajdshflasjdhfl")
             setUseTiming(true) // false = run sim as fast as possible
             val logPath = LogFileUtil.findReplayLog()
             Logger.setReplaySource(WPILOGReader(logPath))
@@ -49,6 +49,7 @@ object Robot : LoggedMeanlibRobot() {
 
         Logger.start()
 
+        LedControl
         if (robotMode == RobotMode.REAL) {
             val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
             println("retrieving network interfaces")
@@ -84,6 +85,7 @@ object Robot : LoggedMeanlibRobot() {
             addOption("Drive Tests", "Drive Tests")
         }
         SmartDashboard.putData("RobotTests", testChooser)
+        LedControl.pattern = LedPatterns.DISABLED
     }
 
     override suspend fun enable() {
