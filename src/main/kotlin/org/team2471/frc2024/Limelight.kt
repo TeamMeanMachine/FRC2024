@@ -2,7 +2,6 @@
 //import edu.wpi.first.math.filter.Debouncer
 //import edu.wpi.first.math.geometry.*
 //import edu.wpi.first.networktables.NetworkTable
-//import edu.wpi.first.wpilibj.Timer
 //import kotlinx.coroutines.GlobalScope
 //import kotlinx.coroutines.launch
 //import org.team2471.frc.lib.coroutines.periodic
@@ -139,7 +138,7 @@
 //
 //        var stDev = limelightDistCurve.getValue(avgDist.asMeters)
 //
-//        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stDev, Timer.getFPGATimestamp())
+//        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stDev, Timer.FPGATimestamp)
 //
 //        stDevEntry.setDouble(stDev)
 //

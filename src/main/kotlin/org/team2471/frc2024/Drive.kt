@@ -198,7 +198,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         set(value) {
             field = value
         }
-    override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
+    override var deltaPos = Vector2L.Zeros
 
     // velocity over 0.02 seconds
     var tickVelocity = Vector2(0.0, 0.0)
