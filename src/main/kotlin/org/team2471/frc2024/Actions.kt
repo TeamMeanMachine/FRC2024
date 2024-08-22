@@ -459,6 +459,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 suspend fun lockToAmp() {
     println("inside lockToAmp()")
     Drive.aimTarget = AimTarget.AMP
+    Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
     suspendUntil(20) { !OI.driverController.b }
     Drive.aimTarget = AimTarget.NONE
