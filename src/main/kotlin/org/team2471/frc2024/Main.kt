@@ -35,7 +35,7 @@ object Robot : LoggedMeanlibRobot() {
 
     val inComp = false
 
-    val subsystems: Array<Subsystem> = arrayOf(LedControl, OI, Drive, Intake, Pivot, Shooter, Climb)
+    val subsystems: Array<Subsystem> = arrayOf(LedControl, OI, Drive, Intake, Pivot, Shooter, Climb, AprilTag)
 
     init {
         println("robotMode == $robotMode")
@@ -44,7 +44,7 @@ object Robot : LoggedMeanlibRobot() {
             Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
-            setUseTiming(true) // Run as fast as possible
+            setUseTiming(true) // false = run sim as fast as possible
             val logPath = LogFileUtil.findReplayLog()
             Logger.setReplaySource(WPILOGReader(logPath))
             Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
@@ -130,7 +130,7 @@ object Robot : LoggedMeanlibRobot() {
         Shooter.manualShootState = false
         Intake.intakeState = Intake.IntakeState.EMPTY
 
-        subsystems.map { suspend { it.disable() } }.toTypedArray()
+        subsystems.forEach { it.disable() }
 
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
