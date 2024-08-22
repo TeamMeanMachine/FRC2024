@@ -70,3 +70,9 @@ gradle-app.setting
 
 # Allow jar files in libs folder
 !libs/*.jar
+
+networktables.json
+networktables.json.bck
+simgui.json
+simgui-ds.json
+simgui-window.json
