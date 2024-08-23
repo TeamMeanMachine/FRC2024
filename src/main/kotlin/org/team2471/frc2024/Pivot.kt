@@ -37,7 +37,7 @@ object Pivot: Subsystem("Pivot") {
     private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
-//    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
@@ -175,7 +175,6 @@ object Pivot: Subsystem("Pivot") {
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
-//                encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
 //                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
@@ -248,7 +247,7 @@ object Pivot: Subsystem("Pivot") {
 
     override suspend fun default() {
         periodic {
-            ticksEntry.setDouble(pivotTicks.toDouble())
+            encoderVoltageEntry.setDouble(encoderVoltage)
         }
     }
 
