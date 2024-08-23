@@ -1,8 +1,13 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -11,10 +16,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.sensors.AnalogInput.LoggedAnalogInput
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.asFeet
-import org.team2471.frc.lib.units.asRadians
-import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.offsetSpeakerPose
 import org.team2471.frc2024.Drive.speakerPos
@@ -25,6 +27,7 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 
 
+@OptIn(DelicateCoroutinesApi::class)
 object Pivot: Subsystem("Pivot") {
     private val table = NetworkTableInstance.getDefault().getTable("Pivot")
 
@@ -34,7 +37,7 @@ object Pivot: Subsystem("Pivot") {
     private val encoderAngleEntry = table.getEntry("Pivot Encoder Angle")
     private val motorAngleEntry = table.getEntry("Pivot Motor Angle")
     private val angleSetpointEntry = table.getEntry("Pivot Angle Setpoint")
-//    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
+    private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
@@ -55,6 +58,14 @@ object Pivot: Subsystem("Pivot") {
     val DRIVEPOSE = MINHARDSTOP + 2.0.degrees
     val MAXHARDSTOP = 110.2.degrees
     val AMPPOSE = 110.0.degrees
+
+    private val advantagePivotOffset = Translation3d(0.0, -6.98.inches.asMeters, -6.98.inches.asMeters)
+    private val backTranslation = Translation3d(advantagePivotOffset.y, advantagePivotOffset.x, advantagePivotOffset.z)
+    private val advantageOffsetPose =
+        Pose3d(
+            Translation3d(-0.058, 0.0051, 0.017),
+            Rotation3d(90.0.degrees.asRadians, 0.0.degrees.asRadians, 90.0.degrees.asRadians)
+        ).transformBy(Transform3d(advantagePivotOffset, Rotation3d()))
 
     // Ticks
     private val MINTICKS = if (isCompBot) 3561.0 else 2316.0
@@ -115,7 +126,7 @@ object Pivot: Subsystem("Pivot") {
 //            println("set pivot angle to $field")
         }
 
-    var feedForward: Double = 0.0
+    val feedForward: Double
         get() {
             return 0.03 * cos((pivotEncoderAngle).asRadians) + if (pivotEncoderAngle < 15.0.degrees) 0.05 else 0.0
         }
@@ -164,7 +175,6 @@ object Pivot: Subsystem("Pivot") {
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
                 motorAngleEntry.setDouble(pivotMotorAngle.asDegrees)
-//                encoderVoltageEntry.setDouble(encoderVoltage)
                 angleSetpointEntry.setDouble(angleSetpoint.asDegrees)
 
 //                val pivotPos = Vector2(15.0, 6.0) - Vector2(15.0, 4.0).rotateDegrees(pivotEncoderAngle.asDegrees)
@@ -190,6 +200,10 @@ object Pivot: Subsystem("Pivot") {
                     }
 //                    println("Angle: ${angle}")
                 }
+
+                val calculatedPose = advantageOffsetPose.rotateBy(Rotation3d(0.0, (pivotEncoderAngle - MINHARDSTOP).asRadians, 0.0))
+                val newCalculatedPose = Pose3d(calculatedPose.translation - backTranslation, calculatedPose.rotation)
+                Robot.logComponent("Components/0 Pivot", newCalculatedPose)
 
             }
         }
@@ -233,7 +247,7 @@ object Pivot: Subsystem("Pivot") {
 
     override suspend fun default() {
         periodic {
-            ticksEntry.setDouble(pivotTicks.toDouble())
+            encoderVoltageEntry.setDouble(encoderVoltage)
         }
     }
 
