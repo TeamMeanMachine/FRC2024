@@ -6,10 +6,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DutyCycleEncoder
-import edu.wpi.first.wpilibj.Preferences
-import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -171,11 +168,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var velocity = Vector2(0.0, 0.0)
     override var acceleration: Vector2 = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
+        set(value) {
+            field = value
+            lastResetTime = Timer.getFPGATimestamp()
+        }
+
     override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
 
     var testWheelPosition: Vector2L = position.feet
 //                   feet seconds fps fudge
     val driveStDevM = (2.5 / 30.0 / 50.0 * 15.0).feet.asMeters
+
+    override var lastResetTime: Double = 0.0
 
 
     override var robotPivot = Vector2(0.0, 0.0).inches
@@ -341,10 +345,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
                     motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
                 }
-                Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
-                Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
-                Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
-                Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                try {
+                    Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
+                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
+                    Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
+                    Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                    Logger.recordOutput("Drive/Position", position.toPose2d(heading.asDegrees))
+                } catch (e: Exception) {}
                 totalDriveCurretEntry.setDouble(totalDriveCurrent)
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 

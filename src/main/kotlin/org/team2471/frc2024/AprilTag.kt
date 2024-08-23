@@ -2,7 +2,13 @@ package org.team2471.frc2024
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.Nat
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics
+import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -42,6 +48,12 @@ object AprilTag: Subsystem("AprilTag") {
 
     var cameraPoses: MutableList<GlobalPose> = mutableListOf()
 
+    val testKinematics: SwerveDriveKinematics = SwerveDriveKinematics(*Drive.modules.map { it.modulePosition.asMeters.toTranslation2d() }.toTypedArray())
+
+    var modulePositions: Array<SwerveModulePosition> = Drive.modules.map { SwerveModulePosition(it.currDistance.feet.asMeters, heading.asRotation2d) }.toTypedArray()
+
+    val poseEstimatorWPI: SwerveDrivePoseEstimator = SwerveDrivePoseEstimator(testKinematics, heading.asRotation2d, modulePositions, Pose2d())
+
 
     var aprilTagsEnabled: Boolean
         get() = aprilTagsEnabledEntry.getBoolean(true)
@@ -75,7 +87,7 @@ object AprilTag: Subsystem("AprilTag") {
     val cameras: Map<String, Camera> = mapOf(
         Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, true)),
         Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, true)),
-        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, true)),
+//        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, true)),
         Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, false))
     )
 
@@ -105,15 +117,19 @@ object AprilTag: Subsystem("AprilTag") {
 
                 updatePos(driveStDevM, *cameraPoses.toTypedArray())
 
+                updatePosWPI(*cameraPoses.toTypedArray())
 
                 positionEntry.setAdvantagePose(position, heading)
 //                println("Drive Position: ${Drive.position}")\
+
+                // In a try bc sometimes it likes to log before the talbe is ready :(
                 try {
                     Logger.recordOutput(
                         "AprilTag/Position",
                         Pose2d(position.asMeters.toTranslation2d(), Rotation2d(heading.asRadians))
                     )
 
+                    Logger.recordOutput("AprilTag/PositionWPI", poseEstimatorWPI.estimatedPosition)
                 } catch (_: Exception) {}
             }
         }
@@ -144,8 +160,12 @@ object AprilTag: Subsystem("AprilTag") {
 
 
         if (aprilTagsEnabled) {
-            for (pose in cameraPoses) {
+            for (pose in aprilPoses) {
+                try {
                 measurementsAndStDevs.add(Pair(pose.latencyAdjustedPose(Drive.position.feet, Drive::lookupPose), pose.stDev))
+                } catch (e: Exception) {
+                    println("Stupid thing with latency adjust again")
+                }
             }
         }
 
@@ -168,5 +188,18 @@ object AprilTag: Subsystem("AprilTag") {
 //        combinedPosition.coerceIn(Vector2L(0.0.inches, 0.0.inches) + Vector2L(16.0.inches, 16.0.inches), Vector2L(1654.0.cm, 821.0.cm) - Vector2L(16.0.inches, 16.0.inches))
         }
         prevPosition = pos
+    }
+
+    fun updatePosWPI(vararg aprilPoses: GlobalPose) {
+        modulePositions = Drive.modules.map { SwerveModulePosition(it.currDistance.feet.asMeters, heading.asRotation2d) }.toTypedArray()
+
+        poseEstimatorWPI.update(heading.asRotation2d, modulePositions)
+
+
+        for (pose in aprilPoses) {
+            poseEstimatorWPI.addVisionMeasurement(pose.pose2d, pose.timestampSeconds)
+            // Is this how you do it???
+            poseEstimatorWPI.setVisionMeasurementStdDevs(Matrix(Nat.N3(), Nat.N1(), doubleArrayOf(pose.stDev, pose.stDev, pose.stDev)))
+        }
     }
 }
