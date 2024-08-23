@@ -41,7 +41,7 @@ object Robot : LoggedMeanlibRobot() {
         println("robotMode == $robotMode")
         if (robotMode != RobotMode.REPLAY) {
             //sim or real
-            Logger.addDataReceiver(WPILOGWriter())
+//            Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
             setUseTiming(true) // false = run sim as fast as possible

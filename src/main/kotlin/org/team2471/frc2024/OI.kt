@@ -17,7 +17,7 @@ object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.03
+    private val deadBandDriver = 0.06
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
