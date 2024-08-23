@@ -1,7 +1,6 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
@@ -249,9 +248,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val xEntry = table.getEntry("Position X")
             val yEntry = table.getEntry("Position Y")
 
-            SmartDashboard.setPersistent("Use Gyro")
-            SmartDashboard.setPersistent("Gyro Type")
-
             if (!SmartDashboard.containsKey("DemoSpeed")) {
                 println("DemoSpeed does not exist, setting it to 1.0")
                 SmartDashboard.getEntry("DemoSpeed").setDouble(1.0)
@@ -340,11 +336,28 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     setpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
                     absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
                     motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
+
+                    val modulePosition = m.modulePosition.rotateDegrees(90.0 * (i + 1.0)).asMeters
+                    val moduleOffset = Translation3d(modulePosition.x, (-1.5).inches.asMeters, modulePosition.y)
+                    val modulePose3d = Pose3d(
+                        Translation3d(-0.058, 0.0051, 0.017),
+                        Rotation3d(90.0.degrees.asRadians, 0.0.degrees.asRadians, 90.0.degrees.asRadians)
+                    ).transformBy(Transform3d(moduleOffset, Rotation3d()))
+
+                    val rotatedModule = modulePose3d
+                        .rotateBy(Rotation3d(0.0, (m.currDistance * 12.0 / 3.0 / Math.PI).rotations.asRadians, -m.angle.asRadians))
+                    val newTranslationTwo = Translation3d(-moduleOffset.x, -moduleOffset.z, moduleOffset.y)
+                        .rotateBy(Rotation3d(0.0, 0.0, (-90.0.degrees * (i.toDouble() + 2.0)).asRadians))
+                    val newCalculatedPose = Pose3d(rotatedModule.translation - newTranslationTwo, rotatedModule.rotation)
+
+                    Robot.logComponent("Components/${i + 3} Module$i", newCalculatedPose)
                 }
-                Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
-                Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
-                Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
-                Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                try {
+                    Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
+                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
+                    Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
+                    Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                } catch (_: Exception) {}
                 totalDriveCurretEntry.setDouble(totalDriveCurrent)
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
 
@@ -378,6 +391,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                     if (!useGyroEntry.exists()) {
                         useGyroEntry.setBoolean(true)
+                        useGyroEntry.setPersistent()
                     }
                     val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
 
@@ -472,6 +486,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             if (!useGyroEntry.exists()) {
                 useGyroEntry.setBoolean(true)
+                useGyroEntry.setPersistent()
             }
             val useGyro2 = useGyroEntry.getBoolean(true) && !DriverStation.isAutonomous()
             drive(
@@ -634,7 +649,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
-                configSim(DCMotor.getKrakenX60Foc(1), 0.006)
+                configSim(DCMotor.getKrakenX60Foc(1), 0.005)
             }
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
@@ -644,10 +659,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(15, 20, 1)
                 pid {
-                    p(0.006 * 1024.0)
+                    p(0.006 * 1024.0, 0.3)
 //                    d(0.0000025 * 1024.0)
                 }
-                configSim(DCMotor.getNeo550(1), 0.000006)
+                configSim(DCMotor.getNeo550(1), 0.0000065)
             }
 //            GlobalScope.launch {
 //                periodic {

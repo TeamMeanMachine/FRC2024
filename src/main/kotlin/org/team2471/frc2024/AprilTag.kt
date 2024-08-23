@@ -6,25 +6,29 @@ import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.littletonrobotics.junction.Logger
 import org.photonvision.PhotonCamera
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
 import org.team2471.frc.lib.vision.GlobalPose
-import org.team2471.frc.lib.vision.LimelightCamera
-import org.team2471.frc.lib.vision.PhotonVisionCamera
 import org.team2471.frc2024.Drive.advantageWheelPoseEntry
 import org.team2471.frc2024.Drive.deltaPos
+import org.team2471.frc2024.Drive.driveStDevM
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.testWheelPosition
 import kotlin.math.pow
 
-object AprilTag {
+object AprilTag: Subsystem("AprilTag") {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
     val aprilTable = NetworkTableInstance.getDefault().getTable("AprilTag")
     val aprilTagsEnabledEntry = aprilTable.getEntry("AprilTags Enabled")
+
+    val positionEntry = aprilTable.getEntry("Position")
 
     val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
 
@@ -32,8 +36,7 @@ object AprilTag {
 
     val excludedIDs = intArrayOf()
 
-
-    var position: Vector2L = Vector2L(0.0.inches, 0.0.inches)
+    var position: Vector2L = Vector2L.Zeros
 
     var prevPosition: Vector2L = position
 
@@ -70,49 +73,55 @@ object AprilTag {
     var robotToCamLLShooter = Transform3d()
 
     val cameras: Map<String, Camera> = mapOf(
-        Pair("CamSL", PhotonVisionCamera(pvTable, "CamSL", robotToCamSL, aprilTagFieldLayout)),
-        Pair("CamSR", PhotonVisionCamera(pvTable, "CamSR", robotToCamSR, aprilTagFieldLayout)),
-        Pair("CamIB", PhotonVisionCamera(pvTable, "CamIB", robotToCamIB, aprilTagFieldLayout)),
-        //                         the networktable isnt used for limelights
-        Pair("LimelightShooter", LimelightCamera(pvTable, "LimelightShooter", robotToCamLLShooter))
+        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, true)),
+        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, true)),
+        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, true)),
+        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, false))
     )
 
 
     init {
-        println("AprilTag init")
+        println("AprilTag init $robotMode")
 
         resetCameras()
 
         aprilTagsEnabledEntry.setBoolean(true)
 
         GlobalScope.launch {
-            periodic {
-                for (cam in cameras) {
-                    val camera = cam.value
-                    camera.isConnectedEntry.setBoolean(camera.isConnected)
-                }
+            println("In periodic apriltag")
+            periodic(0.02) {
+
 
                 cameraPoses.clear()
 
+
                 try {
-                    for (camera in cameras.values) {
-                            if (camera.isConnected) {
-                                val globalPose: GlobalPose? = camera.getEstimatedGlobalPose(position, Drive.heading, Drive::lookupPose)
-                                if (globalPose != null) {
-                                    cameraPoses.add(globalPose)
-                                }
-                            }
-                    }
+                    cameras.values.map { it.getEstimatedGlobalPose(Drive.position.feet, heading, Drive::lookupPose) }
+                        .forEach { if (it != null) cameraPoses.add(it) }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: $ex")
                 }
 
+
+                updatePos(driveStDevM, *cameraPoses.toTypedArray())
+
+
+                positionEntry.setAdvantagePose(position, heading)
+//                println("Drive Position: ${Drive.position}")\
+                try {
+                    Logger.recordOutput(
+                        "AprilTag/Position",
+                        Pose2d(position.asMeters.toTranslation2d(), Rotation2d(heading.asRadians))
+                    )
+
+                } catch (_: Exception) {}
             }
         }
     }
 
     fun resetCameras() {
         PhotonCamera.setVersionCheckEnabled(false)
+        println("in apriltag for reset")
         for (camera in cameras.values) {
             camera.reset()
         }
@@ -127,7 +136,7 @@ object AprilTag {
 
 
         testWheelPosition = pos + deltaPos
-        deltaPos = Vector2L(0.0.inches, 0.0.inches)
+        deltaPos = Vector2L.Zeros
 
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
@@ -140,7 +149,8 @@ object AprilTag {
             }
         }
 
-        var totalPos = Vector2L(0.0.inches, 0.0.inches)
+        // more into here https://docs.google.com/document/d/1FoDFRYyeyxJ-kkqUKKqm2p3dM88hWMFwhrL7IWsKgeM/edit#heading=h.src21s3e4v7y
+        var totalPos = Vector2L.Zeros
         var totalStDev = 0.0
 
         for (posAndStDev in measurementsAndStDevs) {
@@ -151,8 +161,6 @@ object AprilTag {
 //    if (pos != combinedPosition) {
 //        println("WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 //    }
-
-
 
         //                       breaks apriltags for some reason
         if (totalStDev != 0.0 /*&& totalStDev < 1000000000.0*/) {
