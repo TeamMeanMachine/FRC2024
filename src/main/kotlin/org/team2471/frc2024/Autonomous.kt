@@ -95,6 +95,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
+        addOption("PathPlanner", "pathPlannerAuto")
 //        addOption("2Far2CloseAmp", "2Far2CloseAmp")
         addOption("4CloseSafe", "4CloseSafe")
 //        addOption("SubSide", "SubSide")
@@ -197,6 +198,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         println("before when block ${Robot.totalTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
+            "PathPlanner" -> pathPlannerAuto()
 //            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
             "4CloseSafe" -> fourCloseSafe()
 //            "SubSide" -> substationSide()
