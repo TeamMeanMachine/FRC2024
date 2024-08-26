@@ -109,7 +109,7 @@ object AprilTag: Subsystem("AprilTag") {
 
                 try {
                     cameras.values.map { it.getEstimatedGlobalPose(Drive.position.feet, heading, Drive::lookupPose) }
-                        .forEach { if (it != null) cameraPoses.add(it) }
+                        .forEach { cameraPoses.add(it) }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: $ex")
                 }
