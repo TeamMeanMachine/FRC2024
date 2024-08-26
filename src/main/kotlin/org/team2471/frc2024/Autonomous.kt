@@ -17,9 +17,11 @@ import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.lib.testing.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc.lib.util.isReal
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
@@ -29,40 +31,15 @@ import kotlin.math.absoluteValue
 
 private lateinit var autonomi: Autonomi
 
-
-enum class Side {
-    LEFT,
-    RIGHT;
-
-    operator fun not(): Side = when (this) {
-        LEFT -> RIGHT
-        RIGHT -> LEFT
-    }
-}
-
 val selAuto
     get() = SmartDashboard.getString("Autos/selected", "no auto selected")
 
 object AutoChooser {
-    private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
     private val closeFourToFiveEntry = AprilTag.aprilTable.getEntry("Auto, Go For It")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
-private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
+    private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
     var cacheFile: File? = null
-    var redSide: Boolean = true
-        get() {
-            if (DriverStation.getAlliance().isEmpty) {
-//                println("DriverStation.getAlliance() = null!!!!!!!!!!!!!!!!!! defaulting to isRedAlliance to true")
-                return true
-            } else {
-                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-            }
-        }
-        set(value) {
-            field = value
-            isRedAllianceEntry.setBoolean(value)
-        }
 
     private val lyricsChooser = SendableChooser<String?>().apply {
         setDefaultOption("Country roads", "Country roads")
@@ -390,10 +367,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }, {
                 Drive.zeroGyro()
             }, {
-//                Drive.combinedPosition =
-//                    if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-//                Drive.position = combinedPosition.asFeet
-            }, {
                 Pivot.aimSpeaker = true
             })
             println("after safeSub parallel ${Robot.totalTimeTaken()}")
@@ -402,11 +375,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             val t = Timer()
             t.start()
             periodic {
-                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && Drive.gyro.isConnected) {
+                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && (Drive.gyro.isConnected == isReal)) {
                     println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
                     this.stop()
                 }
-                if (!Drive.gyro.isConnected) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
+                if (!Drive.gyro.isConnected && isReal) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
             }
 
             println("starting auto stuff now ${Robot.totalTimeTaken()}")
@@ -697,7 +670,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("0-Mid1_Grab1.5")
             Shooter.setRpms(5000.0)
-            var t = Timer()
+            val t = Timer()
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
             if (shootFirstEntry.getBoolean(true)) {
@@ -777,7 +750,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("0.3-Fir2_Grab1.5")
             Shooter.setRpms(5000.0)
-            var t = Timer()
+            val t = Timer()
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.5 }
             if (shootFirstEntry.getBoolean(true)) {
@@ -862,7 +835,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 if (isRedAlliance) Vector2(0.0, 0.0).feet else Vector2(0.0, 0.0).reflectAcrossField().feet
             val auto = autonomi["Tests"]
             auto?.isReflected = isBlueAlliance
-            var path = auto?.get("8 Foot Straight")
+            val path = auto?.get("8 Foot Straight")
             aimAndShoot()
 
             if (path != null) {
@@ -887,18 +860,17 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     }
 
     private suspend fun testAuto() = use(Drive, name = "test") {
-        val testPath = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
+        val testPathName = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
+        val testPathList = listOf(EightFootStraight, EightFootCircle, TwoFootCircle, FourFootCircle, HookPath)
+
+        val testPath = testPathList.find { it.name == testPathName }
+
+        println(testPathName)
         if (testPath != null) {
-            val testAutonomous = autonomi["Tests"]
-            testAutonomous?.isReflected = isRedAlliance
-            val path = testAutonomous?.get(testPath)
-            println(testPath)
-            if (path != null) {
-                println("Path is not null")
-                Drive.driveAlongPath(path, true)
-            } else {
-                println("Path is null!!! :(")
-            }
+            println("Path is not null")
+            Drive.driveAlongPath(testPath, true)
+        } else {
+            println("Test Path is null!!! :(")
         }
     }
 

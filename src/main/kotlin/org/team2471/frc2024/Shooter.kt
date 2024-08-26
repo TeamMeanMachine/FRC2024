@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -170,6 +171,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
         shooterMotorTop.config {
@@ -178,6 +180,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
 

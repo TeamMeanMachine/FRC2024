@@ -53,6 +53,8 @@ object Robot : LoggedMeanlibRobot() {
         Logger.start()
 
         LedControl
+        AutoChooser
+        NoteDetector
 
         // i heard the first string + double concatenations were expensive...
 //        repeat(25) {

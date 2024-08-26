@@ -69,11 +69,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val velocityEntry = table.getEntry("Velocity")
 
-    val speedEntry = table.getEntry("Speed")
-    val accelerationEntry = table.getEntry("Acceleration")
-    val rotationalSpeedEntry = table.getEntry("rotational Speed")
-    val rotationalAccelerationEntry = table.getEntry("rotational Acceleration")
-
     val useGyroEntry = table.getEntry("Use Gyro")
     val gyroIsConnectedEntry = table.getEntry("Gyro Connected")
 
@@ -92,9 +87,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
 
     private val aimTargetEntry = table.getEntry("Aim Target")
-
-    val rateCurve = MotionCurve()
-
 
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
@@ -664,7 +656,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(15, 20, 1)
                 pid {
-                    p(0.006 * 1024.0, 0.3)
+                    p(6.144, 2.33)
 //                    d(0.0000025 * 1024.0)
                 }
                 configSim(DCMotor.getNeo550(1), 0.0000065)
@@ -742,11 +734,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun getAngleToSpeaker(useSpinCompensation: Boolean = false): Angle {
-        var point = if (useSpinCompensation) {
-            offsetSpeakerPose
-        } else {
-            speakerPos
-        }
+        val point = if (useSpinCompensation) {
+                offsetSpeakerPose
+            } else {
+                speakerPos
+            }
 
         val dVector = AprilTag.position - point.feet
         return atan2(dVector.y.asFeet, dVector.x.asFeet).radians
@@ -757,41 +749,6 @@ fun Drive.abortPath(): Boolean {
     return isHumanDriving
 }
 
-suspend fun Drive.currentTest() = use(this) {
-    var power = 0.0
-    var upPressed = false
-    var downPressed = false
-    periodic {
-        if (OI.driverController.dPad == Controller.Direction.UP) {
-            upPressed = true
-        } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
-            downPressed = true
-        }
-        if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
-            upPressed = false
-            power += 0.05
-        }
-        if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
-            downPressed = false
-            power -= 0.05
-        }
-
-        var currModule = modules[0] as Drive.Module
-        currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
-        currModule = modules[1] as Drive.Module
-        currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
-        currModule = modules[2] as Drive.Module
-        currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
-        currModule = modules[3] as Drive.Module
-        currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
-
-        println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
-    }
-}
 
 fun latencyAdjust(vector: Vector2L, latencySeconds: Double): Vector2L {
     val odomDiff = Drive.poseDiff(latencySeconds)
