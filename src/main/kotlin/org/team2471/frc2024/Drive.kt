@@ -18,11 +18,8 @@ import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.input.Controller //Added by Jeremy on 1-30-23 for power testing
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
-import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
@@ -595,8 +592,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override val speed: Double
             get() = driveMotor.velocity
-        override val acceleration: Double
-            get() = driveMotor.acceleration
 
         override val acceleration: Double
             get() = driveMotor.acceleration
