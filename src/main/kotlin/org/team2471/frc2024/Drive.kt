@@ -103,8 +103,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kMoveWhileSpin = if (isReal) 27.0 else 59.0,
     )
 
-    val maxVel = parameters.maxVelocity.lengthPerSecond.asMeters//25.0.feet.asMeters
-    val maxRot = parameters.maxRotateVelocity.changePerSecond.asRadians//1000.0.degrees.asRadians
+    val maxVel = 25.0.feet.asMeters
+    val maxRot = 1000.0.degrees.asRadians
 
 
     /**
@@ -263,8 +263,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 HolonomicPathFollowerConfig(
                     PIDConstants(parameters.kpPosition.feet.asMeters, 0.0, parameters.kdPosition.feet.asMeters),
                     PIDConstants(parameters.kpHeading.degrees.asRadians, 0.0, parameters.kdHeading.degrees.asRadians),
-                    parameters.maxVelocity.lengthPerSecond.asMeters,
-                    parameters.maxRotateVelocity.changePerSecond.asRadians,
+                    maxVel,
+                    maxRot,
                     ReplanningConfig(false, true, 100.0, 100.0)
                 ),
                 {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
@@ -617,7 +617,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val absoluteAngle: Angle
             get() = if (encoderConnected) {
-                    (digitalEncoder.absolutePosition.degrees * 360.0 * parameters.invertSteerFactor - angleOffset).wrap()
+                    (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
                 } else {
 //                    encoder not connected, assume wheel is zeroed
                     0.0.degrees
