@@ -347,7 +347,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                             //encoder has not sent updates after a certain threshold
                             m.encoderConnected = false
 //                            println("module #$i absolute encoder has been static for more then 40 ticks")
-                            DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
+                            if (isReal) DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
                         }
                         previousAngles[i] = rawEncoderAbsoluteAngle
                     }
@@ -460,7 +460,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         } else {
             heading = 180.0.degrees
         }
-        println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
+        println("zeroed heading to $heading  alliance red? $isRedAlliance")
     }
 
     fun frontSpeakerResetOdom() {
@@ -676,7 +676,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio                                               * fudge
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (91.65F/96.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
+            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (91.65/96.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
