@@ -148,7 +148,7 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Do
     Drive.aimTarget = AimTarget.NONE
 }
 
-suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Boolean = false) {
+suspend fun seeAndPickUpSeenNote() {
 
     val t = Timer()
     t.start()
@@ -168,11 +168,7 @@ suspend fun seeAndPickUpSeenNote(timeOut: Boolean = true, cancelWithTrigger : Bo
         } else {
             noteSeenThreshold = 0
         }
-        if (timeOut && t.get() > 3) {
-            println("exiting with timeout")
-            stop()
-        }
-        if (cancelWithTrigger && OI.driveLeftTrigger < 0.2) {
+        if (OI.driveLeftTrigger < 0.2) {
             println("exiting with trigger")
             stop()
         }
@@ -223,10 +219,6 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 //            val expectedPosWeight = (10.0/(notePosCount - 7.4) - 0.4).coerceIn(0.0, 1.0)
         var expectedFieldPos : Vector2? = expectedPos
         var notePosMaxError = 3.5
-        if (noteFoundFlag) {
-//            expectedFieldPos = estimatedFieldPos
-//                notePosMaxError = 3.5 // If we don't have many measurements then some more error is acceptable
-        }
 
         var noteFound = false
         var newNoteList = NoteDetector.notes
@@ -327,7 +319,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
             //start driving
 
-            noteFoundFlag = true
+             noteFoundFlag = true
 
             if (!noteFound) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
