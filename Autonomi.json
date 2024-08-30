@@ -9,9 +9,7 @@
 		"kdHeading": 0.0,
 		"kHeadingFeedForward": 0.0,
 		"alignRobotToPath": false,
-		"kMoveWhileSpin": 1.0,
-		"invertDriveFactor": 1.0,
-		"invertSteerFactor": 1.0
+		"kMoveWhileSpin": 1.0
 	},
 	"mapAutonomous": {
 		"Tests": {

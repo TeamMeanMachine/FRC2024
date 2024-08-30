@@ -2,8 +2,8 @@ import edu.wpi.first.gradlerio.GradleRIOPlugin
 
 plugins {
     id "java"
-    id "org.jetbrains.kotlin.jvm" version "1.7.20"
-    id "edu.wpi.first.GradleRIO" version "2024.3.1"
+    id "org.jetbrains.kotlin.jvm" version "1.9.21"
+    id "edu.wpi.first.GradleRIO" version "2024.3.2"
     id "com.github.gmazzo.buildconfig" version "3.0.0"
 }
 
@@ -44,6 +44,7 @@ deploy {
 }
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
+var advantageKitVersion = "3.2.0"
 
 repositories {
     mavenCentral()
@@ -53,7 +54,13 @@ repositories {
     maven { setUrl("https://www.revrobotics.com/content/sw/max/sdk/maven/")}
     maven { setUrl("https://maven.photonvision.org/repository/internal")}
 //    maven { url 'https://nexus.otake.pw/repository/maven-public/' }
-
+    maven {
+        url = uri("https://maven.pkg.github.com/Mechanical-Advantage/AdvantageKit")
+        credentials {
+            username = "Mechanical-Advantage-Bot"
+            password = "\u0067\u0068\u0070\u005f\u006e\u0056\u0051\u006a\u0055\u004f\u004c\u0061\u0079\u0066\u006e\u0078\u006e\u0037\u0051\u0049\u0054\u0042\u0032\u004c\u004a\u006d\u0055\u0070\u0073\u0031\u006d\u0037\u004c\u005a\u0030\u0076\u0062\u0070\u0063\u0051"
+        }
+    }
 }
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
@@ -82,14 +89,7 @@ dependencies {
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.roborio)
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
 
-   // testImplementation 'junit:junit:4.12'
-   // simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
-
-    //testImplementation 'junit:junit:4.12'
-
-    // Enable simulation gui support. Must check the box in vscode to enable support
-    // upon debugging
-    //simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
+    testImplementation 'junit:junit:4.12'
 
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
     compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.5.31'
@@ -99,8 +99,14 @@ dependencies {
     compileOnly 'com.github.gmazzo.buildconfig:com.github.gmazzo.buildconfig.gradle.plugin:3.0.0'
 
 //    implementation 'pw.otake.pseudoresonance:pixy2-java-api:1.4.1'
-    implementation("org.photonvision:photonlib-java:v2024.2.8")
-    implementation("org.photonvision:photontargeting-java:v2024.2.8")
+    implementation("org.photonvision:photonlib-java:v2024.3.1")
+    implementation("org.photonvision:photontargeting-java:v2024.3.1")
+
+    //AdvantageKit libs
+    implementation("org.littletonrobotics.akit.junction:junction-core:$advantageKitVersion")
+    implementation("org.littletonrobotics.akit.junction:wpilib-shim:$advantageKitVersion")
+    implementation("org.littletonrobotics.akit.conduit:conduit-api:$advantageKitVersion")
+    implementation("org.littletonrobotics.akit.conduit:conduit-wpilibio:$advantageKitVersion")
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
@@ -129,6 +135,16 @@ wrapper {
     gradleVersion = '7.6'
     distributionType = Wrapper.DistributionType.BIN
 }
+//configurations.configureEach {
+//    exclude("edu.wpi.first.wpilibj")
+//}
+
+tasks.register('checkAkitInstall', JavaExec) {
+    dependsOn "classes"
+    mainClass = "org.littletonrobotics.junction.CheckInstall"
+    classpath = sourceSets.main.runtimeClasspath
+}
+compileJava.finalizedBy checkAkitInstall
 
 compileKotlin {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_17

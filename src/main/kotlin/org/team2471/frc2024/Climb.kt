@@ -1,19 +1,24 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Translation3d
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.Relay
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.units.Length
-import org.team2471.frc.lib.units.inches
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 
+@OptIn(DelicateCoroutinesApi::class)
 object Climb: Subsystem("Climb") {
     private val table = NetworkTableInstance.getDefault().getTable("Climb")
 
@@ -24,7 +29,7 @@ object Climb: Subsystem("Climb") {
     private val relayOnEntry = table.getEntry("Relay On")
     private val matchTimeLeft = table.getEntry("Match time left")
 
-    val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER))
+    val climberMotor = MotorController(SparkMaxID(Sparks.CLIMBER, "Climb/Climb"))
     val climberEncoder = DutyCycleEncoder(DigitalSensors.CLIMBER)
     private val relay = Relay(Solenoids.CLIMB_SWITCH)
 
@@ -56,13 +61,13 @@ object Climb: Subsystem("Climb") {
             currentLimit(39, 60, 1)
             inverted(true)
             pid {
-                p(0.0006)
+                p(0.6144, 0.03)
             }
             coastMode()
+            configSim(DCMotor.getNeo550(1), 0.000001)
         }
         climberMotor.setRawOffset(MIN_CLIMB_INCHES)
         climbSetpoint = MIN_CLIMB_INCHES.inches
-        val matchTimeTimer = Timer()
 
         GlobalScope.launch {
             periodic {
@@ -85,7 +90,12 @@ object Climb: Subsystem("Climb") {
                     relay.set(Relay.Value.kOff)
                 }
 
+                val insideHeight = (climberHeight - MIN_CLIMB_INCHES.inches).asMeters
+                val rotation = Rotation3d(90.0.degrees.asRadians, 0.0, 90.0.degrees.asRadians)
+                val translationOffset = Translation3d(-0.058, 0.0051, 0.017)
 
+                Robot.logComponent("Components/1 OutsideClimber", Pose3d(Translation3d(0.0, 0.0, insideHeight / 2.0) + translationOffset, rotation))
+                Robot.logComponent("Components/2 InsideClimber", Pose3d(Translation3d(0.0, 0.0, insideHeight) + translationOffset, rotation))
             }
         }
     }

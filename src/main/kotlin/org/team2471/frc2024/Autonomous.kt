@@ -22,51 +22,25 @@ import org.team2471.frc.lib.testing.*
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc.lib.util.isReal
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc2024.Drive.combinedPosition
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import java.io.File
 import java.util.*
 import kotlin.math.absoluteValue
 
-
 private lateinit var autonomi: Autonomi
-
-
-enum class Side {
-    LEFT,
-    RIGHT;
-
-    operator fun not(): Side = when (this) {
-        LEFT -> RIGHT
-        RIGHT -> LEFT
-    }
-}
 
 val selAuto
     get() = SmartDashboard.getString("Autos/selected", "no auto selected")
 
 object AutoChooser {
-    private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
     private val closeFourToFiveEntry = AprilTag.aprilTable.getEntry("Auto, Go For It")
     private var autonomiEntryTopicSub =
         NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
-private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
+    private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
     var cacheFile: File? = null
-    var redSide: Boolean = true
-        get() {
-            if (DriverStation.getAlliance().isEmpty) {
-//                println("DriverStation.getAlliance() = null!!!!!!!!!!!!!!!!!! defaulting to isRedAlliance to true")
-                return true
-            } else {
-                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-            }
-        }
-        set(value) {
-            field = value
-            isRedAllianceEntry.setBoolean(value)
-        }
 
     private val lyricsChooser = SendableChooser<String?>().apply {
         setDefaultOption("Country roads", "Country roads")
@@ -89,8 +63,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         addOption("Auto Length", "Auto Length")
         addOption("Back Auto Length", "Back Auto Length")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
-
-
     }
 
     private val autonomousChooser = SendableChooser<String?>().apply {
@@ -298,8 +270,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         var path = auto?.get("1-GrabSecond")
 
         if (path != null) {
-            combinedPosition = path.getPosition(0.0).feet
-            Drive.position = combinedPosition.asFeet
+            AprilTag.position = path.getPosition(0.0).feet
+            Drive.position = AprilTag.position.asFeet
         }
 
         aimAndShoot(true)
@@ -381,19 +353,19 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             parallel({ //drive do driving
                 if (path != null) {
                     Pivot.angleSetpoint = if (isRedAlliance) 38.0.degrees else 38.0.degrees
-                    Drive.driveAlongPath(path!!, true, useCombinedPosition = false)
+                    Drive.driveAlongPath(path!!, true)
                 } else {
                     println("PATH EQUALS NULL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 }
                 path = auto?.get("2-GrabThird")
                 if (path != null) {
                     Pivot.angleSetpoint = if (isRedAlliance) 36.5.degrees else 36.5.degrees //35.0 for red
-                    Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
+                    Drive.driveAlongPath(path!!, false)
                 }
                 path = auto?.get("3-GrabFourth")
                 if (path != null) {
                     Pivot.angleSetpoint = if (isRedAlliance) 34.0.degrees else 34.0.degrees //33.0 for red
-                    Drive.driveAlongPath(path!!, false, useCombinedPosition = false)
+                    Drive.driveAlongPath(path!!, false)
                 }
                 delay(1.0)
                 finishedPaths = true
@@ -424,10 +396,6 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }, {
                 Drive.zeroGyro()
             }, {
-//                Drive.combinedPosition =
-//                    if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-//                Drive.position = combinedPosition.asFeet
-            }, {
                 Pivot.aimSpeaker = true
             })
             println("after safeSub parallel ${Robot.totalTimeTaken()}")
@@ -436,11 +404,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             val t = Timer()
             t.start()
             periodic {
-                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && Drive.gyro.isConnected()) {
+                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && (Drive.gyro.isConnected == isReal)) {
                     println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
                     this.stop()
                 }
-                if (!Drive.gyro.isConnected()) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
+                if (!Drive.gyro.isConnected && isReal) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
             }
 
             println("starting auto stuff now ${Robot.totalTimeTaken()}")
@@ -453,7 +421,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
                 path = auto?.get("1-GrabSecond")
                 if (path != null) Drive.driveAlongPath(path, true, inResetGyro = false, turnOverride = { Drive.aimSpeakerAmpLogic() })
 
-                Shooter.setRpms(Shooter.getRpmFromPosition(combinedPosition.asFeet))
+                Shooter.setRpms(Shooter.getRpmFromPosition(AprilTag.position.asFeet))
                 aimAndShoot()
                 Intake.intakeState = Intake.IntakeState.INTAKING
                 Shooter.setRpms(0.0)
@@ -577,7 +545,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         if (!skipShoot) {
             if (shootPath != null) {
                 parallel({
-                    shootPath.xyCurve.headPoint.position = if (isRedAlliance) combinedPosition.asFeet else combinedPosition.asFeet.reflectAcrossField()
+                    shootPath.xyCurve.headPoint.position = if (isRedAlliance) AprilTag.position.asFeet else AprilTag.position.asFeet.reflectAcrossField()
                     Drive.driveAlongPath(shootPath, false, turnOverride = { if (aimWhileDriving) Drive.aimSpeakerAmpLogic() else null }, earlyExit = {missedPieceFlag})
                     println("FINISHED SHOOTER PATH YAY!!")
                     finishedPath = true
@@ -629,8 +597,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
     suspend fun dynamicDriveToMissedPiece(notePos: Vector2) {
         val path = Path2D("newPath")
-        path.addVector2(Drive.combinedPosition.asFeet)
-        path.addVector2(Vector2(Drive.combinedPosition.asFeet.x, notePos.y))
+        path.addVector2(AprilTag.position.asFeet)
+        path.addVector2(Vector2(AprilTag.position.asFeet.x, notePos.y))
         val duration = path.length / 3.0
         path.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
         path.addEasePoint(0.0, 0.0)
@@ -650,9 +618,9 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             }, {
                 Drive.zeroGyro()
             }, {
-                Drive.combinedPosition =
+                AprilTag.position =
                     if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-                Drive.position = combinedPosition.asFeet
+                Drive.position = AprilTag.position.asFeet
             })
             println("after pileAuto parallel ${Robot.totalTimeTaken()}")
             val t = Timer()
@@ -667,8 +635,8 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("1-DownCenter")
             if (path != null) {
-                combinedPosition = path.getPosition(0.0).feet
-                Drive.position = combinedPosition.asFeet
+                AprilTag.position = path.getPosition(0.0).feet
+                Drive.position = AprilTag.position.asFeet
             }
             println("running auto stuff ${Robot.totalTimeTaken()}")
 
@@ -683,7 +651,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 
             Shooter.setRpms(5000.0)
             Intake.setIntakeMotorsPercent(1.0)
-            Drive.robotPivot = Vector2(0.0, 10.5)
+            Drive.robotPivot = Vector2(0.0, 10.5).feet
             pickUpSeenNote(wantedApproachAngle = -80.0, overrideTimeout = 1.0)
 
 
@@ -701,7 +669,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
 //            fire()
 
         } finally {
-            Drive.robotPivot = Vector2(0.0, 0.0)
+            Drive.robotPivot = Vector2(0.0, 0.0).feet
             Drive.aimTarget = AimTarget.NONE
             Pivot.aimSpeaker = false
         }
@@ -725,13 +693,13 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     suspend fun firstMidAuto() = use(Drive, Shooter) {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition =
+            AprilTag.position =
                 if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("0-Mid1_Grab1.5")
             Shooter.setRpms(5000.0)
-            var t = Timer()
+            val t = Timer()
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
             if (shootFirstEntry.getBoolean(true)) {
@@ -805,13 +773,13 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     suspend fun firstSecAuto() = use(Drive, Shooter) {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition =
+            AprilTag.position =
                 if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
             val auto = autonomi["SafeSubSide"]
             auto?.isReflected = isBlueAlliance
             var path = auto?.get("0.3-Fir2_Grab1.5")
             Shooter.setRpms(5000.0)
-            var t = Timer()
+            val t = Timer()
             t.start()
             suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.5 }
             if (shootFirstEntry.getBoolean(true)) {
@@ -892,11 +860,11 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     suspend fun propAuto() = use(Drive, Shooter) {
         try {
             Drive.zeroGyro()
-            Drive.combinedPosition =
+            AprilTag.position =
                 if (isRedAlliance) Vector2(0.0, 0.0).feet else Vector2(0.0, 0.0).reflectAcrossField().feet
             val auto = autonomi["Tests"]
             auto?.isReflected = isBlueAlliance
-            var path = auto?.get("8 Foot Straight")
+            val path = auto?.get("8 Foot Straight")
             aimAndShoot()
 
             if (path != null) {
@@ -929,7 +897,7 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
         println(testPathName)
         if (testPath != null) {
             println("Path is not null")
-            Drive.driveAlongPath(testPath, true, useCombinedPosition = false)
+            Drive.driveAlongPath(testPath, true)
         } else {
             println("Test Path is null!!! :(")
         }
@@ -938,23 +906,14 @@ private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos"
     suspend fun hii() = use(Drive, Shooter, Intake, name = "hii") {
         println("hiiiii ${Robot.totalTimeTaken()}")
         Drive.zeroGyro()
-        Drive.combinedPosition =
+        AprilTag.position =
             if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-        val auto = autonomi["SafeSubSide"]
-        auto?.isReflected = isBlueAlliance
-        var path = auto?.get("0-Mid1_Grab1.5")
-
-        val t = Timer()
-        t.start()
-
-        val startingPosition = Drive.combinedPosition
-
-        println("line in front of driveAlongPath ${Robot.totalTimeTaken()}")
-        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
-        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
-
-
-
+        val path = autonomi["SafeSubSide"]?.get("1-GrabSecond")
+        if (path != null) {
+            Drive.driveAlongPath(path)
+        } else {
+            println("path is null!!!!!!!!!!!!!")
+        }
     }
 //
 //    suspend fun bye() {

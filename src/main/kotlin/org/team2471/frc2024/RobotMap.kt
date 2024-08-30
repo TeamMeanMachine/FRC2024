@@ -2,6 +2,11 @@
 
 package org.team2471.frc2024
 
+object Leds {
+    const val LED_PORT = 0
+    const val LED_LENGTH = 60
+}
+
 object Talons {
 }
 
