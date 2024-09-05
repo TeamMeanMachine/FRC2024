@@ -7,21 +7,17 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.*
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.demoMode
-import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2024.AprilTag.resetCameras
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Shooter.manualShootState
-import org.team2471.frc2024.Shooter.rpmBottomSetpoint
-import org.team2471.frc2024.Shooter.rpmCurve
-import org.team2471.frc2024.Shooter.rpmTopSetpoint
 import kotlin.math.absoluteValue
 
 object OI : Subsystem("OI") {
     val driverController = XboxController(0)
     val operatorController = XboxController(1)
 
-    private val deadBandDriver = 0.03
+    private val deadBandDriver = 0.06
     private val deadBandOperator = 0.1
 
     private val driveTranslationX: Double
@@ -71,7 +67,6 @@ object OI : Subsystem("OI") {
             Drive.zeroGyro()
             Drive.initializeSteeringMotors() //not needed 02/05
         }
-//        driverController::x.whenTrue { Drive.xPose() }
 
         driverController::leftBumper.whenTrue {
             if (Intake.intakeState == Intake.IntakeState.EMPTY) {
@@ -85,7 +80,7 @@ object OI : Subsystem("OI") {
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue {
-            aimAtSpeaker();
+            aimAtSpeaker()
 //            if (Drive.demoMode) aimAtTagDemo() else aimAtSpeaker();
 //            Shooter.manualShootState = !Shooter.manualShootState
         }
@@ -102,11 +97,13 @@ object OI : Subsystem("OI") {
             else {
                 aimFromPodium() }
         }
+//        driverController::x.whenTrue { Drive.xPose(); println("xpose") }
+
         driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
         }
-        driverController::b.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }//println("driver B pressed trying to drive to amp"); lockToAmp() }
+        driverController::b.whenTrue { if (!Drive.demoMode) lockToAmp() else Pivot.angleSetpoint = Pivot.AMPPOSE }// }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
@@ -160,6 +157,8 @@ object OI : Subsystem("OI") {
                 } else {
                     driverController.rumble = 0.0
                 }
+
+//                println("driveRotation $driveRotation driveTranslation ${driveTranslation}")
 
                 // Operator Rumble
                 if (Shooter.manualShootState && Robot.isTeleopEnabled) {

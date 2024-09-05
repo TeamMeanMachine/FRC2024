@@ -1,0 +1,17 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Autos": "String Chooser",
+      "/SmartDashboard/Best Song Lyrics": "String Chooser",
+      "/SmartDashboard/RobotTests": "String Chooser",
+      "/SmartDashboard/Tests": "String Chooser"
+    }
+  },
+  "NetworkTables Info": {
+    "Connections": {
+      "open": true
+    },
+    "visible": true
+  }
+}

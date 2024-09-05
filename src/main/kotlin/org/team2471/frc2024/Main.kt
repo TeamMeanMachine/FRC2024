@@ -2,47 +2,59 @@
 
 package org.team2471.frc2024
 
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.littletonrobotics.junction.LogFileUtil
+import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.littletonrobotics.junction.wpilog.WPILOGReader
+import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import org.team2471.frc.lib.coroutines.parallel
+import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
-import org.team2471.frc.lib.framework.MeanlibRobot
+import org.team2471.frc.lib.framework.LoggedMeanlibRobot
+import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion.following.demoMode
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc2024.testing.driveTests
-import org.team2471.frc2024.testing.steeringTests
+import org.team2471.frc.lib.util.RobotMode
+import org.team2471.frc.lib.util.robotMode
 import java.net.NetworkInterface
 
 
 @DelicateCoroutinesApi
-object Robot : MeanlibRobot() {
+object Robot : LoggedMeanlibRobot() {
     var startMeasureTime = getSystemTimeSeconds()
     var lastMeasureTime = startMeasureTime
-    var isCompBot = true
+    val isCompBot = getCompBotBoolean()
+
+    private val loggedComponentPosesList: HashMap<String, Pose3d> = hashMapOf()
 
     val inComp = false
 
-    init {
-        val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
-        println("retrieving network interfaces")
-        for (iFace in networkInterfaces) {
-            println(iFace.name)
-            if (iFace.name == "eth0") {
-                println("NETWORK NAME--->${iFace.name}<----")
-                var macString = ""
-                for (byteVal in iFace.hardwareAddress){
-                    macString += String.format("%s", byteVal)
-                }
-                println("FORMATTED---->$macString<-----")
+    val subsystems: Array<Subsystem> = arrayOf(LedControl, OI, Drive, Intake, Pivot, Shooter, Climb, AprilTag)
 
-                isCompBot = (macString != "0-1284751573")
-                println("I am compbot = $isCompBot")
-            }
+    init {
+        println("robotMode == $robotMode")
+        if (robotMode != RobotMode.REPLAY) {
+            //sim or real
+//            Logger.addDataReceiver(WPILOGWriter())
+            Logger.addDataReceiver(NT4Publisher())
+        } else {
+            setUseTiming(true) // false = run sim as fast as possible
+            val logPath = LogFileUtil.findReplayLog()
+            Logger.setReplaySource(WPILOGReader(logPath))
+            Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
         }
+
+        Logger.start()
+
+        LedControl
+        AutoChooser
+        NoteDetector
 
         // i heard the first string + double concatenations were expensive...
 //        repeat(25) {
@@ -50,28 +62,9 @@ object Robot : MeanlibRobot() {
 //        }
         println("NEVER GONNA GIVE YOU UP")
 
-        OI
-        println("Activating OI! ${OI.driverController.leftThumbstickX}")
-        Drive
-        Drive.zeroGyro()
-        Drive.heading = 0.0.degrees
-        println("Activating Drive! heading = ${Drive.heading}")
-        Intake
-        println("Activating Intake! bottomBreak = ${Intake.bottomBreak}")
-        Shooter
-        println("Activating Shooter! rpmError = ${(Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint) - (Shooter.motorRpmTop + Shooter.motorRpmBottom)}")
-        Climb
-        println("Activating Climb! climberHeight = ${Climb.climberHeight}")
-        Pivot
-        println("Activating Pivot! pivotEncoderAngle = ${Pivot.pivotEncoderAngle}")
-        AutoChooser
-        println("Activating AutoChooser! redSide = ${AutoChooser.redSide}")
-        AprilTag
-        println("Activating Apriltag! backCamsConnected = ${AprilTag.backCamsConnected}")
-        NoteDetector
-        println("Activating NoteDetector! noteCam isConnected = ${NoteDetector.camera.isConnected}")
-        Limelight
-        println("Activating Limelight! limelight isConnected = ${Limelight.isConnected}")
+        for (subsystem in subsystems) {
+            println("activating subsystem ${subsystem.name}")
+        }
 
         // drop down menu for selecting tests
         val testChooser = SendableChooser<String?>().apply {
@@ -79,6 +72,14 @@ object Robot : MeanlibRobot() {
             addOption("Drive Tests", "Drive Tests")
         }
         SmartDashboard.putData("RobotTests", testChooser)
+        LedControl.pattern = LedPatterns.DISABLED
+        GlobalScope.launch {
+            periodic {
+                try {
+                    loggedComponentPosesList.forEach { Logger.recordOutput(it.key, it.value) }
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     override suspend fun enable() {
@@ -86,14 +87,9 @@ object Robot : MeanlibRobot() {
         println("starting enable")
         var done = false
         GlobalScope.launch {
+            //creates a list of enable functions for each subsystem, then run them in parallel. Tested in sim and was same speed as old code -Justin
             parallel(
-                {Drive.enable(); println("after drive ${totalTimeTaken()}")},
-                {Shooter.enable(); println("after shooter ${totalTimeTaken()}")},
-                {Climb.enable(); println("after climb ${totalTimeTaken()}")},
-                {Intake.enable(); println("after intake ${totalTimeTaken()}")},
-                {Pivot.enable(); println("after pivot ${totalTimeTaken()}")},
-                {AprilTag.backgroundReset(); println("after aprilTag ${totalTimeTaken()}")}
-
+                *subsystems.map { suspend { it.enable(); println("after ${it.name} ${totalTimeTaken()}") } }.toTypedArray()
             )
             done = true
         }
@@ -135,11 +131,8 @@ object Robot : MeanlibRobot() {
     override suspend fun disable() {
         Shooter.manualShootState = false
         Intake.intakeState = Intake.IntakeState.EMPTY
-        Drive.disable()
-        Climb.disable()
-        Intake.disable()
-        Pivot.disable()
-        Shooter.disable()
+
+        subsystems.forEach { it.disable() }
 
         OI.driverController.rumble = 0.0
         OI.operatorController.rumble = 0.0
@@ -165,7 +158,33 @@ object Robot : MeanlibRobot() {
     fun recentTimeTaken(): Double {
         val timeTaken = getSystemTimeSeconds() - lastMeasureTime
         updateSecondsTaken()
-        return timeTaken.toDouble()
+        return timeTaken
+    }
+
+    private fun getCompBotBoolean(): Boolean {
+        var compBot = true
+        if (robotMode == RobotMode.REAL) {
+            val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
+            println("retrieving network interfaces")
+            for (iFace in networkInterfaces) {
+                println(iFace.name)
+                if (iFace.name == "eth0") {
+                    println("NETWORK NAME--->${iFace.name}<----")
+                    var macString = ""
+                    for (byteVal in iFace.hardwareAddress){
+                        macString += String.format("%s", byteVal)
+                    }
+                    println("FORMATTED---->$macString<-----")
+
+                    compBot = (macString != "0-1284751573")
+                }
+            }
+        } else { println("Not real so I am compbot") }
+        println("I am compbot = $compBot")
+        return compBot
+    }
+    fun logComponent(name: String, pose: Pose3d) {
+        loggedComponentPosesList[name] = pose
     }
 }
 

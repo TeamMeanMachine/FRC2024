@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -54,8 +55,8 @@ object Shooter: Subsystem("Shooter") {
     const val NEG_POWER = -0.001 //min for falcon to even consider
     const val MAXRPM = 5800.0
 
-    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
-    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM, "Shooter/Top"))
+    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP, "Shooter/Bottom"))
 
     val motorRpmTop
         get() = shooterMotorTop.velocity
@@ -170,6 +171,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
         shooterMotorTop.config {
@@ -178,6 +180,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
 
