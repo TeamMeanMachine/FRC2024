@@ -897,6 +897,8 @@ object AutoChooser {
         println(testPathName)
         if (testPath != null) {
             println("Path is not null")
+            testPath.isReflected = isRedAlliance
+
             Drive.driveAlongPath(testPath, true)
         } else {
             println("Test Path is null!!! :(")
