@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -19,20 +20,15 @@ object Shooter: Subsystem("Shooter") {
 
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
 
-    private val shooterPercentEntry = table.getEntry("Shooter Percent")
-    private val shooterCurrentEntry = table.getEntry("Shooter Current")
-    private val shooterTwoCurrentEntry = table.getEntry("Shooter Two Current")
+    private val shooterCurrentEntry = table.getEntry("Bottom Current")
+    private val shooterTwoCurrentEntry = table.getEntry("Top Current")
     private val motorRpmBottomEntry = table.getEntry("RPM Bottom")
     private val motorRpmTopEntry = table.getEntry("RPM Top")
-    private val rpmTopEntry = table.getEntry("rpm top setpoint")
-    private val rpmBottomEntry = table.getEntry("rpm bottom setpoint")
-    private val shootingRpmTopEntry = table.getEntry("Shooting RPM Top")
-    private val shootingRpmBottomEntry = table.getEntry("Shooting RPM Bottom")
-    private val shootingEntry = table.getEntry("shooting")
-    private val closeSpeakerRpmEntry = table.getEntry("closeSpeakerRPM")
-
+    private val rpmTopEntry = table.getEntry("RPM Top Setpoint")
+    private val rpmBottomEntry = table.getEntry("RPM Bottom Setpoint")
+    private val shootingEntry = table.getEntry("Manual Shoot State")
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
-    val topAmpRPMEntry = table.getEntry("Top Amp RPM")
+    val topAmpRPMEntry = table.getEntry("Top RPM Amp")
     val Pitch3_5Entry = table.getEntry("Pitch3.5Entry")
     val Pitch5Entry = table.getEntry("Pitch5Entry")
     val Pitch7Entry = table.getEntry("Pitch7Entry")
@@ -51,13 +47,12 @@ object Shooter: Subsystem("Shooter") {
     val RPM17Entry = table.getEntry("RPM17Entry")
 
     val demoRPMEntry = table.getEntry("DemoRPM")
-    val demoTagRPMEntry = table.getEntry("Demo Tag RPM")
 
     const val NEG_POWER = -0.001 //min for falcon to even consider
     const val MAXRPM = 5800.0
 
-    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM))
-    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP))
+    val shooterMotorBottom = MotorController(FalconID(Falcons.SHOOTER_BOTTOM, "Shooter/Top"))
+    val shooterMotorTop = MotorController(FalconID(Falcons.SHOOTER_TOP, "Shooter/Bottom"))
 
     val motorRpmTop
         get() = shooterMotorTop.velocity
@@ -83,8 +78,8 @@ object Shooter: Subsystem("Shooter") {
     val pitchCurve = MotionCurve()
     val rpmCurve = MotionCurve()
 
-    private val topPDController = PDController(0.0002, 0.0002)
-    private val bottomPDController = PDController(0.0002, 0.0002)
+    private val topPDController = PDController(0.00002, 0.0002)
+    private val bottomPDController = PDController(0.00002, 0.0002)
 
     private var ffTopPower: Double = 0.0
     private var ffBottomPower: Double = 0.0
@@ -107,8 +102,6 @@ object Shooter: Subsystem("Shooter") {
 
     init {
         demoRPMEntry.setDouble(2500.0)
-
-        demoTagRPMEntry.setDouble(1500.0)
 
 //        if (!Robot.inComp) {
             if (!Pitch17Entry.exists() || !Pitch3_5Entry.exists()) {
@@ -146,21 +139,6 @@ object Shooter: Subsystem("Shooter") {
                 RPM17Entry.setPersistent()
             }
 
-            shooterPercentEntry.setDouble(1.0)
-            if (!shootingRpmTopEntry.exists()) {
-                shootingRpmTopEntry.setDouble(5000.0)
-                shootingRpmTopEntry.setPersistent()
-            }
-
-            if (!shootingRpmBottomEntry.exists()) {
-                shootingRpmBottomEntry.setDouble(5000.0)
-                shootingRpmBottomEntry.setPersistent()
-            }
-
-        if (!closeSpeakerRpmEntry.exists()) {
-            closeSpeakerRpmEntry.setDouble(3500.0)
-        }
-
             if (isRedAlliance) {
                 topAmpRPMEntry.setDouble(2000.0)
                 bottomAmpRPMEntry.setDouble(2000.0)
@@ -176,6 +154,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
         shooterMotorTop.config {
@@ -184,6 +163,7 @@ object Shooter: Subsystem("Shooter") {
             coastMode()
             inverted(true)
             followersInverted(true)
+            configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
 
@@ -263,10 +243,7 @@ object Shooter: Subsystem("Shooter") {
         periodic {
             if (manualShootState) {
                 if (Drive.demoMode) {
-                    if (Drive.aimTarget == AimTarget.DEMOTAG) {
-                        rpmTopSetpoint = demoTagRPMEntry.getDouble(1500.0)
-                        rpmBottomSetpoint = demoTagRPMEntry.getDouble(1500.0)
-                    } else if (Drive.aimTarget == AimTarget.SPEAKER) {
+                    if (Drive.aimTarget == AimTarget.SPEAKER) {
                         rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                         rpmBottomSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
                     } else if (Pivot.angleSetpoint > 90.0.degrees) {
@@ -283,8 +260,8 @@ object Shooter: Subsystem("Shooter") {
                         rpmTopSetpoint = topAmpRPMEntry.getDouble(1200.0)
                         rpmBottomSetpoint = bottomAmpRPMEntry.getDouble(1200.0)
                     } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
-                        rpmTopSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
-                        rpmBottomSetpoint = closeSpeakerRpmEntry.getDouble(3500.0)
+                        rpmTopSetpoint = 3500.0
+                        rpmBottomSetpoint = 3500.0
                     } else {
                         if (AprilTag.aprilTagsEnabled) {
                             rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)

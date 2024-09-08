@@ -9,7 +9,6 @@ import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.inches
@@ -17,13 +16,10 @@ import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.motion.following.poseDiff
-import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.units.asFeet
-import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import kotlin.math.absoluteValue
-import kotlin.math.max
 import kotlin.math.sign
 
 suspend fun climbWithTrigger() = use(Climb) {
@@ -335,7 +331,7 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 
             if (!noteFound) {
                 headingError = 0.0 //(estimatedFieldPos - Drive.combinedPosition).angleAsDegrees + Drive.heading.asDegrees // <-- This does not work yet, so 0.0
-                notePos = (estimatedFieldPos - Drive.combinedPosition.asFeet).rotateDegrees(-Drive.heading.asDegrees)
+                notePos = (estimatedFieldPos - AprilTag.position.asFeet).rotateDegrees(-Drive.heading.asDegrees)
                 fieldPos = estimatedFieldPos
             }
 
@@ -461,7 +457,9 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 }
 
 suspend fun lockToAmp() {
+    println("inside lockToAmp()")
     Drive.aimTarget = AimTarget.AMP
+    Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
     suspendUntil(20) { !OI.driverController.b }
     Drive.aimTarget = AimTarget.NONE

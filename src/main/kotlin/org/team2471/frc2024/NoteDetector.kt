@@ -85,7 +85,7 @@ object NoteDetector {
                 var closest: Note? = null
                 for (n in notes) {
                     if (closest != null) {
-                        if (n.fieldCoords.distance(Drive.combinedPosition.asFeet) > closest.fieldCoords.distance(Drive.combinedPosition.asFeet)) {
+                        if (n.fieldCoords.distance(AprilTag.position.asFeet) > closest.fieldCoords.distance(AprilTag.position.asFeet)) {
                             closest = n
                         }
                     } else {
@@ -239,7 +239,7 @@ object NoteDetector {
     }
 
     fun robotCoordsToFieldCoords(robotCoords : Vector2): Vector2 {
-        return robotCoords.rotateDegrees(Drive.heading.asDegrees) + Drive.combinedPosition.asFeet
+        return robotCoords.rotateDegrees(Drive.heading.asDegrees) + AprilTag.position.asFeet
     }
 
     fun closestNoteIsAtPosition(expectedPos : Vector2, maximumErr: Double = 3.5) : Boolean {
