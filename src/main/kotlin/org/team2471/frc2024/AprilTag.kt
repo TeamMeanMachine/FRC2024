@@ -42,7 +42,7 @@ object AprilTag: Subsystem("AprilTag") {
 
     val excludedIDs = intArrayOf()
 
-    var position: Vector2L = Vector2L.Zeros
+    var position: Vector2L = Vector2L(0.0.inches, 0.0.inches)
 
     var prevPosition: Vector2L = position
 
@@ -191,15 +191,15 @@ object AprilTag: Subsystem("AprilTag") {
     }
 
     fun updatePosWPI(vararg aprilPoses: GlobalPose) {
-        modulePositions = Drive.modules.map { SwerveModulePosition(it.currDistance.feet.asMeters, heading.asRotation2d) }.toTypedArray()
-
-        poseEstimatorWPI.update(heading.asRotation2d, modulePositions)
-
-
-        for (pose in aprilPoses) {
-            poseEstimatorWPI.addVisionMeasurement(pose.pose2d, pose.timestampSeconds)
-            // Is this how you do it???
-            poseEstimatorWPI.setVisionMeasurementStdDevs(Matrix(Nat.N3(), Nat.N1(), doubleArrayOf(pose.stDev, pose.stDev, pose.stDev)))
-        }
+//        modulePositions = Drive.modules.map { SwerveModulePosition(it.currDistance.feet.asMeters, heading.asRotation2d) }.toTypedArray()
+//
+//        poseEstimatorWPI.update(heading.asRotation2d, modulePositions)
+//
+//
+//        for (pose in aprilPoses) {
+//            poseEstimatorWPI.addVisionMeasurement(pose.pose2d, pose.timestampSeconds)
+////             Is this how you do it???
+//            poseEstimatorWPI.setVisionMeasurementStdDevs(Matrix(Nat.N3(), Nat.N1(), doubleArrayOf(pose.stDev, pose.stDev, pose.stDev)))
+//        }
     }
 }
