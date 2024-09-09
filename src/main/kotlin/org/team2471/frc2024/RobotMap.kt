@@ -18,7 +18,6 @@ object Sparks {
     const val BACK_LEFT_STEER = 11
 
     const val CLIMBER = 9
-    const val AMP = 14
 }
 
 object AnalogSensors {
