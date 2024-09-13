@@ -250,6 +250,23 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val encoderCounterList = arrayOf(0, 0, 0, 0)
             val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
 
+            val wheelCenterOffsets = arrayOfNulls<Pose3d>(modules.indices.count())
+            val returningTranslations = arrayOfNulls<Translation3d>(modules.indices.count())
+
+            for (i in modules.indices) {
+                val m = modules[i] as Module
+                val modelAdjustedAngle = m.modulePosition.rotateDegrees(90.0 * (i + 1.0)).asMeters
+                val modelOffset = Translation3d(modelAdjustedAngle.x, (-1.5).inches.asMeters, modelAdjustedAngle.y)
+                val wheelCenterOffset = Pose3d(
+                    Translation3d(-0.058, 0.0051, 0.017),
+                    Rotation3d(90.0.degrees.asRadians, 0.0.degrees.asRadians, 90.0.degrees.asRadians)
+                ).transformBy(Transform3d(modelOffset, Rotation3d()))
+                val returningTranslation = Translation3d(-modelOffset.x, -modelOffset.z, modelOffset.y)
+                    .rotateBy(Rotation3d(0.0, 0.0, (-90.0.degrees * (i.toDouble() + 2.0)).asRadians))
+                wheelCenterOffsets[i] = wheelCenterOffset
+                returningTranslations[i] = returningTranslation
+            }
+
             println("in init just before periodic")
             periodic {
                 recordOdometry()
@@ -330,20 +347,16 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
                     motorAngleStates[i] = SwerveModuleState(absoluteSpeed, angle.asRotation2d)
 
-                    val modulePosition = m.modulePosition.rotateDegrees(90.0 * (i + 1.0)).asMeters
-                    val moduleOffset = Translation3d(modulePosition.x, (-1.5).inches.asMeters, modulePosition.y)
-                    val modulePose3d = Pose3d(
-                        Translation3d(-0.058, 0.0051, 0.017),
-                        Rotation3d(90.0.degrees.asRadians, 0.0.degrees.asRadians, 90.0.degrees.asRadians)
-                    ).transformBy(Transform3d(moduleOffset, Rotation3d()))
+                    //advantageScope 3d component visualization
+                    val wheelCenterOffset = wheelCenterOffsets[i]
+                    val returningTranslation = returningTranslations[i]
+                    if (wheelCenterOffset != null && returningTranslation != null) {
+                        val rotatedModule = wheelCenterOffset
+                            .rotateBy(Rotation3d(0.0, (m.currDistance * 12.0 / 3.0 / Math.PI).rotations.asRadians, -m.angle.asRadians))
+                        val newCalculatedPose = Pose3d(rotatedModule.translation - returningTranslation, rotatedModule.rotation)
 
-                    val rotatedModule = modulePose3d
-                        .rotateBy(Rotation3d(0.0, (m.currDistance * 12.0 / 3.0 / Math.PI).rotations.asRadians, -m.angle.asRadians))
-                    val newTranslationTwo = Translation3d(-moduleOffset.x, -moduleOffset.z, moduleOffset.y)
-                        .rotateBy(Rotation3d(0.0, 0.0, (-90.0.degrees * (i.toDouble() + 2.0)).asRadians))
-                    val newCalculatedPose = Pose3d(rotatedModule.translation - newTranslationTwo, rotatedModule.rotation)
-
-                    Robot.logComponent("Components/${i + 3} Module$i", newCalculatedPose)
+                        Robot.logComponent("Components/${i + 3} Module$i", newCalculatedPose)
+                    }
                 }
                 try {
                     Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
