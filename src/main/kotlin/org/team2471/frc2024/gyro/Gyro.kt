@@ -18,13 +18,13 @@ object Gyro  {
 
     val isConnected: Boolean get() = inputs.isConnected
 
-    val angle: Angle get() = if (isConnected) inputs.angle.degrees else 0.0.degrees
+    val angle: Angle get() = inputs.angle.degrees
 
     val roll: Angle get() = inputs.roll.degrees
 
     val pitch: Angle get() = inputs.pitch.degrees
 
-    val rate: Double get() = if (isConnected) inputs.rate else headingVelocityFromSwerve() //degrees per second
+    val rate: Double get() = inputs.rate //degrees per second
 
     init {
         GlobalScope.launch {
@@ -36,9 +36,4 @@ object Gyro  {
     }
 
     fun reset() = io.reset()
-
-    fun headingVelocityFromSwerve(): Double {
-
-        return 0.0
-    }
 }
