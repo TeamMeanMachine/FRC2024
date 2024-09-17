@@ -115,7 +115,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 98.75 else 81.876).degrees,
+            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 26.69 else 81.876).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -124,7 +124,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -20.37 else -35.897).degrees,
+            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -19.67 else -35.897).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -133,7 +133,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) 38.24 else -150.539).degrees,
+            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -35.17 else -150.539).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -142,7 +142,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) 164.98 else -104.767).degrees,
+            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -159.03 else -104.767).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
