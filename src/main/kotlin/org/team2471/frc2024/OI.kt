@@ -95,8 +95,8 @@ object OI : Subsystem("OI") {
             if (Drive.demoMode) {
                 Pivot.angleSetpoint = Pivot.demoAngleEntry.getDouble(Pivot.DEMO_POSE.asDegrees).degrees }
             else {
-                aimFromPodium() }
-//                Pivot.angleSetpoint = 30.0.degrees }
+                aimForPass() }
+//                Pivot.angleSetpoint = 25.0.degrees }
         }
 //        driverController::x.whenTrue { Drive.xPose(); println("xpose") }
 

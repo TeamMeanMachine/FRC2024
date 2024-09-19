@@ -93,6 +93,7 @@ object Shooter: Subsystem("Shooter") {
 
     var rpmTopSetpoint: Double = 0.0
         set(value) {
+//            println("RPM Set to $rpmTopSetpoint")
             val capped = value.coerceIn(0.0, MAXRPM)
             ffTopPower = if (capped == 0.0) -0.2 * kFeedForwardTop * motorRpmTop else capped * kFeedForwardTop //only ff going up
             field = capped
@@ -281,6 +282,8 @@ object Shooter: Subsystem("Shooter") {
                     } else if (Pivot.angleSetpoint == Pivot.CLOSESPEAKERPOSE) {
                         rpmTopSetpoint = 3500.0
                         rpmBottomSetpoint = 3500.0
+                    } else if (Drive.aimTarget == AimTarget.PASS) {
+                        setRpms(4500.0)
                     } else {
                         if (AprilTag.aprilTagsEnabled) {
                             rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
