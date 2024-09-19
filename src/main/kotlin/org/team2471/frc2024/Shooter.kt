@@ -264,7 +264,7 @@ object Shooter: Subsystem("Shooter") {
                         rpmTopSetpoint = 3500.0
                         rpmBottomSetpoint = 3500.0
                     } else if (Drive.aimTarget == AimTarget.PASS) {
-                        setRpms(4500.0)
+                        setRpms(4000.0)
                     } else {
                         if (AprilTag.aprilTagsEnabled) {
                             rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)

@@ -76,7 +76,7 @@ object OI : Subsystem("OI") {
                 Intake.intakeState = Intake.IntakeState.EMPTY
             }
         }
-        driverController::a.whenTrue { spit() }
+        driverController::a.whenTrue { lockToAmp() }
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue {
@@ -98,13 +98,16 @@ object OI : Subsystem("OI") {
                 aimForPass() }
 //                Pivot.angleSetpoint = 25.0.degrees }
         }
+        driverController::start.whenTrue {
+            aimFromPodium()
+        }
 //        driverController::x.whenTrue { Drive.xPose(); println("xpose") }
 
         driverController::leftTriggerFullPress.whenTrue { // broken right now, see NoteDetector.angleToClosestNote
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
         }
-        driverController::b.whenTrue { if (!Drive.demoMode) lockToAmp() else Pivot.angleSetpoint = Pivot.AMPPOSE }// }
+        driverController::b.whenTrue { if (!Drive.demoMode) spit() else Pivot.angleSetpoint = Pivot.AMPPOSE }// }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }
