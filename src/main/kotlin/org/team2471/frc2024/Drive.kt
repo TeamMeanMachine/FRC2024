@@ -698,6 +698,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             AimTarget.AMP -> 90.0.degrees
             AimTarget.GAMEPIECE -> -NoteDetector.angleToClosestNote()!!
             AimTarget.PODIUM -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
+            AimTarget.PASS -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //pass aiming same as podium
             else -> getAngleToSpeaker()
         }
 
@@ -766,6 +767,7 @@ enum class AimTarget {
     AMP,
     GAMEPIECE,
     PODIUM,
+    PASS,
     DEMOTAG,
     NONE
 }

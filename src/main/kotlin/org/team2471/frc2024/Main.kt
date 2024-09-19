@@ -72,7 +72,9 @@ object Robot : LoggedMeanlibRobot() {
             addOption("Drive Tests", "Drive Tests")
         }
         SmartDashboard.putData("RobotTests", testChooser)
+
         LedControl.pattern = LedPatterns.DISABLED
+
         GlobalScope.launch {
             periodic {
                 try {
