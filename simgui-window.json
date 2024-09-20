@@ -5,13 +5,13 @@
   "MainWindow": {
     "GLOBAL": {
       "fps": "120",
-      "height": "681",
+      "height": "699",
       "maximized": "0",
       "style": "0",
       "userScale": "2",
-      "width": "1280",
-      "xpos": "263",
-      "ypos": "53"
+      "width": "958",
+      "xpos": "442",
+      "ypos": "139"
     }
   },
   "Table": {
@@ -23,6 +23,11 @@
     }
   },
   "Window": {
+    "###/SmartDashboard/AutoChooser": {
+      "Collapsed": "0",
+      "Pos": "227,92",
+      "Size": "254,54"
+    },
     "###DIO": {
       "Collapsed": "0",
       "Pos": "470,20",
@@ -50,12 +55,12 @@
     },
     "###NetworkTables Info": {
       "Collapsed": "0",
-      "Pos": "254,44",
-      "Size": "750,204"
+      "Pos": "426,44",
+      "Size": "578,204"
     },
     "###Other Devices": {
       "Collapsed": "0",
-      "Pos": "1026,20",
+      "Pos": "939,20",
       "Size": "250,695"
     },
     "###Relays": {
