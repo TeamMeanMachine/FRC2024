@@ -103,8 +103,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kMoveWhileSpin = if (isReal) 27.0 else 59.0,
     )
 
-    val maxVel = 25.0.feet.asMeters
-    val maxRot = 1000.0.degrees.asRadians
+
+    val maxVel = 19.2.feet.asMeters
+    val maxRot = 500.0.degrees.asRadians
 
 
     /**
@@ -497,6 +498,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
         println("vy ms: ${-chassisSpeeds.vyMetersPerSecond/maxVel}, vx ms: ${chassisSpeeds.vxMetersPerSecond/maxVel}, turn: ${-chassisSpeeds.omegaRadiansPerSecond/maxRot}")
         drive(Vector2(-chassisSpeeds.vyMetersPerSecond/maxVel, chassisSpeeds.vxMetersPerSecond/maxVel),-chassisSpeeds.omegaRadiansPerSecond/maxRot, fieldCentric = false)
+
+
+//        val velocityVector = Vector2(-chassisSpeeds.vyMetersPerSecond, chassisSpeeds.vxMetersPerSecond).meters.asFeet
+//        val turnVelocity = -chassisSpeeds.omegaRadiansPerSecond
+
+//        var translationControlField = velocityVector * parameters.kPositionFeedForward + (positionError) * parameters.kpPosition + deltaPositionError * parameters.kdPosition
     }
 
 

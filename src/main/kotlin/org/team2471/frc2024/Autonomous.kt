@@ -28,8 +28,7 @@ import org.team2471.frc.lib.motion.following.xPose
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.testing.*
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.isReal
 import org.team2471.frc.lib.util.measureTimeFPGA
@@ -88,16 +87,22 @@ object AutoChooser {
 
     suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-        val trajectory = Choreo.getTrajectory("8FootStraight")
+        val trajectory = Choreo.getTrajectory("NewPath")
 
-        println("Trajectory: ${trajectory}")
+        val initalPose = trajectory.initialPose
+
+        Drive.position = Vector2(initalPose.x.meters.asFeet, initalPose.y.meters.asFeet)
+
+        Drive.heading = initalPose.rotation.asAngle
+
+        println("Trajectory:    $trajectory")
 
         val autoCommand = Choreo.choreoSwerveCommand(
             trajectory,
             Drive::getPose,
-            PIDController(0.32, 0.0, 0.6),
-            PIDController(0.32, 0.0, 0.6),
-            PIDController(0.005, 0.0, 0.02),
+            PIDController(Drive.parameters.kpPosition.feet.asMeters, 0.0, Drive.parameters.kdPosition.feet.asMeters),
+            PIDController(Drive.parameters.kpPosition.feet.asMeters, 0.0, Drive.parameters.kdPosition.feet.asMeters),
+            PIDController(Drive.parameters.kpHeading.feet.asMeters, 0.0, Drive.parameters.kdHeading.feet.asMeters),
             Drive::driveRobotRelative,
             Drive::isBlueAlliance,
             object : SubsystemBase() {}
