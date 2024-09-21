@@ -144,3 +144,16 @@ suspend fun Drive.currentTest() = use(this) {
     }
 }
 
+suspend fun Drive.velocityTest() = use(this) {
+    val velocitySetPoint = Vector2(0.0, 0.0)
+    val velocityHeading = 5.0
+    val t = Timer()
+    t.start()
+    periodic {
+        driveWithVelocity(velocitySetPoint, velocityHeading.degrees)
+        if (t.get() > 10.0) {
+            this.stop()
+        }
+    }
+}
+

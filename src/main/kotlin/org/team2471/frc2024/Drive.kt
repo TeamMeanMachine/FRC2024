@@ -65,6 +65,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val totalTurnCurrentEntry = table.getEntry("Total Turn Current")
 
     val velocityEntry = table.getEntry("Velocity")
+    val angularVelocityEntry = table.getEntry("Angular Velocity")
 
     val useGyroEntry = table.getEntry("Use Gyro")
     val gyroIsConnectedEntry = table.getEntry("Gyro Connected")
@@ -313,6 +314,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
                 velocityEntry.setDouble(velocity.length)
+                angularVelocityEntry.setDouble(headingRate.changePerSecond.asDegrees)
 
                 val setpointStates = arrayOfNulls<SwerveModuleState>(4)
                 val absoluteStates = arrayOfNulls<SwerveModuleState>(4)
@@ -704,6 +706,20 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
     }
 
+    val velocityPositionController = PDController(0.1, 0.0)
+    val velocityHeadingController = PDController(0.001, 0.0)
+
+    fun driveWithVelocity(wantedVelocity: Vector2, turnVelocity: Angle) {
+        val x = wantedVelocity.x
+        val y = wantedVelocity.y
+        val translation = Vector2(velocityPositionController.update(x - velocity.x), velocityPositionController.update(y - velocity.y))
+
+        val turn = velocityHeadingController.update(turnVelocity.asDegrees - headingRate.changePerSecond.asDegrees)
+
+        println(turn)
+
+        drive(translation, turn, false)
+    }
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {
