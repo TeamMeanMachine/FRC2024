@@ -711,25 +711,25 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
     }
 
-    val velocityPositionController = PDVelocityController(0.001, 0.0, 1.0/20.0)
-    val velocityHeadingController = PDVelocityController(0.000001, 0.0, 1.0/1000.0)
+    val velocityPositionController = PDVelocityController(0.000, 0.0, 1.0/20.0)
+    val velocityHeadingController = PDVelocityController(0.00005, 0.001, 1.0/1000.0)
 
     fun driveWithVelocity(wantedVelocity: Vector2, turnVelocity: Angle) {
         val x = wantedVelocity.x
         val y = wantedVelocity.y
-        val robotCentricVel = velocity
-        var translation = Vector2(
-            velocityPositionController.update(x, -robotCentricVel.y),
-            velocityPositionController.update(y, robotCentricVel.x)
+        val robotCentricVel = velocity.rotate(-heading)
+        val translation = Vector2(
+            velocityPositionController.update(x, robotCentricVel.x),
+            velocityPositionController.update(y, robotCentricVel.y)
         )
 
-//        println("wanted: $x  current ${-robotCentricVel.x}")
+//        println("wanted: $wantedVelocity  current ${robotCentricVel}")
 
-        val turn = velocityHeadingController.update(turnVelocity.asDegrees, -headingRate.changePerSecond.asDegrees)
+        val turn = velocityHeadingController.update(turnVelocity.asDegrees, headingRate.changePerSecond.asDegrees)
 
 //        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
 
-        drive(translation, turn, false)
+        drive(Vector2(-translation.y, translation.x), -turn, false)
     }
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
