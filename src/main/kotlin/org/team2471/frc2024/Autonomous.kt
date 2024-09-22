@@ -87,7 +87,7 @@ object AutoChooser {
 
     suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-        val trajectory = Choreo.getTrajectory("NewPath")
+        val trajectory = Choreo.getTrajectory("8FootStraight")
 
         val initalPose = trajectory.initialPose
 
