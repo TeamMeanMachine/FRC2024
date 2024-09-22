@@ -41,7 +41,7 @@ suspend fun spit() = use(Intake, LedControl) {
     suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
     LedControl.pattern = LedPatterns.INTAKE
     periodic {
-        if (OI.driverController.b) {
+        if (OI.driverController.a) {
             Intake.intakeMotorTop.setPercentOutput(-0.9)
             Intake.intakeMotorBottom.setPercentOutput(-0.9)
             Intake.feederMotor.setPercentOutput(-0.9)
@@ -482,7 +482,7 @@ suspend fun lockToAmp() {
     Drive.aimTarget = AimTarget.AMP
     Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
-    suspendUntil(20) { !OI.driverController.a }
+    suspendUntil(20) { !OI.driverController.b }
     Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")

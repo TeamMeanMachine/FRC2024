@@ -155,7 +155,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val gyroConnected: Boolean get() = Gyro.isConnected
 
     override var headingRate: AngularVelocity = -gyro.rate.degrees.perSecond
-        get() = if (gyroConnected) -gyro.rate.degrees.perSecond else field
+        get() = if (gyroConnected) gyro.rate.degrees.perSecond else field
 
     override var velocity = Vector2(0.0, 0.0)
     override var acceleration: Vector2 = Vector2(0.0, 0.0)
@@ -711,23 +711,27 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
     }
 
-    val velocityPositionController = PDVelocityController(0.000, 0.0, 1.0/20.0)
-    val velocityHeadingController = PDVelocityController(0.00005, 0.001, 1.0/1000.0)
+    //Position
+    val velocityPositionControllerY = PDVelocityController(0.002, 0.001, 1.0/20.0)
+    val velocityPositionControllerX = PDVelocityController(0.002, 0.001, 1.0/20.0)
+    //heading
+    val velocityHeadingController = PDVelocityController(0.0001, 0.000, 1.0/850.0)
 
     fun driveWithVelocity(wantedVelocity: Vector2, turnVelocity: Angle) {
         val x = wantedVelocity.x
         val y = wantedVelocity.y
         val robotCentricVel = velocity.rotate(-heading)
+
         val translation = Vector2(
-            velocityPositionController.update(x, robotCentricVel.x),
-            velocityPositionController.update(y, robotCentricVel.y)
+            velocityPositionControllerX.update(x, robotCentricVel.x),
+            velocityPositionControllerY.update(y, robotCentricVel.y)
         )
 
 //        println("wanted: $wantedVelocity  current ${robotCentricVel}")
 
         val turn = velocityHeadingController.update(turnVelocity.asDegrees, headingRate.changePerSecond.asDegrees)
 
-//        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
+        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
 
         drive(Vector2(-translation.y, translation.x), -turn, false)
     }
