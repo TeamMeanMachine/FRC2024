@@ -58,16 +58,7 @@ object LedControl : Subsystem ("LedControl"){
 
                 patternEntry.setString(pattern.name)
 
-                when (pattern) {
-                    LedPatterns.INIT -> updateBlink(Color(255, 25, 0), 0.2)
-                    LedPatterns.DISABLED -> setSolid(Color.kRed)
-                    LedPatterns.ENABLED -> updatePulse(Color.kRed, 1.0)
 
-                    LedPatterns.INTAKE -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kYellow, 0.04)
-                    LedPatterns.HOLDING -> updateBlink(Color.kRed, 0.2)
-                    LedPatterns.AUTO -> updatePulse(Color(255, 25, 0), 0.5)
-                }
 
 
                 if (controlerTestEnabled and !isEnabled) {
@@ -84,9 +75,21 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            if (pattern != LedPatterns.INIT) {
+            when (pattern) {
+                LedPatterns.INIT -> updateBlink(Color(255, 25, 0), 0.2)
+                LedPatterns.DISABLED -> setSolid(Color.kRed)
+                LedPatterns.ENABLED -> updatePulse(Color.kRed, 1.0)
+                LedPatterns.AUTO -> updatePulse(Color(255, 25, 0), 0.5)
+                LedPatterns.INTAKE -> {}
+            }
+            if (pattern != LedPatterns.INIT || pattern != LedPatterns.AUTO) {
                 if (Robot.isEnabled) {
-                    pattern = LedPatterns.ENABLED
+                    when (Intake.intakeState) {
+                        Intake.IntakeState.INTAKING -> updateBlink(Color.kYellow, 0.2)
+                        Intake.IntakeState.SHOOTING -> updateBlink(Color.kYellow, 0.04)
+                        Intake.IntakeState.HOLDING -> updateBlink(Color.kRed, 0.2)
+                        else -> pattern = LedPatterns.ENABLED
+                    }
                 } else {
                     pattern = LedPatterns.DISABLED
                 }
@@ -282,7 +285,7 @@ enum class LedPatterns {
     ENABLED,
     INIT,
     INTAKE,
-    HOLDING,
-    SHOOTING,
+    //HOLDING,
+    //SHOOTING,
     AUTO
 }
