@@ -16,7 +16,6 @@ import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.util.Timer
 
 @OptIn(DelicateCoroutinesApi::class)
 object Climb: Subsystem("Climb") {

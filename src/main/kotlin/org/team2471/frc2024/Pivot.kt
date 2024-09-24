@@ -168,6 +168,8 @@ object Pivot: Subsystem("Pivot") {
         pivotAmpRate.setDouble(80.0)
         speakerDistPitchOffset = 0.0
 
+        angleSetpoint = DRIVEPOSE
+
 
         GlobalScope.launch {
             periodic {

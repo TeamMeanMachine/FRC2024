@@ -41,6 +41,8 @@ object Intake: Subsystem("Intake") {
     val holdingCargo: Boolean
         get() = intakeState != IntakeState.EMPTY && intakeState != IntakeState.INTAKING && intakeState != IntakeState.SPITTING
 
+    val intakeAngle = 43.0.degrees
+
     init {
         manualIntake.setBoolean(false)
 
@@ -92,7 +94,7 @@ object Intake: Subsystem("Intake") {
                 }
                 IntakeState.SPITTING -> {}
                 IntakeState.INTAKING -> {
-                    Pivot.angleSetpoint = 36.0.degrees
+                    Pivot.angleSetpoint = intakeAngle
                     Shooter.manualShootState = false
                     Shooter.setRpms(0.0)
                     setIntakeMotorsPercent(0.9)
@@ -107,13 +109,13 @@ object Intake: Subsystem("Intake") {
                     }
                 }
                 IntakeState.SLOWING -> {
-                    Pivot.angleSetpoint = 36.0.degrees
+                    Pivot.angleSetpoint = intakeAngle
                     if (manualIntake.getBoolean(false)) {
-                        feederMotor.setPercentOutput(0.05)
+                        feederMotor.setPercentOutput(0.1)
                     } else {
-                        setIntakeMotorsPercent(0.05)
+                        setIntakeMotorsPercent(0.1)
                     }
-                    if (topBreak) {
+                    if (topBreak || !bottomBreak) {
                         intakeState = IntakeState.REVERSING
                     }
                     if (t.get() > 2.0) {

@@ -118,7 +118,7 @@ suspend fun aimFromPodium() {
     Drive.aimTarget = AimTarget.PODIUM
     Pivot.aimSpeaker = true
 
-    suspendUntil { !OI.driverController.x }
+    suspendUntil { !OI.driverController.start }
 
     Drive.aimTarget = AimTarget.NONE
     Pivot.aimSpeaker = false
@@ -128,6 +128,27 @@ suspend fun aimFromPodium() {
     Shooter.rpmBottomSetpoint = 0.0
 
 }
+
+
+// I found podium almost works so imma just copy
+suspend fun aimForPass() = use(Pivot, name = "Pass") {
+    Drive.aimTarget = AimTarget.PASS
+
+    Pivot.angleSetpoint = 39.0.degrees
+
+    Shooter.manualShootState = true
+
+    suspendUntil { !OI.driverController.x }
+
+    Drive.aimTarget = AimTarget.NONE
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+
+    Pivot.angleSetpoint = Pivot.DRIVEPOSE
+
+    Shooter.manualShootState = false
+}
+
 
 suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0) {
 

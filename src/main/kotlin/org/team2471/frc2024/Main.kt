@@ -28,6 +28,7 @@ import org.team2471.frc2024.testing.driveTests
 import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
+import org.team2471.frc2024.testing.velocityTest
 import java.net.NetworkInterface
 import kotlin.math.absoluteValue
 
@@ -79,7 +80,9 @@ object Robot : LoggedMeanlibRobot() {
             addOption("Drive Tests", "Drive Tests")
         }
         SmartDashboard.putData("RobotTests", testChooser)
+
         LedControl.pattern = LedPatterns.DISABLED
+
         GlobalScope.launch {
             periodic {
                 try {
@@ -132,7 +135,8 @@ object Robot : LoggedMeanlibRobot() {
 //        Drive.driveTests()
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
-        Drive.setAngleOffsets()
+//        Drive.setAngleOffsets()
+        Drive.velocityTest()
         println("test mode done")
     }
 

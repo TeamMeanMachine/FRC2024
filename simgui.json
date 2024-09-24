@@ -2,10 +2,18 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/AutoChooser": "String Chooser",
       "/SmartDashboard/Autos": "String Chooser",
       "/SmartDashboard/Best Song Lyrics": "String Chooser",
       "/SmartDashboard/RobotTests": "String Chooser",
       "/SmartDashboard/Tests": "String Chooser"
+    },
+    "windows": {
+      "/SmartDashboard/AutoChooser": {
+        "window": {
+          "visible": true
+        }
+      }
     }
   },
   "NetworkTables Info": {
