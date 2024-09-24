@@ -19,6 +19,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.LoggedMeanlibRobot
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
@@ -100,10 +101,11 @@ object Robot : LoggedMeanlibRobot() {
         println("ending enable ${totalTimeTaken()}")
     }
 
-    override suspend fun autonomous() {
+    override suspend fun autonomous() = use(LedControl) {
         println("autonomous starting")
         if (!Drive.demoMode) {
             initTimeMeasurement()
+            LedControl.pattern = LedPatterns.AUTO
 //            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
 //            Drive.aimPDController = Drive.autoPDController
             println("autonomous Drive brakeMode ${totalTimeTaken()}")

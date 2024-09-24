@@ -26,12 +26,17 @@ object LedControl : Subsystem ("LedControl"){
     val maxBrightness = 255
     //val defaultDisabledColor = Color(255, 25, 0)
     var rainbowFirstPixelHue = 0
-//    var blinkCounter = 0
+    //    var blinkCounter = 0
 //    var rainbowOn = false
 //    var blinkingOn = false
 //    var animationData = emptyArray<Int>()
 //    var animationColor = Color.kRed
     var pattern = LedPatterns.INIT
+    val LedPatternInit = updateBlink(Color(255, 25, 0), 0.2)
+    val LedPatternDisabled = setSolid(Color.kRed)
+    val LedPatternEnabled = updatePulse(Color.kRed, 1.0)
+    val LedPatternAuto = updatePulse(Color(255, 25, 0), 0.4)
+
 
     private val timer = Timer()
 
@@ -49,17 +54,25 @@ object LedControl : Subsystem ("LedControl"){
         //startBlinking(Color.kRed, 5)
 
         GlobalScope.launch {
-            periodic(0.02) {
+            periodic {
                 //updateRainbow(255, 2)
                 //when {
-                    //rainbowOn -> updateRainbow(animationData[0], animationData[1], animationData[2])
-                    //blinkingOn -> updateBlink(animationColor, animationData[0], animationData[1])
+                //rainbowOn -> updateRainbow(animationData[0], animationData[1], animationData[2])
+                //blinkingOn -> updateBlink(animationColor, animationData[0], animationData[1])
                 //}
 
                 patternEntry.setString(pattern.name)
 
+                when (pattern) {
+                    LedPatterns.INIT -> LedPatternInit
+                    LedPatterns.ENABLED -> LedPatternEnabled
+                    LedPatterns.DISABLED -> LedPatternDisabled
+                    LedPatterns.AUTO -> LedPatternAuto
 
-
+                    LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
+                    LedPatterns.HOLDING -> updatePulse(Color.kRed, 0.2)
+                    LedPatterns.SHOOTING -> updateBlink(Color.kRed, 0.2)
+                }
 
                 if (controlerTestEnabled and !isEnabled) {
                     if (OI.driverController.b or (OI.driverController.leftThumbstick.length >= 1)) {
@@ -75,25 +88,17 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            when (pattern) {
-                LedPatterns.INIT -> updateBlink(Color(255, 25, 0), 0.2)
-                LedPatterns.DISABLED -> setSolid(Color.kRed)
-                LedPatterns.ENABLED -> updatePulse(Color.kRed, 1.0)
-                LedPatterns.AUTO -> updatePulse(Color(255, 25, 0), 0.5)
-                LedPatterns.INTAKE -> {}
-            }
-            if (pattern != LedPatterns.INIT || pattern != LedPatterns.AUTO) {
-                if (Robot.isEnabled) {
-                    when (Intake.intakeState) {
-                        Intake.IntakeState.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                        Intake.IntakeState.SHOOTING -> updateBlink(Color.kYellow, 0.04)
-                        Intake.IntakeState.HOLDING -> updateBlink(Color.kRed, 0.2)
-                        else -> pattern = LedPatterns.ENABLED
-                    }
-                } else {
-                    pattern = LedPatterns.DISABLED
+            if (Robot.isEnabled) {
+                pattern = when (Intake.intakeState) {
+                    Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
+                    Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
+                    Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
+                    else -> LedPatterns.ENABLED
                 }
+            } else {
+                pattern = LedPatterns.DISABLED
             }
+
         }
     }
 
@@ -122,7 +127,7 @@ object LedControl : Subsystem ("LedControl"){
      * Sets the entire LED strip to a static rainbow pattern
      * brightness: from 0 (off) to maxBrightness for led brightness
      * rainbowCount: number of full rainbows on the strip
-    */
+     */
     fun staticRainbow(brightness: Int = maxBrightness, rainbowCount: Int = 1) {
         //stopAnimations()
         for (i in 0 until ledBuffer.length) {
@@ -138,7 +143,7 @@ object LedControl : Subsystem ("LedControl"){
      * color: wpilib color object for led color
      * delay: time in seconds in between toggling on/off
      * brightness: from 0 (off) to maxBrightness for led brightness
-    */
+     */
     private fun updateBlink(color: Color, delay: Double, brightness: Int = maxBrightness) {
         if (timer.get() > delay) {
             for (i in 0 until ledBuffer.length) {
@@ -158,7 +163,7 @@ object LedControl : Subsystem ("LedControl"){
      * brightness: from 0 (off) to maxBrightness for led brightness
      * rainbowCount: number of full rainbows on the strip
      * colorIncrement: how much the hue is incremented every time the function is run
-    */
+     */
     private fun updateRainbow(brightness: Int = maxBrightness, rainbowCount: Int = 1, colorIncrement: Int = 1) {
         staticRainbow(brightness, rainbowCount)
         rainbowFirstPixelHue += colorIncrement
@@ -171,7 +176,7 @@ object LedControl : Subsystem ("LedControl"){
      * Sets the entire LED strip to a color with brightness multiplied by a raised sine pulse
      * color: wpilib color object for led color
      * period: pulse period in seconds
-    */
+     */
     fun updatePulse(color: Color, period: Double) {
         //stopAnimations()
 
@@ -247,7 +252,7 @@ object LedControl : Subsystem ("LedControl"){
             for (i in 0 until ledBuffer.length) {
                 ledBuffer.setRGB(i, 0, 0, 0)
             }
-            
+
             var newValue: Double
 
             if (min > max) throw IllegalArgumentException()
@@ -284,8 +289,8 @@ enum class LedPatterns {
     DISABLED,
     ENABLED,
     INIT,
-    INTAKE,
-    //HOLDING,
-    //SHOOTING,
+    INTAKING,
+    HOLDING,
+    SHOOTING,
     AUTO
 }
