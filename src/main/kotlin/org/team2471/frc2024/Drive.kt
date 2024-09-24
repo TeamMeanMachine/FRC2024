@@ -16,6 +16,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
+import org.team2471.frc.lib.control.PDVelocityController
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
@@ -65,6 +66,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val totalTurnCurrentEntry = table.getEntry("Total Turn Current")
 
     val velocityEntry = table.getEntry("Velocity")
+    val angularVelocityEntry = table.getEntry("Angular Velocity")
+
+    val accelerationEntry = table.getEntry("Acceleration")
 
     val useGyroEntry = table.getEntry("Use Gyro")
     val gyroIsConnectedEntry = table.getEntry("Gyro Connected")
@@ -150,8 +154,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
     override val gyroConnected: Boolean get() = Gyro.isConnected
 
-    override val headingRate: AngularVelocity
-        get() = -gyro.rate.degrees.perSecond
+    override var headingRate: AngularVelocity = -gyro.rate.degrees.perSecond
+        get() = if (gyroConnected) gyro.rate.degrees.perSecond else field
 
     override var velocity = Vector2(0.0, 0.0)
     override var acceleration: Vector2 = Vector2(0.0, 0.0)
@@ -313,6 +317,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 absoluteAngle3Entry.setDouble((modules[3] as Module).absoluteAngle.asDegrees)
 
                 velocityEntry.setDouble(velocity.length)
+                angularVelocityEntry.setDouble(headingRate.changePerSecond.asDegrees)
+
+                accelerationEntry.setDouble(acceleration.length)
 
                 val setpointStates = arrayOfNulls<SwerveModuleState>(4)
                 val absoluteStates = arrayOfNulls<SwerveModuleState>(4)
@@ -704,6 +711,30 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
     }
 
+    //Position
+    val velocityPositionControllerY = PDVelocityController(0.002, 0.001, 1.0/20.0)
+    val velocityPositionControllerX = PDVelocityController(0.002, 0.001, 1.0/20.0)
+    //heading
+    val velocityHeadingController = PDVelocityController(0.0001, 0.000, 1.0/850.0)
+
+    fun driveWithVelocity(wantedVelocity: Vector2, turnVelocity: Angle) {
+        val x = wantedVelocity.x
+        val y = wantedVelocity.y
+        val robotCentricVel = velocity.rotate(-heading)
+
+        val translation = Vector2(
+            velocityPositionControllerX.update(x, robotCentricVel.x),
+            velocityPositionControllerY.update(y, robotCentricVel.y)
+        )
+
+//        println("wanted: $wantedVelocity  current ${robotCentricVel}")
+
+        val turn = velocityHeadingController.update(turnVelocity.asDegrees, headingRate.changePerSecond.asDegrees)
+
+        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
+
+        drive(Vector2(-translation.y, translation.x), -turn, false)
+    }
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {

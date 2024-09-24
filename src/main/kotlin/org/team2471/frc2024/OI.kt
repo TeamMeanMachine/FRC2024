@@ -76,7 +76,7 @@ object OI : Subsystem("OI") {
                 Intake.intakeState = Intake.IntakeState.EMPTY
             }
         }
-        driverController::a.whenTrue { lockToAmp() }
+        driverController::b.whenTrue { lockToAmp() }
         driverController::rightTriggerFullPress.whenTrue { /*if (Pivot.angleSetpoint > Pivot.AMPPOSE - 10.0.degrees) flipAmpShot() else*/ fire() }
         driverController::rightBumper.whenTrue { Shooter.manualShootState = !Shooter.manualShootState }
         driverController::y.whenTrue {
@@ -107,7 +107,7 @@ object OI : Subsystem("OI") {
             seeAndPickUpSeenNote(false, true)
 //            toggleAimAtNote()
         }
-        driverController::b.whenTrue { if (!Drive.demoMode) spit() else Pivot.angleSetpoint = Pivot.AMPPOSE }// }
+        driverController::a.whenTrue { spit() }
         operatorController::back.whenTrue { resetCameras() }
         operatorController::y.whenTrue { Pivot.angleSetpoint = Pivot.AMPPOSE }
         operatorController::b.whenTrue { Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE }

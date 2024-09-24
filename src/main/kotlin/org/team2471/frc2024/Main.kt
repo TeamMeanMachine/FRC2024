@@ -23,6 +23,7 @@ import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
+import org.team2471.frc2024.testing.velocityTest
 import java.net.NetworkInterface
 
 
@@ -127,7 +128,8 @@ object Robot : LoggedMeanlibRobot() {
 //        Drive.driveTests()
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
-        Drive.setAngleOffsets()
+//        Drive.setAngleOffsets()
+        Drive.velocityTest()
         println("test mode done")
     }
 
