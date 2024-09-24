@@ -516,7 +516,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
-        println("vy ms: ${chassisSpeeds.vyMetersPerSecond/maxVel}, vx ms: ${chassisSpeeds.vxMetersPerSecond/maxVel}, turn: ${-chassisSpeeds.omegaRadiansPerSecond/maxRot}")
+        println("vy%: ${chassisSpeeds.vyMetersPerSecond/maxVel}, vx%: ${chassisSpeeds.vxMetersPerSecond/maxVel}, turn%: ${-chassisSpeeds.omegaRadiansPerSecond/maxRot}")
         driveWithVelocity(Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet), chassisSpeeds.omegaRadiansPerSecond.radians)
 
 

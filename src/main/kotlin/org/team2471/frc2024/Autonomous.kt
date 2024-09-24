@@ -67,8 +67,12 @@ object AutoChooser {
         val initialPose = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
 
         Drive.position = initialPose.asFeet
-
         Drive.heading = trajectory.initialPose.rotation.asAngle
+
+        if (Drive.isRedAlliance) {
+            Drive.position = initialPose.asFeet.reflectAcrossField()
+            Drive.heading = (180.0.degrees - trajectory.initialPose.rotation.asAngle).wrap()  // may not be correct if not 0 or 180
+        }
 
         println("Trajectory:    $trajectory")
 
@@ -79,7 +83,7 @@ object AutoChooser {
             PIDController(Drive.parameters.kpPosition.feet.asMeters, 0.0, Drive.parameters.kdPosition.feet.asMeters),
             PIDController(Drive.parameters.kpHeading.feet.asMeters, 0.0, Drive.parameters.kdHeading.feet.asMeters),
             Drive::driveRobotRelative,
-            Drive::isBlueAlliance,
+            Drive::isRedAlliance,
             object : SubsystemBase() {}
         )
 

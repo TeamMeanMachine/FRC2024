@@ -10,8 +10,8 @@
       "style": "0",
       "userScale": "2",
       "width": "958",
-      "xpos": "784",
-      "ypos": "222"
+      "xpos": "68",
+      "ypos": "85"
     }
   },
   "Table": {
@@ -25,7 +25,7 @@
   "Window": {
     "###/SmartDashboard/AutoChooser": {
       "Collapsed": "0",
-      "Pos": "227,92",
+      "Pos": "179,97",
       "Size": "254,54"
     },
     "###DIO": {
@@ -35,8 +35,8 @@
     },
     "###FMS": {
       "Collapsed": "0",
-      "Pos": "63,381",
-      "Size": "169,184"
+      "Pos": "36,545",
+      "Size": "283,140"
     },
     "###Joysticks": {
       "Collapsed": "0",
@@ -90,7 +90,7 @@
     },
     "Robot State": {
       "Collapsed": "0",
-      "Pos": "28,16",
+      "Pos": "36,23",
       "Size": "92,116"
     }
   }
