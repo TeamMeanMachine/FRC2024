@@ -1,43 +1,18 @@
 package org.team2471.frc2024
 
 import com.choreo.lib.*;
-import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.math.kinematics.ChassisSpeeds
-import edu.wpi.first.networktables.NetworkTableEvent
-import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.InstantCommand
-import edu.wpi.first.wpilibj2.command.PIDSubsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
-import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
-import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.motion.following.drive
-import org.team2471.frc.lib.motion.following.driveAlongPath
-import org.team2471.frc.lib.motion.following.xPose
-import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.lib.testing.*
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.util.isReal
-import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc2024.Drive.isBlueAlliance
-import org.team2471.frc2024.Drive.isRedAlliance
-import org.team2471.frc2024.gyro.GyroIO
-import java.io.File
-import java.util.*
-import kotlin.math.absoluteValue
 
 
 val selAuto
@@ -89,11 +64,11 @@ object AutoChooser {
 
         val trajectory = Choreo.getTrajectory("8FootStraight")
 
-        val initalPose = trajectory.initialPose
+        val initialPose = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
 
-        Drive.position = Vector2(initalPose.x.meters.asFeet, initalPose.y.meters.asFeet)
+        Drive.position = initialPose.asFeet
 
-        Drive.heading = initalPose.rotation.asAngle
+        Drive.heading = trajectory.initialPose.rotation.asAngle
 
         println("Trajectory:    $trajectory")
 
@@ -123,6 +98,7 @@ object AutoChooser {
             }
         }
         autoCommand.end(interrupted)
+        println("I travelled this length ${Drive.position - initialPose.asFeet}")
     }
 }
 
