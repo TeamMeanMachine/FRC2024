@@ -189,7 +189,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(-1.0, 0.0) //dcmp comp 1.0  practice -1.0
-    override val kCarpet = 0.0 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kCarpet = 0.0//725 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (ex. 0.0212 -> 2.12% more distance downstream)
     override val kTread = 0.0 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
@@ -702,8 +702,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio                                               * fudge
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (91.65/96.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
+                //                    wheel diam / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
+            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) *(96.0/90.575)
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)

@@ -135,8 +135,8 @@ object Robot : LoggedMeanlibRobot() {
 //        Drive.driveTests()
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
-//        Drive.setAngleOffsets()
-        Drive.velocityTest()
+        Drive.setAngleOffsets()
+//        Drive.velocityTest()
         println("test mode done")
     }
 
