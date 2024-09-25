@@ -19,6 +19,8 @@ object LedControl : Subsystem ("LedControl"){
     private val table = NetworkTableInstance.getDefault().getTable("Led Control")
     val patternEntry = table.getEntry("Pattern")
 
+    private val timer = Timer()
+
     val led = AddressableLED(Leds.LED_PORT)
     val ledBuffer = AddressableLEDBuffer(Leds.LED_LENGTH)
     val controllerTestLength = 12
@@ -32,13 +34,8 @@ object LedControl : Subsystem ("LedControl"){
 //    var animationData = emptyArray<Int>()
 //    var animationColor = Color.kRed
     var pattern = LedPatterns.INIT
-    val LedPatternInit = updateBlink(Color(255, 25, 0), 0.2)
-    val LedPatternDisabled = setSolid(Color.kRed)
-    val LedPatternEnabled = updatePulse(Color.kRed, 1.0)
-    val LedPatternAuto = updatePulse(Color(255, 25, 0), 0.4)
 
 
-    private val timer = Timer()
 
     init {
         println("LEDS YAYYYYY")
@@ -64,13 +61,13 @@ object LedControl : Subsystem ("LedControl"){
                 patternEntry.setString(pattern.name)
 
                 when (pattern) {
-                    LedPatterns.INIT -> LedPatternInit
-                    LedPatterns.ENABLED -> LedPatternEnabled
-                    LedPatterns.DISABLED -> LedPatternDisabled
-                    LedPatterns.AUTO -> LedPatternAuto
+                    LedPatterns.INIT -> updateBlink(Color(255, 25, 0), 0.2)
+                    LedPatterns.ENABLED -> updatePulse(Color.kRed, 1.0)
+                    LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
+                    LedPatterns.AUTO -> updatePulse(Color(255, 25, 0), 0.4)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.HOLDING -> updatePulse(Color.kRed, 0.2)
+                    LedPatterns.HOLDING -> updatePulse(Color.kGreen, 0.1)
                     LedPatterns.SHOOTING -> updateBlink(Color.kRed, 0.2)
                 }
 
