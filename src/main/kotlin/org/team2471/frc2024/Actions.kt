@@ -52,13 +52,15 @@ suspend fun spit() = use(Intake) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun fire(duration: Double? = null) = use(Shooter){
+suspend fun fire(duration: Double? = null) = use(Shooter, name = "fire"){
+    println("inside fire")
     val t = Timer()
 //    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
     Intake.intakeState = Intake.IntakeState.SHOOTING
 //    }
     t.start()
     periodic {
+        println("in shoot periotoic")
         Intake.intakeState = Intake.IntakeState.SHOOTING
         if ((t.get() > 0.3 && Robot.isAutonomous) && duration == null) {
             println("exiting shooting from autonomous")

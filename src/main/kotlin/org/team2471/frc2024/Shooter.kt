@@ -327,6 +327,10 @@ object Shooter: Subsystem("Shooter") {
         rpmBottomSetpoint = rpm
     }
 
+    fun isRevved(): Boolean {
+        return ((rpmBottomSetpoint - motorRpmBottom) < 500) && ((rpmTopSetpoint - motorRpmTop) < 500)
+    }
+
     fun getRpmFromPosition(point: Vector2): Double {
         return rpmCurve.getValue(point.distance(Drive.speakerPos))
     }

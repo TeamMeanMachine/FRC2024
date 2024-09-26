@@ -96,6 +96,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val aimTargetEntry = table.getEntry("Aim Target")
 
+    val wantedVelocityEntry = table.getEntry("Wanted Velocity")
+
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
         kpPosition = 0.32,
@@ -517,7 +519,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
         println("vy%: ${chassisSpeeds.vyMetersPerSecond/maxVel}, vx%: ${chassisSpeeds.vxMetersPerSecond/maxVel}, turn%: ${-chassisSpeeds.omegaRadiansPerSecond/maxRot}")
-        driveWithVelocity(Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet), chassisSpeeds.omegaRadiansPerSecond.radians)
+
+        val vector = Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet)
+
+        Drive.wantedVelocityEntry.setDouble(vector.length)
+        driveWithVelocity(vector, chassisSpeeds.omegaRadiansPerSecond.radians)
 
 
 //        val velocityVector = Vector2(-chassisSpeeds.vyMetersPerSecond, chassisSpeeds.vxMetersPerSecond).meters.asFeet
