@@ -86,11 +86,15 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            pattern = when (Intake.intakeState) {
-                Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
-                Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
-                Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
-                else -> if (Shooter.averageRpmSetpoint > 10.0) LedPatterns.RAMPING else LedPatterns.ENABLED
+            pattern = if (Shooter.averageRpmSetpoint > 10.0) {
+                LedPatterns.RAMPING
+            } else {
+                when (Intake.intakeState) {
+                    Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
+                    Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
+                    Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
+                    else -> LedPatterns.ENABLED
+                }
             }
         }
     }
