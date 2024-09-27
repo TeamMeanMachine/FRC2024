@@ -106,7 +106,6 @@ object Robot : LoggedMeanlibRobot() {
         println("autonomous starting")
         if (!Drive.demoMode) {
             initTimeMeasurement()
-            LedControl.pattern = LedPatterns.AUTO
 //            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
 //            Drive.aimPDController = Drive.autoPDController
             println("autonomous Drive brakeMode ${totalTimeTaken()}")

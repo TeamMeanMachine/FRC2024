@@ -11,7 +11,6 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.PI
-import kotlin.math.floor
 import kotlin.math.sin
 
 object LedControl : Subsystem ("LedControl"){
@@ -36,6 +35,7 @@ object LedControl : Subsystem ("LedControl"){
     var pattern = LedPatterns.INIT
 
 
+    private var meanOrange = Color(255, 25, 0)
 
     init {
         println("LEDS YAYYYYY")
@@ -61,14 +61,15 @@ object LedControl : Subsystem ("LedControl"){
                 patternEntry.setString(pattern.name)
 
                 when (pattern) {
-                    LedPatterns.INIT -> updateBlink(Color(255, 25, 0), 0.2)
+                    LedPatterns.INIT -> updateBlink(meanOrange, 0.2)
                     LedPatterns.ENABLED -> updatePulse(Color.kRed, 1.0)
                     LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
-                    LedPatterns.AUTO -> updatePulse(Color(255, 25, 0), 0.4)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.HOLDING -> updatePulse(Color.kGreen, 0.1)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kRed, 0.2)
+                    LedPatterns.SHOOTING -> updateBlink(Color.kYellow, 0.04)
+                    LedPatterns.HOLDING -> setSolid(Color.kGreen)
+
+                    LedPatterns.RAMPING -> updatePulse(meanOrange, 0.5)
                 }
 
                 if (controlerTestEnabled and !isEnabled) {
@@ -289,5 +290,5 @@ enum class LedPatterns {
     INTAKING,
     HOLDING,
     SHOOTING,
-    AUTO
+    RAMPING
 }
