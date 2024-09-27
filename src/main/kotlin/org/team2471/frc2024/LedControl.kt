@@ -66,10 +66,10 @@ object LedControl : Subsystem ("LedControl"){
                     LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kGreen, 0.04)
+                    LedPatterns.SHOOTING -> updateBlink(Color.kGreen, 0.06)
                     LedPatterns.HOLDING -> setSolid(Color.kGreen)
 
-                    LedPatterns.RAMPING -> updatePulse(meanOrange, 0.5)
+                    LedPatterns.RAMPING -> setFractionColorFromMid(Color.kGreen, Shooter.averageRpm, Shooter.averageRpmSetpoint)
                 }
 
                 if (controlerTestEnabled and !isEnabled) {
@@ -90,7 +90,7 @@ object LedControl : Subsystem ("LedControl"){
                 Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
                 Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
                 Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
-                else -> LedPatterns.ENABLED
+                else -> if (Shooter.averageRpmSetpoint > 10.0) LedPatterns.RAMPING else LedPatterns.ENABLED
             }
         }
     }

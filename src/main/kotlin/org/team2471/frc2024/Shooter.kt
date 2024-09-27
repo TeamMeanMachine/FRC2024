@@ -61,6 +61,12 @@ object Shooter: Subsystem("Shooter") {
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
 
+    val averageRpm
+        get() = (motorRpmBottom + motorRpmTop) / 2.0
+
+    val averageRpmSetpoint
+        get() = (rpmTopSetpoint + rpmBottomSetpoint) / 2.0
+
     @OptIn(DelicateCoroutinesApi::class)
     var manualShootState = false
         set(value) {
