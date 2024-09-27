@@ -279,7 +279,7 @@ object Shooter: Subsystem("Shooter") {
         }
     }
 
-    override fun postEnable() {
+    override fun onDisable() {
         println("inside shooter preEnable ${Robot.totalTimeTaken()}")
         GlobalScope.launch {
             rpmTopSetpoint  = 0.0
@@ -328,6 +328,7 @@ object Shooter: Subsystem("Shooter") {
     }
 
     fun isRevved(): Boolean {
+//        println("Bottom Error: ${(rpmBottomSetpoint - motorRpmBottom)} Top Error: ${(rpmTopSetpoint - motorRpmTop)}")
         return ((rpmBottomSetpoint - motorRpmBottom) < 500) && ((rpmTopSetpoint - motorRpmTop) < 500)
     }
 
