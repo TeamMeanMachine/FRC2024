@@ -109,7 +109,7 @@ object Robot : LoggedMeanlibRobot() {
         println("ending enable ${totalTimeTaken()}")
     }
 
-    override suspend fun autonomous() = use(LedControl) {
+    override suspend fun autonomous() {
         println("autonomous starting")
 
 //        AutoChooser.pathPlannerAuto()
