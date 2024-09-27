@@ -2,23 +2,34 @@ package org.team2471.frc2024
 
 import com.choreo.lib.*;
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.kinematics.Odometry
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
+import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.AutoChooser.initialPose
 
 
 val selAuto
     get() = SmartDashboard.getString("AutoChooser/selected", "no auto selected")
 
 object AutoChooser {
+
+    private var prevAutoChoosen = ""
+
+    var initialPose: Pair<Vector2, Angle> = Pair(Vector2(0.0, 0.0), 0.0.radians)
 
     private val lyricsChooser = SendableChooser<String?>().apply {
         setDefaultOption("Country roads", "Country roads")
@@ -28,7 +39,10 @@ object AutoChooser {
     private val autoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
         addOption("TestAuto", "TestAuto")
+        addOption("4Close", "4Close")
     }
+
+    private val paths: ArrayList<Command> = arrayListOf()
 
     init {
 
@@ -41,7 +55,24 @@ object AutoChooser {
 
                 val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
 
+
                 SmartDashboard.putBoolean("Auto is selected", autoChosen)
+
+                if (prevAutoChoosen != selAuto) {
+                    println("Autonomous change detected")
+                    when (selAuto) {
+                        "4Close" -> {
+                            paths.addAll( arrayListOf(
+                                    initializeChoreoPath("4Close.1", true),
+                                    initializeChoreoPath("4Close.2"),
+                                    initializeChoreoPath("4Close.3")
+                            ))
+                        }
+                        else -> println("no paths :(")
+                    }
+
+                    prevAutoChoosen = selAuto
+                }
             }
         }
     }
@@ -54,6 +85,7 @@ object AutoChooser {
         println("before when block ${Robot.totalTimeTaken()}")
         when (selAuto) {
             "TestAuto" -> testAuto()
+            "4Close" -> fourClose()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -62,76 +94,89 @@ object AutoChooser {
 
     suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-        val trajectory = Choreo.getTrajectory("8FootStraight")
+        val autoCommand = initializeChoreoPath("4Close.1", true)
 
-        val initialPose = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
+        executeChoreoCommand(autoCommand)
+    }
 
-        Drive.position = initialPose.asFeet
-        Drive.heading = trajectory.initialPose.rotation.asAngle
+    suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
+        Drive.position = initialPose.first
+        Drive.heading = initialPose.second
 
-        if (Drive.isRedAlliance) {
-            Drive.position = initialPose.asFeet.reflectAcrossField()
-            Drive.heading = (180.0.degrees - trajectory.initialPose.rotation.asAngle).wrap()  // may not be correct if not 0 or 180
-        }
+        Shooter.setRpms(5000.0)
 
-        println("Trajectory:    $trajectory")
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
-        val autoCommand = Choreo.choreoSwerveCommand(
-            trajectory,
-            Drive::getPose,
-            PIDController(Drive.parameters.kpPosition.feet.asMeters, 0.0, Drive.parameters.kdPosition.feet.asMeters),
-            PIDController(Drive.parameters.kpPosition.feet.asMeters, 0.0, Drive.parameters.kdPosition.feet.asMeters),
-            PIDController(Drive.parameters.kpHeading.feet.asMeters, 0.0, Drive.parameters.kdHeading.feet.asMeters),
-            Drive::driveRobotRelative,
-            Drive::isRedAlliance,
-            object : SubsystemBase() {}
-        )
+        suspendUntil { Shooter.isRevved() }
 
-        var interrupted = true
+        Intake.intakeState = Intake.IntakeState.SHOOTING
 
-        autoCommand.initialize()
+        delay(0.3.seconds)
 
-        println("Right before periodic")
-        periodic {
-            autoCommand.execute()
+        Pivot.angleSetpoint = Pivot.PODIUMPOSE
 
-            if (autoCommand.isFinished) {
-                interrupted = false
-                println("Finished!")
-                this.stop()
-            }
-        }
-        autoCommand.end(interrupted)
-        println("I travelled this length ${Drive.position - initialPose.asFeet}")
+        executeChoreoCommand(paths[0])
+        executeChoreoCommand(paths[1])
+        executeChoreoCommand(paths[2])
+
     }
 }
 
-/*
-    suspend fun pathPlannerAuto() = use(Drive, name = "Path Planner Auto")
-    {
-        println("Entered pathPlanner Auto. Getting command")
-        val autoCommand = */
-/*PathPlannerAuto("4Close")*//*
- autoChooser.selected
-//        val autoCommand = PathPlannerAuto(tempCommand.name)
+fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Command {
+    val trajectory = Choreo.getTrajectory(pathName)
 
-        println("Got command: ${autoCommand.name}")
+    if (resetOdometry) {
+        val initialPos = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
 
-        var interrupted = true
-
-        println("Initializing...")
-        autoCommand.initialize()
-
-        println("Right before periodic")
-        periodic {
-            autoCommand.execute()
-
-            if (autoCommand.isFinished) {
-                interrupted = false
-                println("Finished!")
-                this.stop()
-            }
+        if (Drive.isRedAlliance) {
+            initialPose = Pair(
+                initialPos.asFeet.reflectAcrossField(),
+                (180.0.degrees - trajectory.initialPose.rotation.asAngle).wrap() // may not be correct if not 0 or 180
+            )
+        } else {
+            initialPose = Pair(
+                initialPos.asFeet,
+                trajectory.initialPose.rotation.asAngle
+            )
         }
-        autoCommand.end(interrupted)
     }
-}*/
+//    println("Trajectory:    $trajectory")
+
+    return Choreo.choreoSwerveCommand(
+        trajectory,
+        Drive::getPose,
+        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
+        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
+        PIDController(Drive.parameters.kpHeading.feet.asMeters / 20.0, 0.0, Drive.parameters.kdHeading.feet.asMeters / 20.0),
+        Drive::driveRobotRelative,
+        Drive::isRedAlliance,
+        object : SubsystemBase() {}
+    )
+
+
+}
+
+suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive) {
+
+    val t = Timer()
+
+    println("Running path.")
+    autoCommand.initialize()// for some reason this takes 1.7 seconds
+//    println("Initialized path: ${t.get()}")
+
+    var interrupted = true
+
+
+    println("Right before periodic: ${t.get()}")
+    periodic {
+        autoCommand.execute()
+
+        if (autoCommand.isFinished) {
+            interrupted = false
+            println("Finished!")
+            this.stop()
+        }
+    }
+    autoCommand.end(interrupted)
+    Drive.drive(Vector2(0.0, 0.0), 0.0)
+}
