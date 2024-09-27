@@ -86,18 +86,17 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            if (Robot.isEnabled) {
-                pattern = when (Intake.intakeState) {
-                    Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
-                    Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
-                    Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
-                    else -> LedPatterns.ENABLED
-                }
-            } else {
-                pattern = LedPatterns.DISABLED
+            pattern = when (Intake.intakeState) {
+                Intake.IntakeState.INTAKING -> LedPatterns.INTAKING
+                Intake.IntakeState.HOLDING -> LedPatterns.HOLDING
+                Intake.IntakeState.SHOOTING -> LedPatterns.SHOOTING
+                else -> LedPatterns.ENABLED
             }
-
         }
+    }
+
+    override fun onDisable() {
+        pattern = LedPatterns.DISABLED
     }
 
 
