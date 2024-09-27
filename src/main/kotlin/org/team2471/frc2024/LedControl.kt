@@ -66,7 +66,7 @@ object LedControl : Subsystem ("LedControl"){
                     LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kYellow, 0.04)
+                    LedPatterns.SHOOTING -> updateBlink(Color.kGreen, 0.04)
                     LedPatterns.HOLDING -> setSolid(Color.kGreen)
 
                     LedPatterns.RAMPING -> updatePulse(meanOrange, 0.5)
