@@ -776,7 +776,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val turn = velocityHeadingController.update(turnVelocity.asDegrees, headingRate.changePerSecond.asDegrees)
 
-        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
+//        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
 
         drive(Vector2(-translation.y, translation.x), -turn, false)
     }
