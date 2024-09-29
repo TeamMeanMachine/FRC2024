@@ -286,12 +286,8 @@ object Shooter: Subsystem("Shooter") {
     }
 
     override fun onDisable() {
-        println("inside shooter preEnable ${Robot.totalTimeTaken()}")
-        GlobalScope.launch {
-            rpmTopSetpoint  = 0.0
-            rpmBottomSetpoint = 0.0
-        }
-        println("after shooter preEnable ${Robot.totalTimeTaken()}")
+        rpmTopSetpoint  = 0.0
+        rpmBottomSetpoint = 0.0
     }
 
     fun rebuildCurves() {
