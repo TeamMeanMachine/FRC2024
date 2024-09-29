@@ -108,8 +108,7 @@ object AprilTag: Subsystem("AprilTag") {
 
 
                 try {
-                    cameras.values.map { it.getEstimatedGlobalPose(Drive.position.feet, heading, Drive::lookupPose) }
-                        .forEach { cameraPoses.add(it) }
+                    cameras.values.forEach { cameraPoses.add(it.getEstimatedGlobalPose(Drive.position.feet, heading, Drive::lookupPose)) }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: $ex")
                 }
@@ -117,12 +116,12 @@ object AprilTag: Subsystem("AprilTag") {
 
                 updatePos(driveStDevM, *cameraPoses.toTypedArray())
 
-                updatePosWPI(*cameraPoses.toTypedArray())
+//                updatePosWPI(*cameraPoses.toTypedArray())
 
                 positionEntry.setAdvantagePose(position, heading)
 //                println("Drive Position: ${Drive.position}")\
 
-                // In a try bc sometimes it likes to log before the talbe is ready :(
+                // In a try bc sometimes it likes to log before the table is ready :(
                 try {
                     Logger.recordOutput(
                         "AprilTag/Position",
@@ -145,7 +144,6 @@ object AprilTag: Subsystem("AprilTag") {
 
     fun updatePos(driveStDevMeters: Double, vararg aprilPoses: GlobalPose) {
         val pos = position
-        prevPosition = pos
 //                                            measurement, stdev
         val measurementsAndStDevs: MutableList<Pair<Vector2L, Double>> = mutableListOf()
 
@@ -156,9 +154,11 @@ object AprilTag: Subsystem("AprilTag") {
 
         advantageWheelPoseEntry.setAdvantagePose(testWheelPosition, heading)
 
+        //add drive pose
         measurementsAndStDevs.add(Pair(testWheelPosition, driveStDevMeters))
 
 
+        //add camera poses
         if (aprilTagsEnabled) {
             for (pose in aprilPoses) {
                 try {
