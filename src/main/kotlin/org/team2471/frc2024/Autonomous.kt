@@ -28,6 +28,7 @@ val selAuto
 object AutoChooser {
 
     private var prevAutoChoosen = ""
+    private var prevAlliance: Boolean? = null
 
     var initialPose: Pair<Vector2, Angle> = Pair(Vector2(0.0, 0.0), 0.0.radians)
 
@@ -58,7 +59,9 @@ object AutoChooser {
 
                 SmartDashboard.putBoolean("Auto is selected", autoChosen)
 
-                if (prevAutoChoosen != selAuto) {
+                val isRed = Drive.isRedAlliance
+
+                if (prevAutoChoosen != selAuto || isRed != prevAlliance) {
                     println("Autonomous change detected")
                     when (selAuto) {
                         "4Close" -> {
@@ -68,10 +71,18 @@ object AutoChooser {
                                     initializeChoreoPath("4Close.3")
                             ))
                         }
+                        "TestAuto" -> {
+                            paths.addAll(
+                                arrayListOf(
+                                    initializeChoreoPath("8Foot.1", true)
+                                )
+                            )
+                        }
                         else -> println("no paths :(")
                     }
 
                     prevAutoChoosen = selAuto
+                    prevAlliance = isRed
                 }
             }
         }
@@ -94,9 +105,10 @@ object AutoChooser {
 
     suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-        val autoCommand = initializeChoreoPath("4Close.1", true)
+        Drive.position = initialPose.first
+        Drive.heading = initialPose.second
 
-        executeChoreoCommand(autoCommand)
+        executeChoreoCommand(paths[0])
     }
 
     suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
@@ -119,7 +131,9 @@ object AutoChooser {
 
         delay(0.3.seconds)
 
-        Pivot.angleSetpoint = Pivot.PODIUMPOSE
+
+        Pivot.angleSetpoint = Pivot.PODIUMPOSE - 4.0.degrees
+
 
         println("before first execute ${Robot.totalTimeTaken()}")
         executeChoreoCommand(paths[0])
@@ -132,6 +146,7 @@ object AutoChooser {
 }
 
 fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Command {
+    println("Init choreo parh $pathName")
     val trajectory = Choreo.getTrajectory(pathName)
 
     if (resetOdometry) {
@@ -149,7 +164,7 @@ fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Comm
             )
         }
     }
-//    println("Trajectory:    $trajectory")
+    println("Trajectory:    ${Drive.getPose()}")
 
     return Choreo.choreoSwerveCommand(
         trajectory,
