@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import com.choreo.lib.ChoreoTrajectory
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
@@ -7,18 +8,14 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.units.inches
 import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.motion.following.lookupPose
-import org.team2471.frc.lib.motion.following.poseDiff
-import org.team2471.frc.lib.units.asFeet
+import org.team2471.frc.lib.motion.following.*
+import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Drive.position
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -563,4 +560,119 @@ suspend fun toggleAimAtNote() {
     Drive.aimTarget = AimTarget.NONE
 }
 
+suspend fun driveAlongChoreoPath(
+    path: ChoreoTrajectory,
+    resetOdometry: Boolean = false,
+    extraTime: Double = 0.0,
+    inResetGyro: Boolean? = null,
+    turnOverride: () -> Double? = {null},
+    earlyExit: (percentComplete: Double) -> Boolean = {false}
+) {
+
+
+    if (inResetGyro ?: resetOdometry) {
+        println("Heading = ${Drive.heading}")
+        Drive.resetHeading()
+        Drive.heading = path.initialPose.rotation.asAngle //path.headingCurve.getValue(0.0).degrees
+        println("After Reset Heading = ${Drive.heading}")
+    }
+
+    if (resetOdometry) {
+        println("Position = $position")
+        Drive.odometryReset()
+        println("Position after odometryReset = $position")
+
+        // set to the numbers required for the start of the path
+        position = path.initialPose.translation.asVector2()
+
+//        resetOdom()
+        println("After Reset Position = $position")
+    }
+
+
+    var prevTime = -0.2
+
+    val timer = org.team2471.frc.lib.util.Timer()
+    timer.start()
+    var prevPathPosition = path.initialPose.translation.asVector2().meters
+    var prevPathHeading = path.initialPose.rotation.asAngle
+    var prevPositionError = Vector2(0.0, 0.0).meters
+    var prevHeadingError = 0.0.degrees
+    suspendUntil(10) { timer.get() != 0.0}
+    println("entering drive periodic")
+    periodic {
+        val t = timer.get()
+        val dt = t - prevTime
+        val pathSample = path.sample(t)
+
+        // position error
+        val pathPosition = Vector2(pathSample.x, pathSample.y).meters//path.getPosition(t)
+        val currentPosition = Drive.position.feet
+        val positionError = pathPosition - currentPosition
+        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$position positionError=$positionError")
+
+        // position feed forward
+        val pathVelocity = (pathPosition - prevPathPosition) / dt
+        prevPathPosition = pathPosition
+
+        // position d
+        val deltaPositionError = positionError - prevPositionError
+        prevPositionError = positionError
+
+        var translationControlField =
+            pathVelocity.asFeet * Drive.parameters.kPositionFeedForward + positionError.asFeet * Drive.parameters.kpPosition + deltaPositionError.asFeet * Drive.parameters.kdPosition
+
+        translationControlField = Vector2(-translationControlField.y, translationControlField.x)
+//        println("translationControlField = $translationControlField")
+
+
+        // heading error
+        val robotHeading = Drive.heading
+        val pathHeading = pathSample.heading.degrees//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val headingError = (robotHeading - pathHeading).wrap()
+//        println("Heading Error: $headingError. pathHeading: $pathHeading")
+
+        // heading feed forward
+        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+        prevPathHeading = pathHeading
+
+        // heading d
+        val deltaHeadingError = headingError - prevHeadingError
+        prevHeadingError = headingError
+
+        val turnControl = headingVelocity * Drive.parameters.kHeadingFeedForward + headingError.asDegrees * Drive.parameters.kpHeading + deltaHeadingError.asDegrees * Drive.parameters.kdHeading
+//        println("Turn Control: $turnControl")
+        if (turnControl.isNaN() || translationControlField.y.isNaN() || translationControlField.x.isNaN()) {
+            println("turnControl: $turnControl")
+            println("translationControlField $translationControlField")
+            println("dt: $dt")
+
+
+//            throw IllegalArgumentException("requestedVolts == NaN")
+        }
+
+        // send it
+        Drive.drive(translationControlField, turnOverride() ?: turnControl, true)
+
+        // are we done yet?
+        if (t >= path.totalTime + extraTime) {
+            println("exiting path")
+            stop()
+        }
+//        if (earlyExit(t / path.durationWithSpeed)) {
+//            println("early exiting path. time: $t  duration: ${path.durationWithSpeed} percent complete: ${t / path.durationWithSpeed}")
+//            stop()
+//        }
+        prevTime = t
+
+//        println("Time=$t Path Position=$pathPosition Position=$position")
+//        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
+    }
+    println("at the end of driveAlongPath")
+
+    // shut it down
+    Drive.drive(Vector2(0.0, 0.0), 0.0, true)
+//    actualRoute.setDoubleArray(doubleArrayOf())
+//    plannedPath.setString("")
+}
 
