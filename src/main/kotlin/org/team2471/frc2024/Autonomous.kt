@@ -100,6 +100,11 @@ object AutoChooser {
     }
 
     suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
+        println("inside fourClose ${Robot.totalTimeTaken()}")
+
+        val t = Timer()
+        t.start()
+
         Drive.position = initialPose.first
         Drive.heading = initialPose.second
 
@@ -107,7 +112,8 @@ object AutoChooser {
 
         Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
-        suspendUntil { Shooter.isRevved() }
+        suspendUntil { Shooter.averageRpm > 3000.0 }
+        println("shooter revved ${Robot.totalTimeTaken()}")
 
         Intake.intakeState = Intake.IntakeState.SHOOTING
 
@@ -115,10 +121,13 @@ object AutoChooser {
 
         Pivot.angleSetpoint = Pivot.PODIUMPOSE
 
+        println("before first execute ${Robot.totalTimeTaken()}")
         executeChoreoCommand(paths[0])
+        println("after first execute ${Robot.totalTimeTaken()}")
         executeChoreoCommand(paths[1])
         executeChoreoCommand(paths[2])
 
+        println("finished all ${Robot.totalTimeTaken()}")
     }
 }
 
@@ -156,27 +165,25 @@ fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Comm
 
 }
 
-suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive) {
-
-    val t = Timer()
-
-    println("Running path.")
+suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Choreo Path") {
+    println("Init path. ${Robot.totalTimeTaken()}")
     autoCommand.initialize()// for some reason this takes 1.7 seconds
-//    println("Initialized path: ${t.get()}")
+    println("Initialized path: ${Robot.totalTimeTaken()}")
 
     var interrupted = true
 
 
-    println("Right before periodic: ${t.get()}")
+    println("Right before periodic: ${Robot.totalTimeTaken()}")
     periodic {
         autoCommand.execute()
 
         if (autoCommand.isFinished) {
             interrupted = false
-            println("Finished!")
+            println("Finished! ${Robot.totalTimeTaken()}")
             this.stop()
         }
     }
     autoCommand.end(interrupted)
+    println("ended ${Robot.totalTimeTaken()}")
     Drive.drive(Vector2(0.0, 0.0), 0.0)
 }
