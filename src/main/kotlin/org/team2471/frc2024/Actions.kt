@@ -562,6 +562,7 @@ suspend fun toggleAimAtNote() {
 
 suspend fun driveAlongChoreoPath(
     path: ChoreoTrajectory,
+    flipped: Boolean,
     resetOdometry: Boolean = false,
     extraTime: Double = 0.0,
     inResetGyro: Boolean? = null,
@@ -569,21 +570,24 @@ suspend fun driveAlongChoreoPath(
     earlyExit: (percentComplete: Double) -> Boolean = {false}
 ) {
 
+    println("inside driveAlongChoreoPath")
+
 
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
         Drive.resetHeading()
-        Drive.heading = path.initialPose.rotation.asAngle //path.headingCurve.getValue(0.0).degrees
+        Drive.heading = path.initialPose.rotation.asAngle * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
         println("After Reset Heading = ${Drive.heading}")
     }
 
     if (resetOdometry) {
         println("Position = $position")
-        Drive.odometryReset()
+//        Drive.odometryReset()
         println("Position after odometryReset = $position")
 
         // set to the numbers required for the start of the path
         position = path.initialPose.translation.asVector2().meters.asFeet
+//        prevPosition = position
 
         println("After Reset Position = $position")
     }
@@ -601,7 +605,7 @@ suspend fun driveAlongChoreoPath(
     println("entering drive periodic")
     periodic {
         val t = timer.get()
-        val dt = t - prevTime
+        val dt = if (t - prevTime != 0.0) t - prevTime else 0.02
         val pathSample = path.sample(t)
 
         // position error
@@ -627,7 +631,7 @@ suspend fun driveAlongChoreoPath(
 
         // heading error
         val robotHeading = Drive.heading
-        val pathHeading = pathSample.heading.degrees//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val pathHeading = pathSample.heading.degrees  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
         val headingError = (robotHeading - pathHeading).wrap()
 //        println("Heading Error: $headingError. pathHeading: $pathHeading")
 

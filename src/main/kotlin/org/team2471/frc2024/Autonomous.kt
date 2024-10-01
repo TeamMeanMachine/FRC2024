@@ -203,10 +203,11 @@ suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Chor
     Drive.drive(Vector2(0.0, 0.0), 0.0)
 }
 
-suspend fun customFollowAuto() = use(Drive) {
+suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
+    println("inside customFollowAuto")
     var path = Choreo.getTrajectory("8Foot")
 
-    if (Drive.isBlueAlliance) path = path.flipped()
+    if (Drive.isRedAlliance) path = path.flipped()
 
-    driveAlongChoreoPath(path, true)
+    driveAlongChoreoPath(path, Drive.isRedAlliance, true)
 }
