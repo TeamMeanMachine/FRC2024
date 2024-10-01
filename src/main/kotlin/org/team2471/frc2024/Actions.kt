@@ -615,7 +615,8 @@ suspend fun driveAlongChoreoPath(
 //        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$position positionError=$positionError")
 
         // position feed forward
-        val pathVelocity = (pathPosition - prevPathPosition) / dt
+        val pathVelocity = Vector2(pathSample.velocityX, pathSample.velocityY).meters//(pathPosition - prevPathPosition) / dt
+//        val pathVelocity = (pathPosition - prevPathPosition) / dt
         prevPathPosition = pathPosition
 
         // position d
@@ -631,12 +632,13 @@ suspend fun driveAlongChoreoPath(
 
         // heading error
         val robotHeading = Drive.heading
-        val pathHeading = pathSample.heading.radians//  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val pathHeading = pathSample.heading.radians  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
         val headingError = (robotHeading - pathHeading).wrap()
         println("Heading Error: $headingError. pathHeading: $pathHeading")
 
         // heading feed forward
-        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+//        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+        val headingVelocity = pathSample.angularVelocity.radians.asDegrees * if (flipped) -1.0 else 1.0//(pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
         prevPathHeading = pathHeading
 
         // heading d
@@ -650,7 +652,6 @@ suspend fun driveAlongChoreoPath(
             println("translationControlField $translationControlField")
             println("dt: $dt")
 
-
 //            throw IllegalArgumentException("requestedVolts == NaN")
         }
 
@@ -662,16 +663,16 @@ suspend fun driveAlongChoreoPath(
             println("exiting path")
             stop()
         }
-//        if (earlyExit(t / path.durationWithSpeed)) {
-//            println("early exiting path. time: $t  duration: ${path.durationWithSpeed} percent complete: ${t / path.durationWithSpeed}")
-//            stop()
-//        }
+        if (earlyExit(t / path.totalTime)) {
+            println("early exiting path. time: $t  duration: ${path.totalTime} percent complete: ${t / path.totalTime}")
+            stop()
+        }
         prevTime = t
 
 //        println("Time=$t Path Position=$pathPosition Position=$position")
 //        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
     }
-    println("at the end of driveAlongPath")
+    println("at the end of driveAlongChoreoPath")
 
     // shut it down
     Drive.drive(Vector2(0.0, 0.0), 0.0, true)
