@@ -2,8 +2,6 @@ package org.team2471.frc2024
 
 import com.choreo.lib.*;
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.math.kinematics.Odometry
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -41,6 +39,7 @@ object AutoChooser {
         addOption("None", null)
         addOption("TestAuto", "TestAuto")
         addOption("4Close", "4Close")
+        addOption("yay", "yay")
     }
 
     private val paths: ArrayList<Command> = arrayListOf()
@@ -97,6 +96,7 @@ object AutoChooser {
         when (selAuto) {
             "TestAuto" -> testAuto()
             "4Close" -> fourClose()
+            "yay" -> customFollowAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -201,4 +201,12 @@ suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Chor
     autoCommand.end(interrupted)
     println("ended ${Robot.totalTimeTaken()}")
     Drive.drive(Vector2(0.0, 0.0), 0.0)
+}
+
+suspend fun customFollowAuto() = use(Drive) {
+    var path = Choreo.getTrajectory("8Foot")
+
+    if (Drive.isBlueAlliance) path = path.flipped()
+
+    driveAlongChoreoPath(path, true)
 }
