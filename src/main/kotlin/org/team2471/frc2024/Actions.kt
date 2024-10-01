@@ -583,9 +583,8 @@ suspend fun driveAlongChoreoPath(
         println("Position after odometryReset = $position")
 
         // set to the numbers required for the start of the path
-        position = path.initialPose.translation.asVector2()
+        position = path.initialPose.translation.asVector2().meters.asFeet
 
-//        resetOdom()
         println("After Reset Position = $position")
     }
 
