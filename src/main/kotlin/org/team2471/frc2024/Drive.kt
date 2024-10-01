@@ -174,16 +174,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var acceleration: Vector2 = Vector2(0.0, 0.0)
     override var position = Vector2(0.0, 0.0)
         set(value) {
-            println("value: $value")
-//            if (value.x < -1.0) {
-//                field = Vector2(Double.NaN, Double.NaN)
-//                throw IllegalAccessError()
-
-//            } else {
-                field = value
-                lastResetTime = Timer.getFPGATimestamp()
-//            }
-
+            field = value
+            lastResetTime = Timer.getFPGATimestamp()
         }
 
     override var deltaPos = Vector2L(0.0.inches, 0.0.inches)

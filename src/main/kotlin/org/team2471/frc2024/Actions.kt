@@ -582,11 +582,12 @@ suspend fun driveAlongChoreoPath(
 
     if (resetOdometry) {
         println("Position = $position")
-        Drive.odometryReset()
+//        Drive.odometryReset()
         println("Position after odometryReset = $position")
 
         // set to the numbers required for the start of the path
         position = path.initialPose.translation.asVector2().meters.asFeet
+//        prevPosition = position
 
         println("After Reset Position = $position")
     }
