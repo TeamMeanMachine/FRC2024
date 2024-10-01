@@ -11,6 +11,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.PI
+import kotlin.math.absoluteValue
 import kotlin.math.sin
 
 object LedControl : Subsystem ("LedControl"){
@@ -66,10 +67,11 @@ object LedControl : Subsystem ("LedControl"){
                     LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kGreen, 0.06)
+                    LedPatterns.SHOOTING -> setSolid(Color.kWhite)
                     LedPatterns.HOLDING -> setSolid(Color.kGreen)
 
                     LedPatterns.RAMPING -> setFractionColorFromMid(Color.kGreen, Shooter.averageRpm, Shooter.averageRpmSetpoint)
+                    LedPatterns.READY -> updateBlink(Color.kGreen, 0.06)
                 }
 
                 if (controlerTestEnabled and !isEnabled) {
@@ -86,7 +88,9 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            pattern = if (Shooter.averageRpmSetpoint > 10.0) {
+            pattern = if (Robot.isTeleopEnabled && Intake.intakeState != Intake.IntakeState.SHOOTING && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
+                LedPatterns.READY
+            } else if (Shooter.averageRpmSetpoint > 10.0 && Intake.intakeState != Intake.IntakeState.SHOOTING) {
                 LedPatterns.RAMPING
             } else {
                 when (Intake.intakeState) {
@@ -293,5 +297,6 @@ enum class LedPatterns {
     INTAKING,
     HOLDING,
     SHOOTING,
-    RAMPING
+    RAMPING,
+    READY
 }
