@@ -561,22 +561,23 @@ suspend fun toggleAimAtNote() {
 }
 
 suspend fun driveAlongChoreoPath(
-    path: ChoreoTrajectory,
+    traj: ChoreoTrajectory,
     flipped: Boolean,
     resetOdometry: Boolean = false,
     extraTime: Double = 0.0,
     inResetGyro: Boolean? = null,
     turnOverride: () -> Double? = {null},
     earlyExit: (percentComplete: Double) -> Boolean = {false}
-) {
-
+) = use(Drive, name = "DriveAlongChoreoPath") {
     println("inside driveAlongChoreoPath")
+
+    val path = if (flipped) traj.flipped() else traj
 
 
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
         Drive.resetHeading()
-        Drive.heading = path.initialPose.rotation.asAngle * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
+        Drive.heading = path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
         println("After Reset Heading = ${Drive.heading}")
     }
 
@@ -632,13 +633,13 @@ suspend fun driveAlongChoreoPath(
 
         // heading error
         val robotHeading = Drive.heading
-        val pathHeading = pathSample.heading.radians  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val pathHeading = pathSample.heading.radians//  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
         val headingError = (robotHeading - pathHeading).wrap()
         println("Heading Error: $headingError. pathHeading: $pathHeading")
 
         // heading feed forward
 //        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
-        val headingVelocity = pathSample.angularVelocity.radians.asDegrees * if (flipped) -1.0 else 1.0//(pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+        val headingVelocity = pathSample.angularVelocity.radians.asDegrees// * if (flipped) -1.0 else 1.0//(pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
         prevPathHeading = pathHeading
 
         // heading d

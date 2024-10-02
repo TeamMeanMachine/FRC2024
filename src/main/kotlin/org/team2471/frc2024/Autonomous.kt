@@ -39,6 +39,7 @@ object AutoChooser {
         addOption("None", null)
         addOption("TestAuto", "TestAuto")
         addOption("4Close", "4Close")
+        addOption("4CloseAndMid", "4CloseAndMid")
         addOption("yay", "yay")
     }
 
@@ -96,6 +97,7 @@ object AutoChooser {
         when (selAuto) {
             "TestAuto" -> testAuto()
             "4Close" -> fourClose()
+            "4CloseAndMid" -> fourCloseAndMid()
             "yay" -> customFollowAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
@@ -135,13 +137,44 @@ object AutoChooser {
         Pivot.angleSetpoint = Pivot.PODIUMPOSE - 4.0.degrees
 
 
+        var path = Choreo.getTrajectory("4Close.1")
         println("before first execute ${Robot.totalTimeTaken()}")
-        executeChoreoCommand(paths[0])
+        driveAlongChoreoPath(path, Drive.isRedAlliance, true)
+        path = Choreo.getTrajectory("4Close.2")
         println("after first execute ${Robot.totalTimeTaken()}")
-        executeChoreoCommand(paths[1])
-        executeChoreoCommand(paths[2])
+        driveAlongChoreoPath(path, Drive.isRedAlliance)
+        path = Choreo.getTrajectory("4Close.3")
+        driveAlongChoreoPath(path, Drive.isRedAlliance)
 
         println("finished all ${Robot.totalTimeTaken()}")
+    }
+
+    suspend fun fourCloseAndMid() = use(Drive, Pivot, name = "fourCloseAndMid") {
+        println("inside fourCloseAndMid ${Robot.totalTimeTaken()}")
+        fourClose()
+        Shooter.setRpms(0.0)
+        Intake.intakeState = Intake.IntakeState.INTAKING
+        Pivot.angleSetpoint = Intake.intakeAngle
+
+        val earlyExit: (Double) -> Boolean = {
+            if (it > 0.75) {
+                Shooter.setRpms(5000.0)
+                false
+            } else {
+                false
+            }
+        }
+
+        driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = earlyExit)
+
+
+
+        Pivot.angleSetpoint = Pivot.getAngleFromPosition(Drive.position) + 2.0.degrees
+
+        suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
+
+
+        fire()
     }
 }
 
@@ -206,8 +239,6 @@ suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Chor
 suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
     println("inside customFollowAuto")
     var path = Choreo.getTrajectory("8Foot")
-
-    if (Drive.isRedAlliance) path = path.flipped()
 
     driveAlongChoreoPath(path, Drive.isRedAlliance, true)
 }
