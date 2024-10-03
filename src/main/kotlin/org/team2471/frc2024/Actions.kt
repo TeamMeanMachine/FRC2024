@@ -564,6 +564,7 @@ suspend fun driveAlongChoreoPath(
     traj: ChoreoTrajectory,
     flipped: Boolean,
     resetOdometry: Boolean = false,
+    useAprilTag: Boolean = false,
     extraTime: Double = 0.0,
     inResetGyro: Boolean? = null,
     turnOverride: () -> Double? = {null},
@@ -577,7 +578,7 @@ suspend fun driveAlongChoreoPath(
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
         Drive.resetHeading()
-        Drive.heading = path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
+        Drive.heading = -path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
         println("After Reset Heading = ${Drive.heading}")
     }
 
@@ -588,6 +589,7 @@ suspend fun driveAlongChoreoPath(
 
         // set to the numbers required for the start of the path
         position = path.initialPose.translation.asVector2().meters.asFeet
+        AprilTag.position = path.initialPose.translation.asVector2().meters
 //        prevPosition = position
 
         println("After Reset Position = $position")
@@ -611,9 +613,9 @@ suspend fun driveAlongChoreoPath(
 
         // position error
         val pathPosition = Vector2(pathSample.x, pathSample.y).meters//path.getPosition(t)
-        val currentPosition = Drive.position.feet
+        val currentPosition = if (useAprilTag) AprilTag.position else position.feet
         val positionError = pathPosition - currentPosition
-//        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$position positionError=$positionError")
+        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$currentPosition positionError=$positionError")
 
         // position feed forward
         val pathVelocity = Vector2(pathSample.velocityX, pathSample.velocityY).meters//(pathPosition - prevPathPosition) / dt
@@ -635,7 +637,7 @@ suspend fun driveAlongChoreoPath(
         val robotHeading = Drive.heading
         val pathHeading = pathSample.heading.radians//  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
         val headingError = (robotHeading - pathHeading).wrap()
-        println("Heading Error: $headingError. pathHeading: $pathHeading")
+//        println("Heading Error: $headingError. pathHeading: $pathHeading")
 
         // heading feed forward
 //        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt

@@ -41,6 +41,7 @@ object AutoChooser {
         addOption("4Close", "4Close")
         addOption("4CloseAndMid", "4CloseAndMid")
         addOption("yay", "yay")
+        addOption("SubSide", "SubSide")
     }
 
     private val paths: ArrayList<Command> = arrayListOf()
@@ -99,6 +100,7 @@ object AutoChooser {
             "4Close" -> fourClose()
             "4CloseAndMid" -> fourCloseAndMid()
             "yay" -> customFollowAuto()
+            "SubSide" -> subSide()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -159,10 +161,8 @@ object AutoChooser {
         val earlyExit: (Double) -> Boolean = {
             if (it > 0.75) {
                 Shooter.setRpms(5000.0)
-                false
-            } else {
-                false
             }
+            false
         }
 
         driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = earlyExit)
@@ -172,7 +172,7 @@ object AutoChooser {
         Pivot.angleSetpoint = Pivot.getAngleFromPosition(Drive.position) + 2.0.degrees
 
         suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
-
+        println("shooting at ${Robot.totalTimeTaken()}")
 
         fire()
     }
@@ -241,4 +241,37 @@ suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
     var path = Choreo.getTrajectory("8Foot")
 
     driveAlongChoreoPath(path, Drive.isRedAlliance, true)
+}
+
+suspend fun subSide() = use(Drive, name = "SubSide") {
+    println("Inside subSide")
+    Shooter.setRpms(5000.0)
+    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+    var path = Choreo.getTrajectory("SubSide.1")
+    suspendUntil { Shooter.averageRpm > 3500.0 }
+    fire()
+    Intake.intakeState = Intake.IntakeState.INTAKING
+    Shooter.setRpms(0.0)
+
+    val earlyExit: (Double) -> Boolean = {
+        if (it > 0.75) {
+            Shooter.setRpms(5000.0)
+            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        }
+        false
+    }
+
+    driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = earlyExit)
+    aimAndShoot()
+//    Drive.position = AprilTag.position.asFeet
+    Intake.intakeState = Intake.IntakeState.INTAKING
+
+    path = Choreo.getTrajectory("SubSide.2")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = earlyExit)
+
+    aimAndShoot()
+    Shooter.setRpms(0.0)
+
+//    path = Choreo.getTrajectory("SubSide.3")
+//    driveAlongChoreoPath(path, Drive.isRedAlliance, useAprilTag = false)
 }
