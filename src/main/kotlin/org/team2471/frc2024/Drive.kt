@@ -765,7 +765,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val y = wantedVelocity.y
         val robotCentricVel = velocity.rotate(-heading)
 
-        Logger.recordOutput("Wanted velocity", wantedVelocity.length)
+//        Logger.recordOutput("Wanted velocity", wantedVelocity.length)
 
         val translation = Vector2(
             velocityPositionControllerX.update(x, robotCentricVel.x),

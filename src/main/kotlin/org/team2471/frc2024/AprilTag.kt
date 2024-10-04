@@ -123,12 +123,12 @@ object AprilTag: Subsystem("AprilTag") {
 
                 // In a try bc sometimes it likes to log before the table is ready :(
                 try {
-                    Logger.recordOutput(
-                        "AprilTag/Position",
-                        Pose2d(position.asMeters.toTranslation2d(), Rotation2d(heading.asRadians))
-                    )
+//                    Logger.recordOutput(
+//                        "AprilTag/Position",
+//                        Pose2d(position.asMeters.toTranslation2d(), Rotation2d(heading.asRadians))
+//                    )
 
-                    Logger.recordOutput("AprilTag/PositionWPI", poseEstimatorWPI.estimatedPosition)
+//                    Logger.recordOutput("AprilTag/PositionWPI", poseEstimatorWPI.estimatedPosition)
                 } catch (_: Exception) {}
             }
         }
