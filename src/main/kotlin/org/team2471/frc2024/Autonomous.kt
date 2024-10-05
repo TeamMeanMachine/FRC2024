@@ -263,7 +263,17 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
         false
     }
 
-    driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = earlyExit)
+    val noteEarlyExit: (Double) -> Boolean = {
+        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+    }
+
+    driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = noteEarlyExit)
+    if (!Intake.holdingCargo) {
+        pickUpSeenNote(ignoreWrongSide = true)
+    }
+
+
+
     aimAndShoot()
 //    Drive.position = AprilTag.position.asFeet
     Intake.intakeState = Intake.IntakeState.INTAKING

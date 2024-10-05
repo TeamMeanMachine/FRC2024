@@ -615,7 +615,7 @@ suspend fun driveAlongChoreoPath(
         val pathPosition = Vector2(pathSample.x, pathSample.y).meters//path.getPosition(t)
         val currentPosition = if (useAprilTag) AprilTag.position else position.feet
         val positionError = pathPosition - currentPosition
-        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$currentPosition positionError=$positionError")
+//        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$currentPosition positionError=$positionError")
 
         // position feed forward
         val pathVelocity = Vector2(pathSample.velocityX, pathSample.velocityY).meters//(pathPosition - prevPathPosition) / dt
