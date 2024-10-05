@@ -92,7 +92,11 @@ object Intake: Subsystem("Intake") {
                 IntakeState.EMPTY -> {
                     setIntakeMotorsPercent(0.0)
                 }
-                IntakeState.SPITTING -> {}
+                IntakeState.SPITTING -> {
+                    Intake.intakeMotorTop.setPercentOutput(-0.9)
+                    Intake.intakeMotorBottom.setPercentOutput(-0.9)
+                    Intake.feederMotor.setPercentOutput(-0.9)
+                }
                 IntakeState.INTAKING -> {
                     Pivot.angleSetpoint = intakeAngle
                     Shooter.manualShootState = false

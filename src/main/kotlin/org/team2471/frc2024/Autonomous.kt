@@ -252,7 +252,7 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
 
     Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
-    suspendUntil { Shooter.averageRpm > 3000.0 }
+    suspendUntil { Shooter.averageRpm > 3500.0 && Pivot.pivotError < 1.0}
     println("shooter revved ${Robot.totalTimeTaken()}")
 
     Intake.intakeState = Intake.IntakeState.SHOOTING
@@ -263,7 +263,7 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
 
 
     val rampEarlyExit: (Double) -> Boolean = {
-        if (it > 0.75) {
+        if (it > 0.5) {
             Shooter.setRpms(5000.0)
             Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
         }

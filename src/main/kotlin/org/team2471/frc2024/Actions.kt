@@ -30,17 +30,14 @@ suspend fun climbWithTrigger() = use(Climb) {
     }
 }
 
-suspend fun spit() = use(Intake) {
+suspend fun spit() {
     println("starting spit periodic")
-    Intake.intakeState = Intake.IntakeState.SPITTING
     Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
     suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
     periodic {
         if (OI.driverController.a) {
-            Intake.intakeMotorTop.setPercentOutput(-0.9)
-            Intake.intakeMotorBottom.setPercentOutput(-0.9)
-            Intake.feederMotor.setPercentOutput(-0.9)
+            Intake.intakeState = Intake.IntakeState.SPITTING
         } else {
             Intake.intakeState = Intake.IntakeState.EMPTY
             this.stop()
