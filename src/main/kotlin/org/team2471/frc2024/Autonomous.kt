@@ -248,14 +248,21 @@ suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
 suspend fun subSide() = use(Drive, name = "SubSide") {
     println("Inside subSide")
     Shooter.setRpms(5000.0)
-    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
     var path = Choreo.getTrajectory("SubSide.1")
-    suspendUntil { Shooter.averageRpm > 3500.0 }
-    fire()
-    Intake.intakeState = Intake.IntakeState.INTAKING
+
+    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+
+    suspendUntil { Shooter.averageRpm > 3000.0 }
+    println("shooter revved ${Robot.totalTimeTaken()}")
+
+    Intake.intakeState = Intake.IntakeState.SHOOTING
+
+    delay(0.3.seconds)
+
     Shooter.setRpms(0.0)
 
-    val earlyExit: (Double) -> Boolean = {
+
+    val rampEarlyExit: (Double) -> Boolean = {
         if (it > 0.75) {
             Shooter.setRpms(5000.0)
             Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
@@ -266,11 +273,15 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
     val noteEarlyExit: (Double) -> Boolean = {
         it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
     }
+    Intake.intakeState = Intake.IntakeState.INTAKING
 
     driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = noteEarlyExit)
     if (!Intake.holdingCargo) {
         pickUpSeenNote(ignoreWrongSide = true)
     }
+
+    path = Choreo.getTrajectory("SubSide.2")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
 
 
 
@@ -278,14 +289,18 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
 //    Drive.position = AprilTag.position.asFeet
     Intake.intakeState = Intake.IntakeState.INTAKING
 
-    path = Choreo.getTrajectory("SubSide.2")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = earlyExit)
+    path = Choreo.getTrajectory("SubSide.3")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
+
+    if (!Intake.holdingCargo) {
+        pickUpSeenNote(ignoreWrongSide = true)
+    }
+
+    path = Choreo.getTrajectory("SubSide.4")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
 
     aimAndShoot()
     Shooter.setRpms(0.0)
-
-//    path = Choreo.getTrajectory("SubSide.3")
-//    driveAlongChoreoPath(path, Drive.isRedAlliance, useAprilTag = false)
 }
 
 suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
@@ -293,8 +308,12 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
     Shooter.setRpms(5000.0)
     Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
     var path = Choreo.getTrajectory("FunSubSideIntake.1")
-    suspendUntil { Shooter.averageRpm > 3500.0 }
-    fire()
+    suspendUntil { Shooter.averageRpm > 3000.0 }
+    println("shooter revved ${Robot.totalTimeTaken()}")
+
+    Intake.intakeState = Intake.IntakeState.SHOOTING
+
+    delay(0.3.seconds)
     Intake.intakeState = Intake.IntakeState.INTAKING
     Shooter.setRpms(0.0)
 
@@ -309,6 +328,7 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
         false
     }
 
+    println("driving \"FunSubSideIntake.1\"")
     driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit, resetOdometry = true)
 
     if (!Intake.holdingCargo) {
@@ -317,20 +337,19 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
 
     val odomFudge = 1.0
 
-    if (Drive.position.y < 5.219 + odomFudge) {
-        path = Choreo.getTrajectory("FunSubSideFire.1")
-        driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+    var pathString = ""
 
+    pathString = if (Drive.position.y < 5.219 + odomFudge) {
+        "FunSubSideFire.1"
     } else if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
-        path = Choreo.getTrajectory("FunSubSideFire2.1")
-
-        driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
-
+        "FunSubSideFire2.1"
     } else {
-        path = Choreo.getTrajectory("FunSubSideFire3.1")
-
-        driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+        "FunSubSideFire3.1"
     }
+
+    path = Choreo.getTrajectory(pathString)
+    println("returning path $pathString")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
 
     aimAndShoot()
     Shooter.setRpms(0.0)
@@ -338,18 +357,18 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
     Intake.intakeState = Intake.IntakeState.INTAKING
 
     path = Choreo.getTrajectory("FunSubSideShooter")
+    println("driving \"FunSubSideShooter\"")
     driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
 
-    if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
-        path = Choreo.getTrajectory("FunSubSideFire2.1")
-
-        driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
-
+    pathString = if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
+        "FunSubSideFire2.1"
     } else {
-        path = Choreo.getTrajectory("FunSubSideFire3.1")
-
-        driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+        "FunSubSideFire3.1"
     }
+
+    path = Choreo.getTrajectory(pathString)
+    println("returning2 path $pathString")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
 
     aimAndShoot()
     Shooter.setRpms(0.0)
