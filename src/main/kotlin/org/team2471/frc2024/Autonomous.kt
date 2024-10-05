@@ -160,14 +160,22 @@ object AutoChooser {
         Intake.intakeState = Intake.IntakeState.INTAKING
         Pivot.angleSetpoint = Intake.intakeAngle
 
-        val earlyExit: (Double) -> Boolean = {
+        val rampearlyExit: (Double) -> Boolean = {
             if (it > 0.75) {
                 Shooter.setRpms(5000.0)
             }
             false
         }
+        val noteEarlyExit: (Double) -> Boolean = {
+            it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+        }
 
-        driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = earlyExit)
+
+        driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = noteEarlyExit)
+        if (!Intake.holdingCargo) {
+            pickUpSeenNote(ignoreWrongSide = true)
+        }
+        driveAlongChoreoPath(Choreo.getTrajectory("4Close.5"), Drive.isRedAlliance, earlyExit = rampearlyExit)
 
 
 

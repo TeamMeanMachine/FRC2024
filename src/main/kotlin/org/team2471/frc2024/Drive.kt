@@ -122,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 26.69 else 81.876).degrees,
+            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 27.39 else 81.876).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -131,7 +131,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -19.67 else -35.897).degrees,
+            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) 135.5 else -35.897).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -140,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -35.17 else -150.539).degrees,
+            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -37.18 else -150.539).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -149,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -159.03 else -104.767).degrees,
+            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -165.2 else -104.767).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -190,7 +190,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var robotPivot = Vector2(0.0, 0.0).inches
     override var headingSetpoint = 0.0.degrees
 
-    override val carpetFlow = Vector2(-1.0, 0.0) //dcmp comp 1.0  practice -1.0
+    override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
     override val kCarpet = 0.03//725 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (ex. 0.0212 -> 2.12% more distance downstream)
     override val kTread = 0.0 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry

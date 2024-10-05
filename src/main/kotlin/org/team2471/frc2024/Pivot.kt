@@ -68,8 +68,8 @@ object Pivot: Subsystem("Pivot") {
         ).transformBy(Transform3d(advantagePivotOffset, Rotation3d()))
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3561.0 else 2311.0
-    private val MAXTICKS = if (isCompBot) 2385.0 else 1106.0
+    private val MINTICKS = if (isCompBot) 3303.0 else 2311.0
+    private val MAXTICKS = if (isCompBot) 2111.0 else 1106.0
 
     var angleFudge = 0.0.degrees
 
