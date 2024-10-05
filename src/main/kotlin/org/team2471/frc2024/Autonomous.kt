@@ -289,10 +289,10 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
     Shooter.setRpms(0.0)
 
     val noteEarlyExit: (Double) -> Boolean = {
-        it > 0.25 && NoteDetector.seesNote
+        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
     }
     val rampEarlyExit: (Double) -> Boolean = {
-        if (it > 0.75) {
+        if (it > 0.10) {
             Shooter.setRpms(5000.0)
             Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
         }
@@ -305,12 +305,13 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
         pickUpSeenNote(ignoreWrongSide = true)
     }
 
+    val odomFudge = 1.0
 
-    if (Drive.position.y < 5.219) {
+    if (Drive.position.y < 5.219 + odomFudge) {
         path = Choreo.getTrajectory("FunSubSideFire.1")
         driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
 
-    } else if (Drive.position.y > 5.219 + 5.505) {
+    } else if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
         path = Choreo.getTrajectory("FunSubSideFire2.1")
 
         driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
@@ -322,13 +323,14 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
     }
 
     aimAndShoot()
+    Shooter.setRpms(0.0)
 
     Intake.intakeState = Intake.IntakeState.INTAKING
 
     path = Choreo.getTrajectory("FunSubSideShooter")
     driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
 
-    if (Drive.position.y > 5.219 + 5.505) {
+    if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
         path = Choreo.getTrajectory("FunSubSideFire2.1")
 
         driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
@@ -340,4 +342,5 @@ suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
     }
 
     aimAndShoot()
+    Shooter.setRpms(0.0)
 }
