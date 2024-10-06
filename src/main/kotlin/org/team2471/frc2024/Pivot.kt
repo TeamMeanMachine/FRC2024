@@ -68,12 +68,12 @@ object Pivot: Subsystem("Pivot") {
         ).transformBy(Transform3d(advantagePivotOffset, Rotation3d()))
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3303.0 else 2311.0
-    private val MAXTICKS = if (isCompBot) 2111.0 else 1106.0
+    private val MINTICKS = if (isCompBot) 3490.0 else 2311.0
+    private val MAXTICKS = if (isCompBot) 2304.0 else 1106.0
 
     var angleFudge = 0.0.degrees
 
-//    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
+//    var advantagePivotTransform = Transform3d(Tra                                          nslation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
     var aimSpeaker = false
         set(value) {
