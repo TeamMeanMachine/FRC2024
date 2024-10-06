@@ -119,6 +119,8 @@ object AutoChooser {
 
     suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
         println("inside fourClose ${Robot.totalTimeTaken()}")
+        Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
         val t = Timer()
         t.start()
@@ -126,9 +128,7 @@ object AutoChooser {
         Drive.position = initialPose.first
         Drive.heading = initialPose.second
 
-        Shooter.setRpms(5000.0)
 
-        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
         suspendUntil { Shooter.averageRpm > 3000.0 }
         println("shooter revved ${Robot.totalTimeTaken()}")
@@ -138,7 +138,7 @@ object AutoChooser {
         delay(0.3.seconds)
 
 
-        Pivot.angleSetpoint = Pivot.PODIUMPOSE - 4.0.degrees
+        Pivot.angleSetpoint = Pivot.PODIUMPOSE - 3.0.degrees
 
 
         var path = Choreo.getTrajectory("4Close.1")
@@ -172,19 +172,20 @@ object AutoChooser {
 
 
         driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = noteEarlyExit)
+
         if (!Intake.holdingCargo) {
             pickUpSeenNote(ignoreWrongSide = true)
         }
+
         driveAlongChoreoPath(Choreo.getTrajectory("4Close.5"), Drive.isRedAlliance, earlyExit = rampearlyExit)
 
 
+        aimAndShoot(false, minTime = 2.0, 0.0, 14.0)
 
-        Pivot.angleSetpoint = Pivot.getAngleFromPosition(Drive.position) + 2.0.degrees
+//        Pivot.angleSetpoint = Pivot.getAngleFromPosition(Drive.position) + 2.0.degrees
 
-        suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
-        println("shooting at ${Robot.totalTimeTaken()}")
-
-        fire()
+//        suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
+        println("shot at ${Robot.totalTimeTaken()}")
     }
 }
 
@@ -256,9 +257,19 @@ suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
 suspend fun subSide() = use(Drive, name = "SubSide") {
     println("Inside subSide")
     Shooter.setRpms(5000.0)
-    var path = Choreo.getTrajectory("SubSide.1")
-
     Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+
+    var path = Choreo.getTrajectory("SubSide.1")
+    val rampEarlyExit: (Double) -> Boolean = {
+        if (it > 0.5) {
+            Shooter.setRpms(5000.0)
+            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        }
+        false
+    }
+    val noteEarlyExit: (Double) -> Boolean = {
+        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+    }
 
     suspendUntil { Shooter.averageRpm > 3500.0 && Pivot.pivotError < 1.0}
     println("shooter revved ${Robot.totalTimeTaken()}")
@@ -269,21 +280,10 @@ suspend fun subSide() = use(Drive, name = "SubSide") {
 
     Shooter.setRpms(0.0)
 
-
-    val rampEarlyExit: (Double) -> Boolean = {
-        if (it > 0.5) {
-            Shooter.setRpms(5000.0)
-            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
-        }
-        false
-    }
-
-    val noteEarlyExit: (Double) -> Boolean = {
-        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
-    }
     Intake.intakeState = Intake.IntakeState.INTAKING
 
     driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = noteEarlyExit)
+
     if (!Intake.holdingCargo) {
         pickUpSeenNote(ignoreWrongSide = true)
     }

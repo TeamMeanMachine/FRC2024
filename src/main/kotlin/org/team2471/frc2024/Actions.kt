@@ -145,7 +145,7 @@ suspend fun aimForPass() = use(Pivot, name = "Pass") {
 }
 
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0, totalTimeThreshold: Double = 0.0) {
 
     println("Aiming...")
 
@@ -154,12 +154,16 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Do
     delay(delay)
     t.start()
     Pivot.readyToShootTimer.start()
-    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime || (totalTimeThreshold != 0.0 && Robot.totalTimeTaken() > totalTimeThreshold) }
     if (t.get() > minTime) {
         println("Aiming max time. ${t.get()}")
         Pivot.speakerIsReady(debug = true)
     }
-    println("firing note at ${t.get()} seconds")
+    if (totalTimeThreshold != 0.0 && Robot.totalTimeTaken() > totalTimeThreshold) {
+        println("shooting to satisfy shot at $totalTimeThreshold totalTime")
+//        Pivot.speakerIsReady(debug = true)
+    }
+    println("firing note at ${t.get()} seconds and ${Robot.totalTimeTaken()} total time")
     fire()
     Drive.aimTarget = AimTarget.NONE
 }
