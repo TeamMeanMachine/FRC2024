@@ -40,6 +40,7 @@ object Pivot: Subsystem("Pivot") {
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
+    private val aimSpeakerEntry = table.getEntry("Aim Speaker?")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
 //    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
     val demoAngleEntry = table.getEntry("Demo Angle")
@@ -173,6 +174,7 @@ object Pivot: Subsystem("Pivot") {
 
         GlobalScope.launch {
             periodic {
+                aimSpeakerEntry.setBoolean(aimSpeaker)
                 pivotCurrentEntry.setDouble(pivotMotor.current)
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
@@ -255,6 +257,7 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
+        aimSpeaker = false
     }
 
     fun getAngleFromPosition(point: Vector2): Angle {
