@@ -1,134 +1,90 @@
 package org.team2471.frc2024
 
-import edu.wpi.first.networktables.NetworkTableEvent
-import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DriverStation
+import com.choreo.lib.*;
+import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
-import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.motion.following.driveAlongPath
-import org.team2471.frc.lib.motion.following.xPose
-import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.lib.testing.*
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc.lib.util.isReal
-import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc2024.Drive.isBlueAlliance
-import org.team2471.frc2024.Drive.isRedAlliance
-import java.io.File
-import java.util.*
-import kotlin.math.absoluteValue
+import org.team2471.frc2024.AutoChooser.initialPose
 
-private lateinit var autonomi: Autonomi
 
 val selAuto
-    get() = SmartDashboard.getString("Autos/selected", "no auto selected")
+    get() = SmartDashboard.getString("AutoChooser/selected", "no auto selected")
 
 object AutoChooser {
-    private val closeFourToFiveEntry = AprilTag.aprilTable.getEntry("Auto, Go For It")
-    private var autonomiEntryTopicSub =
-        NetworkTableInstance.getDefault().getTable("PathVisualizer").getStringTopic("Autonomi").subscribe("")
-    private val shootFirstEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("ShootFirst")
-    var cacheFile: File? = null
+
+    private var prevAutoChoosen = ""
+    private var prevAlliance: Boolean? = null
+
+    var initialPose: Pair<Vector2, Angle> = Pair(Vector2(0.0, 0.0), 0.0.radians)
 
     private val lyricsChooser = SendableChooser<String?>().apply {
         setDefaultOption("Country roads", "Country roads")
         addOption("take me home", "take me home")
     }
 
-    private val testAutoChooser = SendableChooser<String?>().apply {
+    private val autoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
-        addOption("20 Foot Test", "20 Foot Test")
-        addOption("8 Foot Straight", "8 Foot Straight")
-        addOption("2 Foot Circle", "2 Foot Circle")
-        addOption("4 Foot Circle", "4 Foot Circle")
-        addOption("8 Foot Circle", "8 Foot Circle")
-        addOption("Full Field Straight B","Full Field Straight B")
-        addOption("Full Field Straight R","Full Field Straight R")
-        addOption("Hook Path", "Hook Path")
-        addOption("16 Foot Fast", "16 Foot Fast")
-        addOption("Auto Length", "Auto Length")
-        addOption("Back Auto Length", "Back Auto Length")
-        setDefaultOption("90 Degree Turn", "90 Degree Turn")
+        addOption("TestAuto", "TestAuto")
+        addOption("4Close", "4Close")
+        addOption("4CloseAndMid", "4CloseAndMid")
+        addOption("yay", "yay")
+        addOption("SubSide", "SubSide")
+        addOption("FunSubSide", "FunSubSide")
     }
 
-    private val autonomousChooser = SendableChooser<String?>().apply {
-        setDefaultOption("Tests", "testAuto")
-//        addOption("2Far2CloseAmp", "2Far2CloseAmp")
-        addOption("4CloseSafe", "4CloseSafe")
-//        addOption("SubSide", "SubSide")
-        addOption("SafeSubSide", "SafeSubSide")
-//        addOption("testingARoundTheStageBlue", "CirclePathes")
-        addOption("MidPieces", "MidPieces")
-        addOption("Pile", "Pile")
-        addOption("FirstMid", "FirstMid")
-        addOption("FirSec", "FirSec")
-        addOption("hii", "hii")
-    }
+    private val paths: ArrayList<Command> = arrayListOf()
 
     init {
+
+        SmartDashboard.putData("AutoChooser", autoChooser)
+
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
-        SmartDashboard.putData("Tests", testAutoChooser)
-        SmartDashboard.putData("Autos", autonomousChooser)
-        closeFourToFiveEntry.setBoolean(true)
-        shootFirstEntry.setBoolean(true)
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
+                SmartDashboard.updateValues()
+
                 val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
 
-                SmartDashboard.putBoolean("Auto is selected", autoChosen)
-            }
-        }
-        try {
-            cacheFile = File("/Users/justin/IdeaProjects/FRC2024/Autonomi.json")//File("/home/lvuser/autonomi.json")
-            if (cacheFile != null) {
-                autonomi = Autonomi.fromJsonString(cacheFile?.readText())!!
-                println("Autonomi cache loaded.")
-            } else {
-                println("Autonomi failed to load!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! RESTART ROBOT!!!!!!")
-            }
-        } catch (_: Throwable) {
-            DriverStation.reportError("Autonomi cache could not be found", false)
-            autonomi = Autonomi()
-        }
-        println("In Auto Init. Before AddListener. Hi.")
-        NetworkTableInstance.getDefault().addListener(
-            autonomiEntryTopicSub,
-            EnumSet.of(
-                NetworkTableEvent.Kind.kValueRemote
-            )
-        ) { event ->
-            println("Autonomous change detected")
-            if (event.valueData != null) {
-                val json = event.valueData.value.string
-                if (json.isNotEmpty()) {
-                    val t = measureTimeFPGA {
-                        autonomi = Autonomi.fromJsonString(json) ?: Autonomi()
-//                        println(autonomi.getPath("Tests", "8 Foot Straight").getPosition(0.0))
-                    }
-                    println("Loaded autonomi in $t seconds")
-                    if (cacheFile != null) {
-                        println("CacheFile != null. Hi.")
-                        cacheFile!!.writeText(json)
-                        NetworkTableInstance.getDefault().getTable("PathVisualizer").getEntry("Autonomi").setString("")
 
-                    } else {
-                        println("cacheFile == null. Hi.")
+                SmartDashboard.putBoolean("Auto is selected", autoChosen)
+
+                val isRed = Drive.isRedAlliance
+
+                if (prevAutoChoosen != selAuto || isRed != prevAlliance) {
+                    println("Autonomous change detected")
+                    when (selAuto) {
+                        "4Close" -> {
+                            paths.addAll( arrayListOf(
+                                    initializeChoreoPath("4Close.1", true),
+                                    initializeChoreoPath("4Close.2"),
+                                    initializeChoreoPath("4Close.3")
+                            ))
+                        }
+                        "TestAuto" -> {
+                            paths.addAll(
+                                arrayListOf(
+                                    initializeChoreoPath("8Foot.1", true)
+                                )
+                            )
+                        }
+                        else -> println("no paths :(")
                     }
-                    println("New autonomi written to cache")
-                } else {
-                    autonomi = Autonomi()
-                    DriverStation.reportWarning("Empty autonomi received from network tables", false)
+
+                    prevAutoChoosen = selAuto
+                    prevAlliance = isRed
                 }
             }
         }
@@ -141,771 +97,287 @@ object AutoChooser {
         println("Selected Auto = ******* $selAuto *******  ${Robot.totalTimeTaken()}")
         println("before when block ${Robot.totalTimeTaken()}")
         when (selAuto) {
-            "Tests" -> testAuto()
-//            "2Far2CloseAmp" -> twoFarTwoCloseAmp()
-            "4CloseSafe" -> fourCloseSafe()
-//            "SubSide" -> substationSide()
-            "SafeSubSide" -> {
-                println("about to call sub ${Robot.totalTimeTaken()}")
-                safeSubstationSide()
-            }
-//            "testingARoundTheStageBlue" -> testingARoundTheStageBlue()
-            "MidPieces" -> midPieces()
-            "Pile" -> pileAuto()
-            "FirstMid" -> firstMidAuto()
-            "FirSec" -> firstSecAuto()
-            "hii" -> hii()
+            "TestAuto" -> testAuto()
+            "4Close" -> fourClose()
+            "4CloseAndMid" -> fourCloseAndMid()
+            "yay" -> customFollowAuto()
+            "SubSide" -> subSide()
+            "FunSubSide" -> funSubSide()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
         println("finished autonomous  ${Robot.totalTimeTaken()}")
     }
 
-    suspend fun midPieces() = use(Drive, Shooter) {
-        try {
-            grabFirstFour() //split because we want intake default for picking up middle pieces
-            println("DONE GRABBING FIRST FOUR. GOING TO MIDDLE")
+    suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-            Shooter.setRpms(0.0)
-            val auto = autonomi["MidPieces"]
-            auto?.isReflected = isRedAlliance
-            var path: Path2D? = auto?.get("4-GrabFifth")
+        Drive.position = initialPose.first
+        Drive.heading = initialPose.second
 
-
-            if (path != null) {
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Drive.driveAlongPath(path, earlyExit = {
-                    it > 0.5 && NoteDetector.closestIsValid
-                })
-            }
-            pickUpSeenNote()
-            path = auto?.get("5-ShootFifth")
-            parallel({
-                delay(0.5)
-                Intake.setIntakeMotorsPercent(0.0)
-                Shooter.setRpms(5000.0)
-                Pivot.aimSpeaker = true
-            }, {
-                if (path != null) {
-                    Drive.driveAlongPath(path!!, turnOverride = {Drive.aimSpeakerAmpLogic()})
-                }
-            })
-            if (Intake.holdingCargo) {
-                println("intake is holding, shooting")
-                aimAndShoot(true)
-            } else {
-                println("Intake is not holding, not shooting")
-            }
-            Shooter.setRpms(0.0)
-            path = auto?.get("6-GrabSixth")
-            if (path != null) {
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Drive.driveAlongPath(path, earlyExit = {
-                    it > 0.3 && NoteDetector.closestIsValid
-                })
-            }
-            pickUpSeenNote()
-            path = auto?.get("7-ShootSixth")
-            parallel({
-                delay(0.5)
-                Intake.setIntakeMotorsPercent(0.0)
-                Shooter.setRpms(5000.0)
-                Pivot.aimSpeaker = true
-            }, {
-                if (path != null) {
-                    Drive.driveAlongPath(path, turnOverride = {Drive.aimSpeakerAmpLogic()})
-                }
-            })
-            if (Intake.holdingCargo) {
-                aimAndShoot(true)
-            }
-
-            Drive.xPose()
-
-        } finally {
-            Drive.xPose()
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-            delay(1.0)
-            Shooter.setRpms(0.0)
-            Intake.setIntakeMotorsPercent(0.0)
-        }
+        executeChoreoCommand(paths[0])
     }
 
-    private suspend fun grabFirstFour() = use(Drive, Shooter, Intake) {
+    suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
+        println("inside fourClose ${Robot.totalTimeTaken()}")
         Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
-        Drive.zeroGyro()
-        val auto = autonomi["MidPieces"]
-        auto?.isReflected = isRedAlliance
-        var path = auto?.get("1-GrabSecond")
-
-        if (path != null) {
-            AprilTag.position = path.getPosition(0.0).feet
-            Drive.position = AprilTag.position.asFeet
-        }
-
-        aimAndShoot(true)
-
-        var finishedPath = false
-
-        parallel({
-            if (path != null) {
-                parallel({
-                    Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
-                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
-            }*/)
-                }, {
-                    delay(0.6)
-                    Pivot.aimSpeaker = false
-                    Shooter.setRpms(5000.0)
-                    Pivot.angleSetpoint = Pivot.getAngleFromPosition(path!!.getPosition(path!!.durationWithSpeed)) - 4.0.degrees
-                    println("setting the pivot angle setpoint. path duration: ${path!!.durationWithSpeed}  angle setpoint: ${Pivot.angleSetpoint}")
-                })
-            }
-//            pickUpSeenNote(true, doTurn = false)
-            parallel({
-                path = auto?.get("2-GrabThird")
-                if (path != null) {
-                    Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
-                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
-            }*/)
-                }
-            }, {
-                delay(0.8)
-                Pivot.aimSpeaker = true
-                Pivot.speakerDistPitchOffset = 2.0
-            })
-
-//            pickUpSeenNote(true, doTurn = false)
-            path = auto?.get("3-GrabFourth")
-            if (path != null) {
-                Pivot.speakerDistPitchOffset = 2.0
-                Drive.driveAlongPath(path!!, false, turnOverride = { Drive.aimSpeakerAmpLogic() }/*, earlyExit = {
-                NoteDetector.closestIsValid && !NoteDetector.closestIsMiddle && it > 0.5
-            }*/)
-//                pickUpSeenNote(true, doTurn = false)
-            }
-            finishedPath = true
-        }, {
-            Pivot.aimSpeaker = true
-//            delay(0.4)
-//            println("firing preloaded")
-            Intake.setIntakeMotorsPercent(1.0)
-//            delay(0.6)
-//            aprilTagsEnabled = false
-
-//            periodic {
-//                if (finishedPath) this.stop()
-//                Drive.headingSetpoint = Drive.getAngleToSpeaker()
-//            }
-        })
-//        aprilTagsEnabled = true
-        Pivot.speakerDistPitchOffset = 0.0
-        println("finished first three")
-    }
-
-    suspend fun fourCloseSafe() = use(Drive, Shooter, Intake) {
-        try {
-            println("in 4closeSafe ${Robot.recentTimeTaken()}")
-            Shooter.setRpms(5000.0)
-            Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
-            Drive.zeroGyro()
-
-            val auto = autonomi["4CloseSafe"]
-            auto?.isReflected = isRedAlliance
-            var path = auto?.get("1-GrabSecond")
-            var finishedPaths = false
-
-            delay(0.1)
-            fire(0.6) //fire preloaded
-            Intake.setIntakeMotorsPercent(1.0) //run intake throughout auto
-            delay(1.0)
-            parallel({ //drive do driving
-                if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 38.0.degrees else 38.0.degrees
-                    Drive.driveAlongPath(path!!, true)
-                } else {
-                    println("PATH EQUALS NULL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                }
-                path = auto?.get("2-GrabThird")
-                if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 36.5.degrees else 36.5.degrees //35.0 for red
-                    Drive.driveAlongPath(path!!, false)
-                }
-                path = auto?.get("3-GrabFourth")
-                if (path != null) {
-                    Pivot.angleSetpoint = if (isRedAlliance) 34.0.degrees else 34.0.degrees //33.0 for red
-                    Drive.driveAlongPath(path!!, false)
-                }
-                delay(1.0)
-                finishedPaths = true
-            }, { //set pivot angle and shooter rpm based on drive pos
-                delay(0.2)
-                periodic {
-                    if (finishedPaths) this.stop()
-//                    Pivot.angleSetpoint = Shooter.pitchCurve.getValue(Drive.distanceFromSpeakerDrivePos).degrees
-//                    Shooter.setRpms(Shooter.rpmCurve.getValue(Drive.distanceFromSpeakerDrivePos))
-                }
-            })
-            Drive.xPose()
-        } finally {
-            Drive.xPose()
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-            Shooter.setRpms(0.0)
-            Intake.setIntakeMotorsPercent(0.0)
-        }
-    }
-
-    suspend fun safeSubstationSide() = use(Drive, Shooter, name = "safeSubAuto") {
-        println("before try in safeSub ${Robot.totalTimeTaken()}")
-        try {
-            println("inside safeSubstationSide ${Robot.totalTimeTaken()}")
-            parallel({
-                Shooter.setRpms(5000.0)
-            }, {
-                Drive.zeroGyro()
-            }, {
-                Pivot.aimSpeaker = true
-            })
-            println("after safeSub parallel ${Robot.totalTimeTaken()}")
-            val auto = autonomi["SafeSubSide"]
-            auto?.isReflected = isBlueAlliance
-            val t = Timer()
-            t.start()
-            periodic {
-                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 && (Drive.gyroConnected == isReal)) {
-                    println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
-                    this.stop()
-                }
-                if (!Drive.gyroConnected && isReal) println("NAVX NOT CONNECTED NOT RUNNING AUTO")
-            }
-
-            println("starting auto stuff now ${Robot.totalTimeTaken()}")
-            var path = auto?.get("1.2-GrabSecondSpit")
-
-            var finishedPath = false
-            var noCargo = false
-
-            if (shootFirstEntry.getBoolean(true)) {
-                path = auto?.get("1-GrabSecond")
-                if (path != null) Drive.driveAlongPath(path, true, inResetGyro = false, turnOverride = { Drive.aimSpeakerAmpLogic() })
-
-                Shooter.setRpms(Shooter.getRpmFromPosition(AprilTag.position.asFeet))
-                aimAndShoot()
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Shooter.setRpms(0.0)
-                shootThenIntake(
-                    auto?.get("nuh uhhh"),
-                    true,
-                    { noCargo },
-                    auto?.get("1-GrabSecond"),
-                    { it > 0.6 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0), 2.5) },
-                    skipShoot = true,
-                    grabNoteAtPosition = NoteDetector.middleNote(0)
-                )
-            } else {
-                Pivot.aimSpeaker = true
-                path = auto?.get("1.2-GrabSecondSpit")
-                var t = Timer()
-                t.start()
-                var shot = false
-                parallel({
-                    suspendUntil{ Shooter.motorRpmTop > 4500.0 && Shooter.motorRpmBottom > 4500.0 || t.get() > 1.0 }
-                    fire()
-                    delay(0.2)
-                    shot = true
-                    Shooter.setRpms(0.0)
-                }, {
-                    if (path != null) Drive.driveAlongPath(path as Path2D, true, inResetGyro = false)
-                }, {
-                    suspendUntil{ shot || t.get() > 1.5 }
-                    Intake.intakeState = Intake.IntakeState.INTAKING
-                })
-            }
-
-            Pivot.angleFudge = 2.0.degrees
-            finishedPath = true
-//            Pivot.angleFudge = 1.8.degrees
-
-            if (noCargo) {
-                println("didn't pick up cargo")
-                dynamicDriveToMissedPiece(NoteDetector.middleNote(1))
-            }
-
-            println("going to shoot second piece. noCargo: $noCargo")
-
-            noCargo = false
-            finishedPath = false
-            parallel({
-                shootThenIntake(auto?.get("2-ShootSecond"), true, { noCargo }, auto?.get("3-GrabThird"), { it > 0.5 && NoteDetector.closestIsMiddleAdjust(2.0) }, grabNoteAtPosition = NoteDetector.middleNote(1))
-                finishedPath = true
-            }, {
-                t.start()
-                periodic {
-                    if (finishedPath) this.stop()
-                    if (!Intake.holdingCargo && !noCargo && t.get() > 0.1 && t.get() < 1.0) {
-                        println("intake is not holding cargo. ${t.get()} seconds from grabbing note")
-//                        noCargo = true chicken
-                        this.stop()
-                    }
-                }
-            })
-
-
-            if (noCargo) {
-                println("didn't pick up cargo")
-                dynamicDriveToMissedPiece(NoteDetector.middleNote(2))
-            }
-
-            println("going to shoot third piece. noCargo: $noCargo")
-
-            noCargo = false
-            finishedPath = false
-            parallel({
-                Pivot.angleFudge = 1.0.degrees
-                shootThenIntake(auto?.get("4-ShootThird"), true, { noCargo }, auto?.get("5-GrabFourth"), { it > 0.7 && NoteDetector.closestIsMiddleAdjust(2.5) }, grabNoteAtPosition = NoteDetector.middleNote(2))
-                Pivot.angleFudge = 0.0.degrees
-                finishedPath = true
-            }, {
-                t.start()
-                periodic {
-                    if (finishedPath) this.stop()
-                    if (!Intake.holdingCargo && !noCargo && t.get() > 0.1 && t.get() < 1.0) {
-                        println("intake is not holding cargo. ${t.get()} seconds from grabbing note")
-//                        noCargo = true chicken
-                        this.stop()
-                    }
-                }
-            })
-//            Pivot.angleFudge = 0.0.degrees
-
-            if (noCargo) {
-                println("didn't pick up cargo")
-                dynamicDriveToMissedPiece(NoteDetector.middleNote(3))
-            }
-
-            println("going to shoot fourth piece. noCargo: $noCargo")
-
-            path = auto?.get("6-ShootFourth")
-            parallel({
-                if (path != null) {
-                    Drive.driveAlongPath(path, false, turnOverride = { Drive.aimSpeakerAmpLogic() })
-                }
-            }, {
-                delay(0.5)
-                Shooter.setRpms(5000.0)
-                Pivot.aimSpeaker = true
-            })
-            fire(0.5)
-            Drive.xPose()
-        } finally {
-            Drive.xPose()
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-            Pivot.angleFudge = 0.0.degrees
-        }
-    }
-
-    suspend fun shootThenIntake(shootPath: Path2D?, aimWhileDriving: Boolean, missedPiece: () -> Boolean, intakePath: Path2D?, intakeEarlyExit: (Double) -> Boolean, skipShoot: Boolean = false, grabNoteAtPosition: Vector2? = null) = use(Drive, name = "driveAlongPathThenShoot") {
-        var finishedPath = false
-        var missedPieceFlag = false
         val t = Timer()
         t.start()
-        if (!skipShoot) {
-            if (shootPath != null) {
-                parallel({
-                    shootPath.xyCurve.headPoint.position = if (isRedAlliance) AprilTag.position.asFeet else AprilTag.position.asFeet.reflectAcrossField()
-                    Drive.driveAlongPath(shootPath, false, turnOverride = { if (aimWhileDriving) Drive.aimSpeakerAmpLogic() else null }, earlyExit = {missedPieceFlag})
-                    println("FINISHED SHOOTER PATH YAY!!")
-                    finishedPath = true
-                }, {
-                    periodic {
-                        missedPieceFlag = missedPiece()
-                        if (t.get() > 0.6) {
-                            Shooter.setRpms(5000.0)
-                            Pivot.aimSpeaker = true
-                        }
-                        if (missedPieceFlag || finishedPath) {
-                            this.stop()
-                        }
-                    }
-                })
-                //we finished path or missed a note. shooting or not shooting
-                if (missedPieceFlag) {
-                    println("shootThenIntake: exiting driveAlongPathThenShoot because we missed a piece")
-                } else {
-                    aimAndShoot(true, delay= 0.75)
-                    Shooter.setRpms(0.0)
-//                fire()
-                }
-            } else {
-                println("SHOOT PATH IS NULL")
+
+        Drive.position = initialPose.first
+        Drive.heading = initialPose.second
+
+
+
+        suspendUntil { Shooter.averageRpm > 3000.0 }
+        println("shooter revved ${Robot.totalTimeTaken()}")
+
+        Intake.intakeState = Intake.IntakeState.SHOOTING
+
+        delay(0.3.seconds)
+
+
+        Pivot.angleSetpoint = Pivot.PODIUMPOSE - 3.0.degrees
+
+
+        var path = Choreo.getTrajectory("4Close.1")
+        println("before first execute ${Robot.totalTimeTaken()}")
+        driveAlongChoreoPath(path, Drive.isRedAlliance, true)
+        path = Choreo.getTrajectory("4Close.2")
+        println("after first execute ${Robot.totalTimeTaken()}")
+        driveAlongChoreoPath(path, Drive.isRedAlliance)
+        path = Choreo.getTrajectory("4Close.3")
+        driveAlongChoreoPath(path, Drive.isRedAlliance)
+
+        println("finished all ${Robot.totalTimeTaken()}")
+    }
+
+    suspend fun fourCloseAndMid() = use(Drive, Pivot, name = "fourCloseAndMid") {
+        println("inside fourCloseAndMid ${Robot.totalTimeTaken()}")
+        fourClose()
+        Shooter.setRpms(0.0)
+        Intake.intakeState = Intake.IntakeState.INTAKING
+        Pivot.angleSetpoint = Intake.intakeAngle
+
+        val rampearlyExit: (Double) -> Boolean = {
+            if (it > 0.75) {
+                Shooter.setRpms(5000.0)
             }
-        } else {
-            println("shootThenIntake: skipping shooting because you said so")
+            false
+        }
+        val noteEarlyExit: (Double) -> Boolean = {
+            it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
         }
 
 
-        //if we missed a piece just leave
-        if (!missedPieceFlag) {
-            println("shootThenIntake: shot a note, doing intake and drive stuff")
-            if (intakePath != null) {
-                parallel({
-                    Drive.driveAlongPath(intakePath, false, earlyExit = intakeEarlyExit)
-                }, {
-                    Shooter.setRpms(0.0)
-                    Intake.intakeState = Intake.IntakeState.INTAKING
-                    Pivot.aimSpeaker = false
-                })
-                pickUpSeenNote(true, getClosestNoteAtPosition = grabNoteAtPosition, overrideTimeout = 2.0)
-            } else {
-                println("INTAKE PATH IS NULL")
-            }
+        driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = noteEarlyExit)
+
+        if (!Intake.holdingCargo) {
+            pickUpSeenNote(ignoreWrongSide = true)
         }
+
+        driveAlongChoreoPath(Choreo.getTrajectory("4Close.5"), Drive.isRedAlliance, earlyExit = rampearlyExit)
+
+
+        aimAndShoot(false, minTime = 2.0, 0.0, 14.0)
+
+//        Pivot.angleSetpoint = Pivot.getAngleFromPosition(Drive.position) + 2.0.degrees
+
+//        suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
+        println("shot at ${Robot.totalTimeTaken()}")
     }
-
-    suspend fun dynamicDriveToMissedPiece(notePos: Vector2) {
-        val path = Path2D("newPath")
-        path.addVector2(AprilTag.position.asFeet)
-        path.addVector2(Vector2(AprilTag.position.asFeet.x, notePos.y))
-        val duration = path.length / 3.0
-        path.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
-        path.addEasePoint(0.0, 0.0)
-        path.addEasePoint(duration, 1.0)
-        path.addHeadingPoint(0.0, Drive.heading.asDegrees)
-        path.addHeadingPoint(duration * 0.35, if (isRedAlliance) 95.0 else 85.0)
-        path.addHeadingPoint(duration, 90.0)
-        Drive.driveAlongPath(path, false, earlyExit = { (it > 0.1 && NoteDetector.closestNoteIsAtPosition(notePos, 4.0)) || Intake.holdingCargo})
-        pickUpSeenNote()
-    }
-
-    suspend fun pileAuto() = use(Drive, Shooter, Intake, name = "Shoot Pile") {
-        try {
-            println("inside pile ${Robot.totalTimeTaken()}")
-            parallel({
-                Shooter.setRpms(3000.0)
-            }, {
-                Drive.zeroGyro()
-            }, {
-                AprilTag.position =
-                    if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-                Drive.position = AprilTag.position.asFeet
-            })
-            println("after pileAuto parallel ${Robot.totalTimeTaken()}")
-            val t = Timer()
-            t.start()
-            periodic {
-                if ((Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0) {
-                    println("waited ${t.get()} seconds for gyro reset. ${Drive.heading}")
-                    this.stop()
-                }
-            }
-            val auto = autonomi["Shoot Pile"]
-            auto?.isReflected = isBlueAlliance
-            var path = auto?.get("1-DownCenter")
-            if (path != null) {
-                AprilTag.position = path.getPosition(0.0).feet
-                Drive.position = AprilTag.position.asFeet
-            }
-            println("running auto stuff ${Robot.totalTimeTaken()}")
-
-            Intake.setIntakeMotorsPercent(1.0)
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(4)) && it > 0.5
-                })
-            }
-            pickUpSeenNote(true, stopWhenBeamBreak = true)
-
-
-            Shooter.setRpms(5000.0)
-            Intake.setIntakeMotorsPercent(1.0)
-            Drive.robotPivot = Vector2(0.0, 10.5).feet
-            pickUpSeenNote(wantedApproachAngle = -80.0, overrideTimeout = 1.0)
-
-
-
-
-
-
-//            var endYaw = NoteDetector.middleNotesSpoilerYaw.getValue(NoteDetector.middleNote(4).y)
-//            if (isBlueAlliance) endYaw = 180.0 - endYaw
-//            pickUpSeenNote()
-//
-//            dynamicDriveAlongPoints(combinedPosition.asFeet, Vector2(27.1, 24.4), Vector2(if (isRedAlliance) -3.0 else 3.0, 0.0), Vector2(0.0, -3.0), Drive.heading, endYaw.degrees, 7.0, {NoteDetector.seesNote})
-//            pickUpSeenNote(wantedApproachAngle = endYaw)
-//            Shooter.setRpms(NoteDetector.middleNotesSpoilerRPM.getValue(combinedPosition.y.asFeet))
-//            fire()
-
-        } finally {
-            Drive.robotPivot = Vector2(0.0, 0.0).feet
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-        }
-    }
-
-    private suspend fun dynamicDriveAlongPoints(startPos: Vector2, endPos: Vector2, startTan: Vector2, endTan: Vector2, startHeading: Angle, endHeading: Angle, velocity: Double, earlyExit: (Double) -> Boolean = {false}) = use(Drive) {
-        val newPath = Path2D("newPath")
-        newPath.addPointAndTangent(startPos.x, startPos.y, startTan.x, startTan.y)
-        newPath.addPointAndTangent(endPos.x, endPos.y, endTan.x, endTan.y)
-        val distance = newPath.length
-        val duration = distance / velocity
-        newPath.easeCurve.setMarkBeginOrEndKeysToZeroSlope(false)  // if this doesn't work, we could add with tangent manually
-        newPath.addEasePoint(0.0, 0.0)
-        newPath.addEasePoint(duration, 1.0)
-        newPath.addHeadingPoint(0.0, startHeading.asDegrees)
-        newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
-        Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
-    }
-
-
-    suspend fun firstMidAuto() = use(Drive, Shooter) {
-        try {
-            Drive.zeroGyro()
-            AprilTag.position =
-                if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-            val auto = autonomi["SafeSubSide"]
-            auto?.isReflected = isBlueAlliance
-            var path = auto?.get("0-Mid1_Grab1.5")
-            Shooter.setRpms(5000.0)
-            val t = Timer()
-            t.start()
-            suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.7 }
-            if (shootFirstEntry.getBoolean(true)) {
-                Pivot.angleFudge = 2.0.degrees
-                aimAndShoot()
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Shooter.setRpms(0.0)
-                Pivot.angleFudge = 0.0.degrees
-            }
-            parallel({
-                if (path != null) {
-                    Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(2), 5.0)
-                    })
-                }
-            }, {
-                if (!shootFirstEntry.getBoolean(true)) {
-                    fire(0.5)
-                    Intake.intakeState = Intake.IntakeState.INTAKING
-                    Shooter.setRpms(0.0)
-                }
-            })
-            pickUpSeenNote()
-            path = auto?.get("6-ShootFourth") //Mid1 Second
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
-
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            Shooter.setRpms(0.0)
-            path = auto?.get("0.1-Mid1_GrabSecond") //Mid1 Third
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote( 0))
-                })
-            }
-            pickUpSeenNote()
-
-            path = auto?.get("2-ShootSecond") //Mid1 Third
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            Shooter.setRpms(0.0)
-            path = auto?.get("3-GrabThird") //Mid1 Fourth
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    NoteDetector.closestIsMiddleAdjust(4.5)
-                })
-            }
-            pickUpSeenNote()
-            path = auto?.get("4-ShootThird") //Mid1 Fourth
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
-            Drive.xPose()
-
-        } finally {
-            Drive.xPose()
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-        }
-    }
-
-    suspend fun firstSecAuto() = use(Drive, Shooter) {
-        try {
-            Drive.zeroGyro()
-            AprilTag.position =
-                if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-            val auto = autonomi["SafeSubSide"]
-            auto?.isReflected = isBlueAlliance
-            var path = auto?.get("0.3-Fir2_Grab1.5")
-            Shooter.setRpms(5000.0)
-            val t = Timer()
-            t.start()
-            suspendUntil { (Drive.heading - if (isRedAlliance) 180.0.degrees else 0.0.degrees).asDegrees.absoluteValue < 10.0 || t.get() > 0.5 }
-            if (shootFirstEntry.getBoolean(true)) {
-                Pivot.angleFudge = 2.0.degrees
-                aimAndShoot()
-                Intake.intakeState = Intake.IntakeState.INTAKING
-                Shooter.setRpms(0.0)
-                Pivot.angleFudge = 0.4.degrees
-            }
-            parallel({
-                if (path != null) {
-                    Drive.driveAlongPath(path!!, false, inResetGyro = false, earlyExit = {
-                        it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(1), 7.0)
-                    })
-                }
-            }, {
-                if (!shootFirstEntry.getBoolean(true)) {
-                    fire(0.5)
-                    Intake.intakeState = Intake.IntakeState.INTAKING
-                    Shooter.setRpms(0.0)
-                    Pivot.angleFudge = 0.0.degrees
-                }
-            })
-            pickUpSeenNote()
-
-            path = auto?.get("4-ShootThird") //FirSe Second
-            parallel({
-                if (path != null) {
-                    Drive.driveAlongPath(path as Path2D, false)
-                }
-            }, {
-                delay(2.0)
-            })
-            aimAndShoot()
-
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            Shooter.setRpms(0.0)
-            path = auto?.get("5-GrabFourth") //FirSe Third
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(2))
-                })
-            }
-            pickUpSeenNote()
-
-            path = auto?.get("6-ShootFourth") //FirSe Third
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            delay(0.05)
-            aimAndShoot()
-
-            Intake.intakeState = Intake.IntakeState.INTAKING
-            Shooter.setRpms(0.0)
-            path = auto?.get("0.1-Mid1_GrabSecond") //FirSe Fourth
-            if (path != null) {
-                Drive.driveAlongPath(path, false, earlyExit = {
-                    it > 0.5 && NoteDetector.closestNoteIsAtPosition(NoteDetector.middleNote(0))
-                })
-            }
-            pickUpSeenNote()
-
-            path = auto?.get("2-ShootSecond") //FirSe Fourth
-            if (path != null) {
-                Drive.driveAlongPath(path, false)
-            }
-            Shooter.setRpms(5000.0)
-            aimAndShoot()
-            Drive.xPose()
-        } finally {
-            Drive.xPose()
-            Drive.aimTarget = AimTarget.NONE
-            Pivot.aimSpeaker = false
-        }
-    }
-
-    suspend fun propAuto() = use(Drive, Shooter) {
-        try {
-            Drive.zeroGyro()
-            AprilTag.position =
-                if (isRedAlliance) Vector2(0.0, 0.0).feet else Vector2(0.0, 0.0).reflectAcrossField().feet
-            val auto = autonomi["Tests"]
-            auto?.isReflected = isBlueAlliance
-            val path = auto?.get("8 Foot Straight")
-            aimAndShoot()
-
-            if (path != null) {
-                Drive.driveAlongPath(path, true, inResetGyro = false, earlyExit = {
-                    NoteDetector.seesNote && NoteDetector.closestIsValid
-                })
-            }
-            if (!NoteDetector.seesNote) delay(0.2)
-        } finally {
-
-        }
-    }
-    private suspend fun testingARoundTheStageBlue() = use(Drive) {
-        val testAutonomous = autonomi["testingARoundTheStageBlue"]
-        val path = testAutonomous?.get("CirclePathes")
-        if (path != null) {
-            println("Path is not null")
-            Drive.driveAlongPath(path, true)
-        } else {
-            println("Path is null!!! :(")
-        }
-    }
-
-    private suspend fun testAuto() = use(Drive, name = "test") {
-        val testPathName = SmartDashboard.getString("Tests/selected", "no test selected") // testAutoChooser.selected
-        val testPathList = listOf(EightFootStraight, EightFootCircle, TwoFootCircle, FourFootCircle, HookPath)
-
-        val testPath = testPathList.find { it.name == testPathName }
-
-        println(testPathName)
-        if (testPath != null) {
-            println("Path is not null")
-            Drive.driveAlongPath(testPath, true)
-        } else {
-            println("Test Path is null!!! :(")
-        }
-    }
-
-    suspend fun hii() = use(Drive, Shooter, Intake, name = "hii") {
-        println("hiiiii ${Robot.totalTimeTaken()}")
-        Drive.zeroGyro()
-        AprilTag.position =
-            if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-        val path = autonomi["SafeSubSide"]?.get("1-GrabSecond")
-        if (path != null) {
-            Drive.driveAlongPath(path)
-        } else {
-            println("path is null!!!!!!!!!!!!!")
-        }
-    }
-//
-//    suspend fun bye() {
-//        println("bye ${Robot.totalTimeTaken()}")
-//        Drive.zeroGyro()
-//        Drive.combinedPosition =
-//            if (isRedAlliance) Vector2(48.62, 11.62).feet else Vector2(48.52, 11.62).reflectAcrossField().feet
-//        val auto = autonomi["4CloseSafe"]
-//        auto?.isReflected = isRedAlliance
-//        var path = auto?.get("1-GrabSecond")
-////        println(path?.getPosition(0.0))
-//
-//        val t = Timer()
-//        t.start()
-//
-//        val startingPosition = Drive.combinedPosition
-//
-//        println("line in front of driveAlongPath ${Robot.totalTimeTaken()}")
-//        if (path != null) Drive.driveAlongPath(path, earlyExit = { true })
-//        println("line after driveAlongPath ${Robot.totalTimeTaken()}")
-//    }
 }
 
+fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Command {
+    println("Init choreo parh $pathName")
+    val trajectory = Choreo.getTrajectory(pathName)
 
+    if (resetOdometry) {
+        val initialPos = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
+
+        if (Drive.isRedAlliance) {
+            initialPose = Pair(
+                initialPos.asFeet.reflectAcrossField(),
+                (180.0.degrees - trajectory.initialPose.rotation.asAngle).wrap() // may not be correct if not 0 or 180
+            )
+        } else {
+            initialPose = Pair(
+                initialPos.asFeet,
+                trajectory.initialPose.rotation.asAngle
+            )
+        }
+    }
+    println("Trajectory:    ${Drive.getPose()}")
+
+    return Choreo.choreoSwerveCommand(
+        trajectory,
+        Drive::getPose,
+        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
+        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
+        PIDController(Drive.parameters.kpHeading.feet.asMeters / 20.0, 0.0, Drive.parameters.kdHeading.feet.asMeters / 20.0),
+        Drive::driveRobotRelative,
+        Drive::isRedAlliance,
+        object : SubsystemBase() {}
+    )
+
+
+}
+
+suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Choreo Path") {
+    println("Init path. ${Robot.totalTimeTaken()}")
+    autoCommand.initialize()// for some reason this takes 1.7 seconds
+    println("Initialized path: ${Robot.totalTimeTaken()}")
+
+    var interrupted = true
+
+
+    println("Right before periodic: ${Robot.totalTimeTaken()}")
+    periodic {
+        autoCommand.execute()
+
+        if (autoCommand.isFinished) {
+            interrupted = false
+            println("Finished! ${Robot.totalTimeTaken()}")
+            this.stop()
+        }
+    }
+    autoCommand.end(interrupted)
+    println("ended ${Robot.totalTimeTaken()}")
+    Drive.drive(Vector2(0.0, 0.0), 0.0)
+}
+
+suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
+    println("inside customFollowAuto")
+    var path = Choreo.getTrajectory("8Foot")
+
+    driveAlongChoreoPath(path, Drive.isRedAlliance, true)
+}
+
+suspend fun subSide() = use(Drive, name = "SubSide") {
+    println("Inside subSide")
+    Shooter.setRpms(5000.0)
+    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+
+    var path = Choreo.getTrajectory("SubSide.1")
+    val rampEarlyExit: (Double) -> Boolean = {
+        if (it > 0.5) {
+            Shooter.setRpms(5000.0)
+            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        }
+        false
+    }
+    val noteEarlyExit: (Double) -> Boolean = {
+        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+    }
+
+    suspendUntil { Shooter.averageRpm > 3500.0 && Pivot.pivotError < 1.0}
+    println("shooter revved ${Robot.totalTimeTaken()}")
+
+    Intake.intakeState = Intake.IntakeState.SHOOTING
+
+    delay(0.3.seconds)
+
+    Shooter.setRpms(0.0)
+
+    Intake.intakeState = Intake.IntakeState.INTAKING
+
+    driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = noteEarlyExit)
+
+    if (!Intake.holdingCargo) {
+        pickUpSeenNote(ignoreWrongSide = true)
+    }
+
+    path = Choreo.getTrajectory("SubSide.2")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+
+
+
+    aimAndShoot()
+//    Drive.position = AprilTag.position.asFeet
+    Intake.intakeState = Intake.IntakeState.INTAKING
+
+    path = Choreo.getTrajectory("SubSide.3")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
+
+    if (!Intake.holdingCargo) {
+        pickUpSeenNote(ignoreWrongSide = true)
+    }
+
+    path = Choreo.getTrajectory("SubSide.4")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+
+    aimAndShoot()
+    Shooter.setRpms(0.0)
+}
+
+suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
+    println("Inside funSubSide")
+    Shooter.setRpms(5000.0)
+    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+    var path = Choreo.getTrajectory("FunSubSideIntake.1")
+    suspendUntil { Shooter.averageRpm > 3000.0 }
+    println("shooter revved ${Robot.totalTimeTaken()}")
+
+    Intake.intakeState = Intake.IntakeState.SHOOTING
+
+    delay(0.3.seconds)
+    Intake.intakeState = Intake.IntakeState.INTAKING
+    Shooter.setRpms(0.0)
+
+    val noteEarlyExit: (Double) -> Boolean = {
+        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+    }
+    val rampEarlyExit: (Double) -> Boolean = {
+        if (it > 0.10) {
+            Shooter.setRpms(5000.0)
+            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        }
+        false
+    }
+
+    println("driving \"FunSubSideIntake.1\"")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit, resetOdometry = true)
+
+    if (!Intake.holdingCargo) {
+        pickUpSeenNote(ignoreWrongSide = true)
+    }
+
+    val odomFudge = 1.0
+
+    var pathString = ""
+
+    pathString = if (Drive.position.y < 5.219 + odomFudge) {
+        "FunSubSideFire.1"
+    } else if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
+        "FunSubSideFire2.1"
+    } else {
+        "FunSubSideFire3.1"
+    }
+
+    path = Choreo.getTrajectory(pathString)
+    println("returning path $pathString")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
+
+    aimAndShoot()
+    Shooter.setRpms(0.0)
+
+    Intake.intakeState = Intake.IntakeState.INTAKING
+
+    path = Choreo.getTrajectory("FunSubSideShooter")
+    println("driving \"FunSubSideShooter\"")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
+
+    pathString = if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
+        "FunSubSideFire2.1"
+    } else {
+        "FunSubSideFire3.1"
+    }
+
+    path = Choreo.getTrajectory(pathString)
+    println("returning2 path $pathString")
+    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
+
+    aimAndShoot()
+    Shooter.setRpms(0.0)
+}

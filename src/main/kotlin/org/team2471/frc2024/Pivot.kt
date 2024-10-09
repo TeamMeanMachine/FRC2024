@@ -40,6 +40,7 @@ object Pivot: Subsystem("Pivot") {
     private val encoderVoltageEntry = table.getEntry("Encoder Voltage")
     private val stageAngleEntry = table.getEntry("Stage Angle")
     private val distanceFromSpeakerEntry = table.getEntry("Distance From Speaker")
+    private val aimSpeakerEntry = table.getEntry("Aim Speaker?")
     val pivotAmpRate = table.getEntry("Pivot amp rate")
 //    var advantagePivotPublisher: StructPublisher<Transform3d> = NetworkTableInstance.getDefault().getStructTopic("Advantage Pivot Transform", Transform3d.struct).publish()
     val demoAngleEntry = table.getEntry("Demo Angle")
@@ -68,12 +69,12 @@ object Pivot: Subsystem("Pivot") {
         ).transformBy(Transform3d(advantagePivotOffset, Rotation3d()))
 
     // Ticks
-    private val MINTICKS = if (isCompBot) 3561.0 else 2316.0
-    private val MAXTICKS = if (isCompBot) 2385.0 else 1116.0
+    private val MINTICKS = if (isCompBot) 3490.0 else 2311.0
+    private val MAXTICKS = if (isCompBot) 2304.0 else 1106.0
 
     var angleFudge = 0.0.degrees
 
-//    var advantagePivotTransform = Transform3d(Translation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
+//    var advantagePivotTransform = Transform3d(Tra                                          nslation3d(0.0, 0.0, 0.0), Rotation3d((Math.PI / 2) + MINHARDSTOP.asRadians, 0.0, (Math.PI / 2)))
 
     var aimSpeaker = false
         set(value) {
@@ -173,6 +174,7 @@ object Pivot: Subsystem("Pivot") {
 
         GlobalScope.launch {
             periodic {
+                aimSpeakerEntry.setBoolean(aimSpeaker)
                 pivotCurrentEntry.setDouble(pivotMotor.current)
                 ticksEntry.setDouble(pivotTicks.toDouble())
                 encoderAngleEntry.setDouble(pivotEncoderAngle.asDegrees)
@@ -255,6 +257,7 @@ object Pivot: Subsystem("Pivot") {
 
     override fun onDisable() {
         pivotMotor.coastMode()
+        aimSpeaker = false
     }
 
     fun getAngleFromPosition(point: Vector2): Angle {

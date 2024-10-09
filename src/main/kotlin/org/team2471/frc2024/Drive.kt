@@ -3,6 +3,13 @@ package org.team2471.frc2024
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig
+import com.pathplanner.lib.util.PIDConstants
+import com.pathplanner.lib.util.ReplanningConfig
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -89,6 +96,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     private val aimTargetEntry = table.getEntry("Aim Target")
 
+    val wantedVelocityEntry = table.getEntry("Wanted Velocity")
+
     override val parameters: SwerveParameters = SwerveParameters(
         gyroRateCorrection = 0.0,
         kpPosition = 0.32,
@@ -101,6 +110,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     )
 
 
+    val maxVel = 19.2.feet.asMeters
+    val maxRot = 500.0.degrees.asRadians
+
+
     /**
      * Coordinates of modules
      * **/
@@ -109,7 +122,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 26.69 else 81.876).degrees,
+            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 27.39 else 81.876).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -118,7 +131,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) -19.67 else -35.897).degrees,
+            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) 135.5 else -35.897).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -127,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -35.17 else -150.539).degrees,
+            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -37.18 else -150.539).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -136,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -159.03 else -104.767).degrees,
+            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -165.2 else -104.767).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -178,7 +191,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var headingSetpoint = 0.0.degrees
 
     override val carpetFlow = Vector2(1.0, 0.0) //dcmp comp 1.0  practice -1.0
-    override val kCarpet = 0.0 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.12% more distance downstream)
+    override val kCarpet = 0.03//725 // 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (ex. 0.0212 -> 2.12% more distance downstream)
     override val kTread = 0.0 // 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
     override val plannedPath: NetworkTableEntry = plannedPathEntry
     override val actualRoute: NetworkTableEntry = actualRouteEntry
@@ -188,10 +201,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //    val teleopPDController =  PDConstantFController(parameters.kpHeading, parameters.kdHeading, parameters.kHeadingFeedForward)
 
     var aimPDController = teleopPDController
-
-//    var aimSpeaker = false
-//    var aimNote = false
-//    var aimAmp = false
 
     var aimTarget: AimTarget = AimTarget.NONE
 
@@ -232,8 +241,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
         }
 
-    val isBlueAlliance: Boolean
-        get() = !isRedAlliance
+    val isBlueAlliance: Boolean get() = !isRedAlliance
 
     init {
         println("drive init")
@@ -252,7 +260,23 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
             val encoderCounterList = arrayOf(0, 0, 0, 0)
-            val previousAngles = arrayOf(0.0.degrees, 0.0.degrees, 0.0.degrees, 0.0.degrees)
+            val previousAngles = arrayOf(0.0, 0.0, 0.0, 0.0)
+
+//            AutoBuilder.configureHolonomic(
+//                Drive::getPose,
+//                Drive::resetPose,
+//                Drive::getRobotRelativeSpeeds,
+//                Drive::driveRobotRelative,
+//                HolonomicPathFollowerConfig(
+//                    PIDConstants(parameters.kpPosition.feet.asMeters, 0.0, parameters.kdPosition.feet.asMeters),
+//                    PIDConstants(parameters.kpHeading.degrees.asRadians, 0.0, parameters.kdHeading.degrees.asRadians),
+//                    maxVel,
+//                    maxRot,
+//                    ReplanningConfig(false, true, 100.0, 100.0)
+//                ),
+//                {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
+//                object: edu.wpi.first.wpilibj2.command.Subsystem {}// What does pathplanner do with this driveSubsystem reference?  Can we create a fake drive subsystem with just enough implemented to work?
+//            )
 
             val wheelCenterOffsets = arrayOfNulls<Pose3d>(modules.indices.count())
             val returningTranslations = arrayOfNulls<Translation3d>(modules.indices.count())
@@ -339,16 +363,20 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += m.turnMotor.current
 
                     if (Robot.isDisabled) {
-                        if (absoluteAngle == previousAngles[i]) {
+                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition
+                        if (rawEncoderAbsoluteAngle == previousAngles[i]) {
                             encoderCounterList[i]++
                         } else {
                             m.encoderConnected = true
                             encoderCounterList[i] = 0
                         }
                         if (encoderCounterList[i] >= 40) {
+                            //encoder has not sent updates after a certain threshold
                             m.encoderConnected = false
+//                            println("module #$i absolute encoder has been static for more then 40 ticks")
+                            if (isReal) DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
                         }
-                        previousAngles[i] = absoluteAngle
+                        previousAngles[i] = rawEncoderAbsoluteAngle
                     }
                     setpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
                     absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
@@ -455,7 +483,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         } else {
             heading = 180.0.degrees
         }
-        println("zeroed heading to $heading")//  alliance blue? ${AutoChooser.redSide}")
+        println("zeroed heading to $heading  alliance red? $isRedAlliance")
     }
 
     fun frontSpeakerResetOdom() {
@@ -474,6 +502,36 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val modY = x.asMeters + fieldCenterOffsetInMeters.x
         return Pose2d(modX,modY, Rotation2d((-heading+180.0.degrees).wrap().asRadians))
     }
+
+    fun getPose(): Pose2d {
+//        println("x=${position.x.feet.asMeters} y=${position.y.feet.asMeters} angle=${heading.asRadians}")
+        return Pose2d(position.x.feet.asMeters, position.y.feet.asMeters, Rotation2d(heading.asRadians))
+    }
+
+    fun resetPose(pose: Pose2d) {
+        position = Vector2(pose.x.meters.asFeet, pose.y.meters.asFeet)
+        heading = pose.rotation.radians.radians
+    }
+
+    fun getRobotRelativeSpeeds(): ChassisSpeeds {
+        return ChassisSpeeds(velocity.y.feet.asMeters, velocity.x.feet.asMeters, headingRate.changePerSecond.asRadians)
+    }
+
+    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
+//        println("vy: ${chassisSpeeds.vyMetersPerSecond.meters.asFeet}, vx%: ${chassisSpeeds.vxMetersPerSecond.meters.asFeet}, turn%: ${-chassisSpeeds.omegaRadiansPerSecond.radians.asDegrees}")
+
+        val vector = Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet)
+
+        Drive.wantedVelocityEntry.setDouble(vector.length)
+        driveWithVelocity(vector, chassisSpeeds.omegaRadiansPerSecond.radians)
+
+
+//        val velocityVector = Vector2(-chassisSpeeds.vyMetersPerSecond, chassisSpeeds.vxMetersPerSecond).meters.asFeet
+//        val turnVelocity = -chassisSpeeds.omegaRadiansPerSecond
+
+//        var translationControlField = velocityVector * parameters.kPositionFeedForward + (positionError) * parameters.kpPosition + deltaPositionError * parameters.kdPosition
+    }
+
 
     override suspend fun default() {
         periodic {
@@ -526,10 +584,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
         Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
     }
-
-
-
-
 
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) { //changed to modules.indices, untested
@@ -595,12 +649,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
 
         val absoluteAngle: Angle
-            get() = /*if (encoderConnected) {*/
+            get() = if (encoderConnected) {
                     (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
-//                } else {
-//                    //encoder not connected, assume wheel is zeroed
-//                    (0.0.degrees - angleOffset).wrap()
-//                }
+                } else {
+//                    encoder not connected, assume wheel is zeroed
+                    0.0.degrees
+                }
 
         override val treadWear: Double
             get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
@@ -617,9 +671,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = driveMotor.acceleration
 
         val power: Double
-            get() {
-                return driveMotor.output
-            }
+            get() = driveMotor.output
 
         override val currDistance: Double
             get() = driveMotor.position
@@ -628,9 +680,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var prevAngle: Angle = angle
 
         override var odometer: Double
-            get() {
-                return odometerEntry.getDouble(0.0)
-            }
+            get() = odometerEntry.getDouble(0.0)
             set(value) {
                 odometerEntry.setDouble(value)
             }
@@ -650,7 +700,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.setPercentOutput(power)
         }
 
-
         val error: Angle
             get() = turnMotor.closedLoopError.degrees
 
@@ -659,8 +708,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio                                               * fudge
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)// * (17.0 / 45.0) //* (93.02 / 96.0) * 1.04
+                //                    wheel diam / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
+            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (99.0/96.0)
                 currentLimit(55, 60, 1)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
@@ -678,12 +727,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 configSim(DCMotor.getNeo550(1), 0.0000065)
             }
-//            GlobalScope.launch {
-//                periodic {
-////                    println("${turnMotor.motorID}   ${ round(absoluteAngle.asDegrees, 2) }")
-//
-//                }
-//            }
         }
 
         override fun driveWithDistance(angle: Angle, distance: Length) {
@@ -722,6 +765,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val y = wantedVelocity.y
         val robotCentricVel = velocity.rotate(-heading)
 
+//        Logger.recordOutput("Wanted velocity", wantedVelocity.length)
+
         val translation = Vector2(
             velocityPositionControllerX.update(x, robotCentricVel.x),
             velocityPositionControllerY.update(y, robotCentricVel.y)
@@ -731,14 +776,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val turn = velocityHeadingController.update(turnVelocity.asDegrees, headingRate.changePerSecond.asDegrees)
 
-        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
+//        println("turn: ${turn.round(4)}  translation ${translation.round(4)}")
 
         drive(Vector2(-translation.y, translation.x), -turn, false)
     }
 
     fun aimSpeakerAmpLogic(smoothing: Boolean = false): Double? {
         aimHeadingSetpoint = when(aimTarget) {
-            AimTarget.SPEAKER -> getAngleToSpeaker(true) + if (DriverStation.isAutonomous()) 4.0.degrees else 2.7.degrees
+            AimTarget.SPEAKER -> getAngleToSpeaker(true)
             AimTarget.AMP -> 90.0.degrees
             AimTarget.GAMEPIECE -> -NoteDetector.angleToClosestNote()!!
             AimTarget.PODIUM -> if (isRedAlliance) 209.0.degrees else -27.0.degrees  //podium aiming
@@ -777,10 +822,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun getAngleToSpeaker(useSpinCompensation: Boolean = false): Angle {
         val point = if (useSpinCompensation) {
-                offsetSpeakerPose
-            } else {
-                speakerPos
-            }
+            offsetSpeakerPose
+        } else {
+            speakerPos
+        }
 
         val dVector = AprilTag.position - point.feet
         return atan2(dVector.y.asFeet, dVector.x.asFeet).radians

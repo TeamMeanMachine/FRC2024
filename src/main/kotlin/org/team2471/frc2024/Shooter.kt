@@ -270,7 +270,7 @@ object Shooter: Subsystem("Shooter") {
                         rpmTopSetpoint = 3500.0
                         rpmBottomSetpoint = 3500.0
                     } else if (Drive.aimTarget == AimTarget.PASS) {
-                        setRpms(4000.0)
+                        setRpms(3500.0)
                     } else {
                         if (AprilTag.aprilTagsEnabled) {
                             rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
@@ -285,13 +285,9 @@ object Shooter: Subsystem("Shooter") {
         }
     }
 
-    override fun postEnable() {
-        println("inside shooter preEnable ${Robot.totalTimeTaken()}")
-        GlobalScope.launch {
-            rpmTopSetpoint  = 0.0
-            rpmBottomSetpoint = 0.0
-        }
-        println("after shooter preEnable ${Robot.totalTimeTaken()}")
+    override fun onDisable() {
+        rpmTopSetpoint  = 0.0
+        rpmBottomSetpoint = 0.0
     }
 
     fun rebuildCurves() {
@@ -331,6 +327,11 @@ object Shooter: Subsystem("Shooter") {
     fun setRpms(rpm: Double) {
         rpmTopSetpoint = rpm
         rpmBottomSetpoint = rpm
+    }
+
+    fun isRevved(): Boolean {
+//        println("Bottom Error: ${(rpmBottomSetpoint - motorRpmBottom)} Top Error: ${(rpmTopSetpoint - motorRpmTop)}")
+        return ((rpmBottomSetpoint - motorRpmBottom) < 500) && ((rpmTopSetpoint - motorRpmTop) < 500)
     }
 
     fun getRpmFromPosition(point: Vector2): Double {

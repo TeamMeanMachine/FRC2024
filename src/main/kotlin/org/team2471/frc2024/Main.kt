@@ -2,6 +2,7 @@
 
 package org.team2471.frc2024
 
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
@@ -21,10 +22,16 @@ import org.team2471.frc.lib.framework.LoggedMeanlibRobot
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.demoMode
+import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.testing.driveTests
+import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc2024.testing.velocityTest
 import java.net.NetworkInterface
+import kotlin.math.absoluteValue
 
 
 @DelicateCoroutinesApi
@@ -43,7 +50,8 @@ object Robot : LoggedMeanlibRobot() {
         println("robotMode == $robotMode")
         if (robotMode != RobotMode.REPLAY) {
             //sim or real
-//            Logger.addDataReceiver(WPILOGWriter())
+
+            Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
             setUseTiming(true) // false = run sim as fast as possible
@@ -104,6 +112,8 @@ object Robot : LoggedMeanlibRobot() {
 
     override suspend fun autonomous() {
         println("autonomous starting")
+
+//        AutoChooser.pathPlannerAuto()
         if (!Drive.demoMode) {
             initTimeMeasurement()
 //            Drive.brakeMode()  seems to be unneeded as it is in Drive postEnable
@@ -127,8 +137,8 @@ object Robot : LoggedMeanlibRobot() {
 //        Drive.driveTests()
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
-//        Drive.setAngleOffsets()
-        Drive.velocityTest()
+        Drive.setAngleOffsets()
+//        Drive.velocityTest()
         println("test mode done")
     }
 

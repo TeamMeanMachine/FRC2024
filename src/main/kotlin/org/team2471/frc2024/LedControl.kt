@@ -11,6 +11,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.PI
+import kotlin.math.absoluteValue
 import kotlin.math.sin
 
 object LedControl : Subsystem ("LedControl"){
@@ -20,18 +21,12 @@ object LedControl : Subsystem ("LedControl"){
 
     private val timer = Timer()
 
+    val controlerTestEnabled = false
+
     val led = AddressableLED(Leds.LED_PORT)
     val ledBuffer = AddressableLEDBuffer(Leds.LED_LENGTH)
-    val controllerTestLength = 12
-    val controlerTestEnabled = false
     val maxBrightness = 255
-    //val defaultDisabledColor = Color(255, 25, 0)
     var rainbowFirstPixelHue = 0
-    //    var blinkCounter = 0
-//    var rainbowOn = false
-//    var blinkingOn = false
-//    var animationData = emptyArray<Int>()
-//    var animationColor = Color.kRed
     var pattern = LedPatterns.INIT
 
 
@@ -42,21 +37,14 @@ object LedControl : Subsystem ("LedControl"){
         led.setLength(ledBuffer.length)
 
         staticRainbow(maxBrightness, 2)
-        //setDotted(Color.kRed, 5)
         led.setData(ledBuffer)
 
         led.start()
         timer.start()
 
-        //startBlinking(Color.kRed, 5)
 
         GlobalScope.launch {
             periodic {
-                //updateRainbow(255, 2)
-                //when {
-                //rainbowOn -> updateRainbow(animationData[0], animationData[1], animationData[2])
-                //blinkingOn -> updateBlink(animationColor, animationData[0], animationData[1])
-                //}
 
                 patternEntry.setString(pattern.name)
 
@@ -66,10 +54,11 @@ object LedControl : Subsystem ("LedControl"){
                     LedPatterns.DISABLED -> setSolid(Color.kRed, 100)
 
                     LedPatterns.INTAKING -> updateBlink(Color.kYellow, 0.2)
-                    LedPatterns.SHOOTING -> updateBlink(Color.kGreen, 0.06)
+                    LedPatterns.SHOOTING -> setSolid(Color.kWhite)
                     LedPatterns.HOLDING -> setSolid(Color.kGreen)
 
                     LedPatterns.RAMPING -> setFractionColorFromMid(Color.kGreen, Shooter.averageRpm, Shooter.averageRpmSetpoint)
+                    LedPatterns.READY -> updateBlink(Color.kGreen, 0.06)
                 }
 
                 if (controlerTestEnabled and !isEnabled) {
@@ -86,7 +75,9 @@ object LedControl : Subsystem ("LedControl"){
 
     override suspend fun default() {
         periodic {
-            pattern = if (Shooter.averageRpmSetpoint > 10.0) {
+            pattern = if (Robot.isTeleopEnabled && Intake.intakeState != Intake.IntakeState.SHOOTING && (Shooter.motorRpmTop - Shooter.rpmTopSetpoint).absoluteValue + (Shooter.motorRpmBottom - Shooter.rpmBottomSetpoint).absoluteValue < 500.0 && Shooter.rpmTopSetpoint + Shooter.rpmBottomSetpoint > 20.0) {
+                LedPatterns.READY
+            } else if (Shooter.averageRpmSetpoint > 10.0 && Intake.intakeState != Intake.IntakeState.SHOOTING) {
                 LedPatterns.RAMPING
             } else {
                 when (Intake.intakeState) {
@@ -104,36 +95,15 @@ object LedControl : Subsystem ("LedControl"){
     }
 
 
-//    fun stopAnimations() {
-//        rainbowOn = false
-//        blinkingOn = false
-//    }
-
-//    fun startRainbow(brightness: Int = maxBrightness, rainbowCount: Int = 1, speed: Int = 1) {
-//        stopAnimations()
-//        animationData = arrayOf(brightness, rainbowCount, speed)
-//        rainbowOn = true
-//    }
-
-//    fun startBlinking(color: Color, delay: Int, brightness: Int = maxBrightness) {
-//        stopAnimations()
-//        animationColor = color
-//        animationData = arrayOf(delay, brightness)
-//        blinkingOn = true
-//    }
-
-
     /**
      * staticRainbow:
      * Sets the entire LED strip to a static rainbow pattern
-     * brightness: from 0 (off) to maxBrightness for led brightness
-     * rainbowCount: number of full rainbows on the strip
+     * @param brightness: from 0 (off) to maxBrightness for led brightness
+     * @param rainbowCount: number of full rainbows on the strip
      */
     fun staticRainbow(brightness: Int = maxBrightness, rainbowCount: Int = 1) {
-        //stopAnimations()
         for (i in 0 until ledBuffer.length) {
             ledBuffer.setHSV(i, linearMap(0.0, ledBuffer.length.toDouble() / rainbowCount, 0.0, 180.0, rainbowFirstPixelHue + i.toDouble()).toInt(), 255, brightness)
-//            ledBuffer.setRGB(i, 255, 0, 0)
         }
     }
 
@@ -141,9 +111,9 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * updateBlink:
      * Toggles the entire LED strip on/off every delay seconds
-     * color: wpilib color object for led color
-     * delay: time in seconds in between toggling on/off
-     * brightness: from 0 (off) to maxBrightness for led brightness
+     * @param color: wpilib color object for led color
+     * @param delay: time in seconds in between toggling on/off
+     * @param brightness: from 0 (off) to maxBrightness for led brightness
      */
     private fun updateBlink(color: Color, delay: Double, brightness: Int = maxBrightness) {
         if (timer.get() > delay) {
@@ -161,9 +131,9 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * updateRainbow:
      * Sets the entire LED strip to a rainbow pattern and increments the hue by colorIncrement
-     * brightness: from 0 (off) to maxBrightness for led brightness
-     * rainbowCount: number of full rainbows on the strip
-     * colorIncrement: how much the hue is incremented every time the function is run
+     * @param brightness: from 0 (off) to maxBrightness for led brightness
+     * @param rainbowCount: number of full rainbows on the strip
+     * @param colorIncrement: how much the hue is incremented every time the function is run
      */
     private fun updateRainbow(brightness: Int = maxBrightness, rainbowCount: Int = 1, colorIncrement: Int = 1) {
         staticRainbow(brightness, rainbowCount)
@@ -175,11 +145,10 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * updatePulse:
      * Sets the entire LED strip to a color with brightness multiplied by a raised sine pulse
-     * color: wpilib color object for led color
-     * period: pulse period in seconds
+     * @param color: wpilib color object for led color
+     * @param period: pulse period in seconds
      */
     fun updatePulse(color: Color, period: Double) {
-        //stopAnimations()
 
         val brightness = ((sin(timer.get() * period * 2 * PI) + 1.0) / 2.0) * maxBrightness
 
@@ -191,14 +160,11 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * setSolid:
      * Sets the entire LED strip to a solid color
-     * color: wpilib color object for LED color
-     * brightness: from 0 (off) to maxBrightness for led brightness
+     * @param color: wpilib color object for LED color
+     * @param brightness: from 0 (off) to maxBrightness for led brightness
      */
     fun setSolid(color: Color, brightness: Int = maxBrightness) {
-        //stopAnimations()
         for (i in 0 until ledBuffer.length) {
-            //println(color.red)
-
             ledBuffer.setRGB(i, (color.red * brightness).toInt(), (color.green * brightness).toInt(), (color.blue * brightness).toInt())
         }
     }
@@ -206,12 +172,11 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * setDotted:
      * Sets every spacing + 1th LED to a color and the rest to off
-     * color: wpilib color object for led color
-     * spacing: number of off LEDs in between on ones
-     * brightness: from 0 (off) to maxBrightness for led brightness
+     * @param color: wpilib color object for led color
+     * @param spacing: number of off LEDs in between on ones
+     * @param brightness: from 0 (off) to maxBrightness for led brightness
      */
     fun setDotted(color: Color, spacing: Int, brightness: Int = maxBrightness) {
-        //stopAnimations()
 
         for (i in 0 until ledBuffer.length) {
             if (i % (spacing + 1) == 0) {
@@ -230,7 +195,6 @@ object LedControl : Subsystem ("LedControl"){
      * setDotted but without setting to off
      */
     fun overlayDotted(color: Color, spacing: Int, brightness: Int = maxBrightness) {
-        //stopAnimations()
         for (i in 0 until ledBuffer.length) {
             if (i % (spacing + 1) == 1) {
                 ledBuffer.setRGB(i, (color.red * brightness).toInt(), (color.green * brightness).toInt(), (color.blue * brightness).toInt())
@@ -241,13 +205,12 @@ object LedControl : Subsystem ("LedControl"){
     /**
      * setFractionColorFromMid:
      * Creates an LED bar graph centered on the middle of the strip where the width is proportional to value
-     * color: wpilib color object for LED color
-     * value: number to be graphed
-     * min: lower bound of value
-     * max: upper bound of value
+     * @param color: wpilib color object for LED color
+     * @param value: number to be graphed
+     * @param min: lower bound of value
+     * @param max: upper bound of value
      */
     fun setFractionColorFromMid(color: Color, value: Double, max: Double, min: Double = 0.0) {
-        //stopAnimations()
 
         try {
             for (i in 0 until ledBuffer.length) {
@@ -293,5 +256,6 @@ enum class LedPatterns {
     INTAKING,
     HOLDING,
     SHOOTING,
-    RAMPING
+    RAMPING,
+    READY
 }
