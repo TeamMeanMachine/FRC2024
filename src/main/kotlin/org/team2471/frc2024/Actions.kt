@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import com.choreo.lib.ChoreoTrajectory
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
@@ -7,18 +8,14 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.Angle
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.units.inches
 import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.motion.following.lookupPose
-import org.team2471.frc.lib.motion.following.poseDiff
-import org.team2471.frc.lib.units.asFeet
+import org.team2471.frc.lib.motion.following.*
+import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Drive.position
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -33,18 +30,14 @@ suspend fun climbWithTrigger() = use(Climb) {
     }
 }
 
-suspend fun spit() = use(Intake, LedControl) {
+suspend fun spit() {
     println("starting spit periodic")
-    Intake.intakeState = Intake.IntakeState.SPITTING
     Pivot.aimSpeaker = false
     Pivot.angleSetpoint = 45.0.degrees
     suspendUntil {Pivot.pivotError.absoluteValue < 10.0}
-    LedControl.pattern = LedPatterns.INTAKE
     periodic {
-        if (OI.driverController.b) {
-            Intake.intakeMotorTop.setPercentOutput(-0.9)
-            Intake.intakeMotorBottom.setPercentOutput(-0.9)
-            Intake.feederMotor.setPercentOutput(-0.9)
+        if (OI.driverController.a) {
+            Intake.intakeState = Intake.IntakeState.SPITTING
         } else {
             Intake.intakeState = Intake.IntakeState.EMPTY
             this.stop()
@@ -53,13 +46,15 @@ suspend fun spit() = use(Intake, LedControl) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun fire(duration: Double? = null) = use(Shooter){
+suspend fun fire(duration: Double? = null) = use(Shooter, name = "fire"){
+    println("inside fire")
     val t = Timer()
 //    if (Pivot.angleSetpoint != Pivot.AMPPOSE) {
     Intake.intakeState = Intake.IntakeState.SHOOTING
 //    }
     t.start()
     periodic {
+        println("in shoot periotoic")
         Intake.intakeState = Intake.IntakeState.SHOOTING
         if ((t.get() > 0.3 && Robot.isAutonomous) && duration == null) {
             println("exiting shooting from autonomous")
@@ -150,7 +145,7 @@ suspend fun aimForPass() = use(Pivot, name = "Pass") {
 }
 
 
-suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0) {
+suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Double = 0.0, totalTimeThreshold: Double = 0.0) {
 
     println("Aiming...")
 
@@ -159,12 +154,16 @@ suspend fun aimAndShoot(print: Boolean = false, minTime: Double = 0.7, delay: Do
     delay(delay)
     t.start()
     Pivot.readyToShootTimer.start()
-    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime }
+    suspendUntil { Pivot.speakerIsReady(debug = print) || t.get() > minTime || (totalTimeThreshold != 0.0 && Robot.totalTimeTaken() > totalTimeThreshold) }
     if (t.get() > minTime) {
         println("Aiming max time. ${t.get()}")
         Pivot.speakerIsReady(debug = true)
     }
-    println("firing note at ${t.get()} seconds")
+    if (totalTimeThreshold != 0.0 && Robot.totalTimeTaken() > totalTimeThreshold) {
+        println("shooting to satisfy shot at $totalTimeThreshold totalTime")
+//        Pivot.speakerIsReady(debug = true)
+    }
+    println("firing note at ${t.get()} seconds and ${Robot.totalTimeTaken()} total time")
     fire()
     Drive.aimTarget = AimTarget.NONE
 }
@@ -482,7 +481,7 @@ suspend fun lockToAmp() {
     Drive.aimTarget = AimTarget.AMP
     Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
-    suspendUntil(20) { !OI.driverController.a }
+    suspendUntil(20) { !OI.driverController.b }
     Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")
@@ -562,4 +561,126 @@ suspend fun toggleAimAtNote() {
     Drive.aimTarget = AimTarget.NONE
 }
 
+suspend fun driveAlongChoreoPath(
+    traj: ChoreoTrajectory,
+    flipped: Boolean,
+    resetOdometry: Boolean = false,
+    useAprilTag: Boolean = false,
+    extraTime: Double = 0.0,
+    inResetGyro: Boolean? = null,
+    turnOverride: () -> Double? = {null},
+    earlyExit: (percentComplete: Double) -> Boolean = {false}
+) = use(Drive, name = "DriveAlongChoreoPath") {
+    println("inside driveAlongChoreoPath")
+
+    val path = if (flipped) traj.flipped() else traj
+
+
+    if (inResetGyro ?: resetOdometry) {
+        println("Heading = ${Drive.heading}")
+        Drive.resetHeading()
+        Drive.heading = -path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
+        println("After Reset Heading = ${Drive.heading}")
+    }
+
+    if (resetOdometry) {
+        println("Position = $position")
+//        Drive.odometryReset()
+        println("Position after odometryReset = $position")
+
+        // set to the numbers required for the start of the path
+        position = path.initialPose.translation.asVector2().meters.asFeet
+        AprilTag.position = path.initialPose.translation.asVector2().meters
+//        prevPosition = position
+
+        println("After Reset Position = $position")
+    }
+
+
+    var prevTime = -0.2
+
+    val timer = org.team2471.frc.lib.util.Timer()
+    timer.start()
+    var prevPathPosition = path.initialPose.translation.asVector2().meters
+    var prevPathHeading = path.initialPose.rotation.asAngle
+    var prevPositionError = Vector2(0.0, 0.0).meters
+    var prevHeadingError = 0.0.degrees
+    suspendUntil(10) { timer.get() != 0.0}
+    println("entering drive periodic")
+    periodic {
+        val t = timer.get()
+        val dt = if (t - prevTime != 0.0) t - prevTime else 0.02
+        val pathSample = path.sample(t)
+
+        // position error
+        val pathPosition = Vector2(pathSample.x, pathSample.y).meters//path.getPosition(t)
+        val currentPosition = if (useAprilTag) AprilTag.position else position.feet
+        val positionError = pathPosition - currentPosition
+//        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$currentPosition positionError=$positionError")
+
+        // position feed forward
+        val pathVelocity = Vector2(pathSample.velocityX, pathSample.velocityY).meters//(pathPosition - prevPathPosition) / dt
+//        val pathVelocity = (pathPosition - prevPathPosition) / dt
+        prevPathPosition = pathPosition
+
+        // position d
+        val deltaPositionError = positionError - prevPositionError
+        prevPositionError = positionError
+
+        var translationControlField =
+            pathVelocity.asFeet * Drive.parameters.kPositionFeedForward + positionError.asFeet * Drive.parameters.kpPosition + deltaPositionError.asFeet * Drive.parameters.kdPosition
+
+        translationControlField = Vector2(-translationControlField.y, translationControlField.x)
+//        println("translationControlField = $translationControlField")
+
+
+        // heading error
+        val robotHeading = Drive.heading
+        val pathHeading = pathSample.heading.radians//  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val headingError = (robotHeading - pathHeading).wrap()
+//        println("Heading Error: $headingError. pathHeading: $pathHeading")
+
+        // heading feed forward
+//        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+        val headingVelocity = pathSample.angularVelocity.radians.asDegrees// * if (flipped) -1.0 else 1.0//(pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+        prevPathHeading = pathHeading
+
+        // heading d
+        val deltaHeadingError = headingError - prevHeadingError
+        prevHeadingError = headingError
+
+        val turnControl = headingVelocity * Drive.parameters.kHeadingFeedForward + headingError.asDegrees * Drive.parameters.kpHeading + deltaHeadingError.asDegrees * Drive.parameters.kdHeading
+//        println("Turn Control: $turnControl")
+        if (turnControl.isNaN() || translationControlField.y.isNaN() || translationControlField.x.isNaN()) {
+            println("turnControl: $turnControl")
+            println("translationControlField $translationControlField")
+            println("dt: $dt")
+
+//            throw IllegalArgumentException("requestedVolts == NaN")
+        }
+
+        // send it
+        Drive.drive(translationControlField, turnOverride() ?: turnControl, true)
+
+        // are we done yet?
+        if (t >= path.totalTime + extraTime) {
+            println("exiting path")
+            stop()
+        }
+        if (earlyExit(t / path.totalTime)) {
+            println("early exiting path. time: $t  duration: ${path.totalTime} percent complete: ${t / path.totalTime}")
+            stop()
+        }
+        prevTime = t
+
+//        println("Time=$t Path Position=$pathPosition Position=$position")
+//        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
+    }
+    println("at the end of driveAlongChoreoPath")
+
+    // shut it down
+    Drive.drive(Vector2(0.0, 0.0), 0.0, true)
+//    actualRoute.setDoubleArray(doubleArrayOf())
+//    plannedPath.setString("")
+}
 

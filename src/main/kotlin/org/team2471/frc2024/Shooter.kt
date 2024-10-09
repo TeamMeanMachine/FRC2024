@@ -20,17 +20,13 @@ object Shooter: Subsystem("Shooter") {
 
     private val table = NetworkTableInstance.getDefault().getTable("Shooter")
 
-    private val shooterPercentEntry = table.getEntry("Shooter Percent")
     private val shooterCurrentEntry = table.getEntry("Bottom Current")
     private val shooterTwoCurrentEntry = table.getEntry("Top Current")
     private val motorRpmBottomEntry = table.getEntry("RPM Bottom")
     private val motorRpmTopEntry = table.getEntry("RPM Top")
     private val rpmTopEntry = table.getEntry("RPM Top Setpoint")
     private val rpmBottomEntry = table.getEntry("RPM Bottom Setpoint")
-    private val shootingRpmTopEntry = table.getEntry("Shooting RPM Top")
-    private val shootingRpmBottomEntry = table.getEntry("Shooting RPM Bottom")
     private val shootingEntry = table.getEntry("Manual Shoot State")
-    private val closeSpeakerRpmEntry = table.getEntry("closeSpeakerRPM")
     val bottomAmpRPMEntry = table.getEntry("Bottom Amp RPM")
     val topAmpRPMEntry = table.getEntry("Top RPM Amp")
     val Pitch3_5Entry = table.getEntry("Pitch3.5Entry")
@@ -64,6 +60,12 @@ object Shooter: Subsystem("Shooter") {
 
     val motorRpmBottom
         get() = shooterMotorBottom.velocity
+
+    val averageRpm
+        get() = (motorRpmBottom + motorRpmTop) / 2.0
+
+    val averageRpmSetpoint
+        get() = (rpmTopSetpoint + rpmBottomSetpoint) / 2.0
 
     @OptIn(DelicateCoroutinesApi::class)
     var manualShootState = false
@@ -111,18 +113,18 @@ object Shooter: Subsystem("Shooter") {
 //        if (!Robot.inComp) {
             if (!Pitch17Entry.exists() || !Pitch3_5Entry.exists()) {
                 Pitch3_5Entry.setDouble(57.0)
-                Pitch5Entry.setDouble(52.0)
-                Pitch7Entry.setDouble(43.0)
-                Pitch9Entry.setDouble(38.0)
-                Pitch11Entry.setDouble(34.0)
+                Pitch5Entry.setDouble(54.0)
+                Pitch7Entry.setDouble(47.0)
+                Pitch9Entry.setDouble(42.0)
+                Pitch11Entry.setDouble(36.0)
                 Pitch13Entry.setDouble(31.0)
                 Pitch15Entry.setDouble(30.0)
                 Pitch17Entry.setDouble(29.0)
 //                Pitch19Entry.setDouble(0.0)
 //                Pitch21Entry.setDouble(0.0)
 
-                RPM3Entry.setDouble(3500.0)
-                RPM6Entry.setDouble(3750.0)
+                RPM3Entry.setDouble(5000.0)
+                RPM6Entry.setDouble(5000.0)
                 RPM9Entry.setDouble(5000.0)
                 RPM15Entry.setDouble(5000.0)
                 RPM17Entry.setDouble(5000.0)
@@ -143,21 +145,6 @@ object Shooter: Subsystem("Shooter") {
                 RPM15Entry.setPersistent()
                 RPM17Entry.setPersistent()
             }
-
-            shooterPercentEntry.setDouble(1.0)
-            if (!shootingRpmTopEntry.exists()) {
-                shootingRpmTopEntry.setDouble(5000.0)
-                shootingRpmTopEntry.setPersistent()
-            }
-
-            if (!shootingRpmBottomEntry.exists()) {
-                shootingRpmBottomEntry.setDouble(5000.0)
-                shootingRpmBottomEntry.setPersistent()
-            }
-
-        if (!closeSpeakerRpmEntry.exists()) {
-            closeSpeakerRpmEntry.setDouble(3500.0)
-        }
 
             if (isRedAlliance) {
                 topAmpRPMEntry.setDouble(2000.0)
@@ -283,7 +270,7 @@ object Shooter: Subsystem("Shooter") {
                         rpmTopSetpoint = 3500.0
                         rpmBottomSetpoint = 3500.0
                     } else if (Drive.aimTarget == AimTarget.PASS) {
-                        setRpms(4000.0)
+                        setRpms(3500.0)
                     } else {
                         if (AprilTag.aprilTagsEnabled) {
                             rpmTopSetpoint = rpmCurve.getValue(Pivot.distFromSpeaker)
@@ -294,23 +281,13 @@ object Shooter: Subsystem("Shooter") {
                         }
                     }
                 }
-
-
-
-
-
-
             }
         }
     }
 
-    override fun postEnable() {
-        println("inside shooter preEnable ${Robot.totalTimeTaken()}")
-        GlobalScope.launch {
-            rpmTopSetpoint  = 0.0
-            rpmBottomSetpoint = 0.0
-        }
-        println("after shooter preEnable ${Robot.totalTimeTaken()}")
+    override fun onDisable() {
+        rpmTopSetpoint  = 0.0
+        rpmBottomSetpoint = 0.0
     }
 
     fun rebuildCurves() {
@@ -350,6 +327,11 @@ object Shooter: Subsystem("Shooter") {
     fun setRpms(rpm: Double) {
         rpmTopSetpoint = rpm
         rpmBottomSetpoint = rpm
+    }
+
+    fun isRevved(): Boolean {
+//        println("Bottom Error: ${(rpmBottomSetpoint - motorRpmBottom)} Top Error: ${(rpmTopSetpoint - motorRpmTop)}")
+        return ((rpmBottomSetpoint - motorRpmBottom) < 500) && ((rpmTopSetpoint - motorRpmTop) < 500)
     }
 
     fun getRpmFromPosition(point: Vector2): Double {

@@ -20,6 +20,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.LoggedMeanlibRobot
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.demoMode
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
@@ -28,6 +29,7 @@ import org.team2471.frc2024.testing.driveTests
 import org.team2471.frc2024.testing.steeringTests
 import org.team2471.frc.lib.util.RobotMode
 import org.team2471.frc.lib.util.robotMode
+import org.team2471.frc2024.testing.velocityTest
 import java.net.NetworkInterface
 import kotlin.math.absoluteValue
 
@@ -48,7 +50,8 @@ object Robot : LoggedMeanlibRobot() {
         println("robotMode == $robotMode")
         if (robotMode != RobotMode.REPLAY) {
             //sim or real
-//            Logger.addDataReceiver(WPILOGWriter())
+
+            Logger.addDataReceiver(WPILOGWriter())
             Logger.addDataReceiver(NT4Publisher())
         } else {
             setUseTiming(true) // false = run sim as fast as possible
@@ -135,6 +138,7 @@ object Robot : LoggedMeanlibRobot() {
 //        Drive.steeringTests()
 //        Pivot.feedForwardTest()
         Drive.setAngleOffsets()
+//        Drive.velocityTest()
         println("test mode done")
     }
 
