@@ -20,7 +20,10 @@
       "/SmartDashboard/Autos": "String Chooser",
       "/SmartDashboard/Best Song Lyrics": "String Chooser",
       "/SmartDashboard/RobotTests": "String Chooser",
-      "/SmartDashboard/Tests": "String Chooser"
+      "/SmartDashboard/Tests": "String Chooser",
+      "/SmartDashboard/VisionSystemSim-CamIB/Sim Field": "Field2d",
+      "/SmartDashboard/VisionSystemSim-CamSL/Sim Field": "Field2d",
+      "/SmartDashboard/VisionSystemSim-CamSR/Sim Field": "Field2d"
     },
     "windows": {
       "/SmartDashboard/AutoChooser": {

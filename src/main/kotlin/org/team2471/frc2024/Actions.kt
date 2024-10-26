@@ -590,7 +590,7 @@ suspend fun driveAlongChoreoPath(
 
         // set to the numbers required for the start of the path
         position = path.initialPose.translation.asVector2().meters.asFeet
-        AprilTag.position = path.initialPose.translation.asVector2().meters
+//        AprilTag.position = path.initialPose.translation.asVector2().meters
 //        prevPosition = position
 
         println("After Reset Position = $position")

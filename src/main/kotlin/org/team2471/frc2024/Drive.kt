@@ -1,17 +1,16 @@
 package org.team2471.frc2024
 
+import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics
+import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-import com.pathplanner.lib.util.PIDConstants
-import com.pathplanner.lib.util.ReplanningConfig
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.networktables.StructArrayPublisher
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -24,7 +23,8 @@ import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.control.PDVelocityController
-import org.team2471.frc.lib.coroutines.*
+import org.team2471.frc.lib.coroutines.MeanlibDispatcher
+import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
@@ -34,7 +34,11 @@ import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.isReal
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.gyro.Gyro
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.atan2
+import kotlin.math.min
+
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -84,13 +88,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val actualRouteEntry = table.getEntry("Actual Route")
     val distanceEntry = table.getEntry("Distance From Speaker Drive")
 
-    private val advantagePoseEntry = table.getEntry("Drive Advantage Pose")
-    private val predictedAdvantagePoseEntry = table.getEntry("Predicted Advantage Pose")
+    private val advantagePosePublisher = table.getStructTopic("Drive Advantage Pose", Pose2d.struct).publish()
 
     private val deltaPosEntry = table.getEntry("DeltaPos")
     private val deltaPosSecEntry = table.getEntry("DeltaPos 2")
-
-    val advantageWheelPoseEntry = table.getEntry("Test Wheel Advantage Pose")
 
     private val advantageCombinedPoseEntry = table.getEntry("Combined Advantage Pose")
 
@@ -162,7 +163,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var heading: Angle
         get() = (gyroOffset - gyro.angle).wrap()
         set(value) {
-//            gyro.reset()
+            gyro.reset()
             gyroOffset = gyro.angle + value
         }
     override val gyroConnected: Boolean get() = Gyro.isConnected
@@ -180,9 +181,19 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var deltaPos = Vector2L(0.0.inches, 0.0.inches)
 
-    var testWheelPosition: Vector2L = position.feet
-//                   feet seconds fps fudge
+    //                   feet seconds fps fudge
     val driveStDevM = (2.5 / 30.0 / 50.0 * 15.0).feet.asMeters
+
+    val kinematics: SwerveDriveKinematics = SwerveDriveKinematics(*modules.map { it.modulePositionWpi }.toTypedArray())
+
+    var modulePositions: Array<SwerveModulePosition> = modules.map { it.wpiPosition }.toTypedArray()
+
+    //                                                                                                                                                                                                                   just random numbers
+    override val poseEstimator: SwerveDrivePoseEstimator = SwerveDrivePoseEstimator(kinematics, heading.asRotation2d, modulePositions, Pose2d(), VecBuilder.fill(driveStDevM, driveStDevM, 0.0), VecBuilder.fill(1.0, 1.0, 100.0))
+
+    override var testModuleStatePublisher: StructArrayPublisher<SwerveModuleState> = table.getStructArrayTopic("Test States", SwerveModuleState.struct).publish()
+
+    var testWheelPosition: Vector2L = position.feet
 
     override var lastResetTime: Double = 0.0
 
@@ -310,13 +321,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 headingEntry.setDouble(heading.asDegrees)
                 headingRadEntry.setDouble(heading.asRadians)
 
-                advantagePoseEntry.setDoubleArray(
-                    doubleArrayOf(
-                        position.x.feet.asMeters,
-                        position.y.feet.asMeters,
-                        heading.asDegrees
-                    )
-                )
+                advantagePosePublisher.setAdvantagePose(position.feet, heading)
 
 //                Logger.recordOutput("deltaPos", deltaPos.length.asFeet)
 //                Logger.recordOutput("velocity", velocity.length)
@@ -492,7 +497,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             resetPose = resetPose.reflectAcrossField()
         }
 
-        AprilTag.position = resetPose.feet
+//        AprilTag.position = resetPose.feet
         position = resetPose
         println("resetting to front speaker pos. $position")
     }
