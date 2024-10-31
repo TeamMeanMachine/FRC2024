@@ -3,10 +3,6 @@ package org.team2471.frc2024
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-import com.pathplanner.lib.util.PIDConstants
-import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -110,8 +106,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     )
 
 
-    val maxVel = 19.2.feet.asMeters
-    val maxRot = 500.0.degrees.asRadians
+//    val maxVel = 19.2.feet.asMeters
+//    val maxRot = 500.0.degrees.asRadians
 
 
     /**
@@ -232,17 +228,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
     val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
 
-    val isRedAlliance: Boolean
-        get() {
-            if (DriverStation.getAlliance().isEmpty) {
-                return true
-            } else {
-                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-            }
-        }
-
-    val isBlueAlliance: Boolean get() = !isRedAlliance
-
     init {
         println("drive init")
         initializeSteeringMotors()
@@ -261,22 +246,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             val encoderCounterList = arrayOf(0, 0, 0, 0)
             val previousAngles = arrayOf(0.0, 0.0, 0.0, 0.0)
-
-//            AutoBuilder.configureHolonomic(
-//                Drive::getPose,
-//                Drive::resetPose,
-//                Drive::getRobotRelativeSpeeds,
-//                Drive::driveRobotRelative,
-//                HolonomicPathFollowerConfig(
-//                    PIDConstants(parameters.kpPosition.feet.asMeters, 0.0, parameters.kdPosition.feet.asMeters),
-//                    PIDConstants(parameters.kpHeading.degrees.asRadians, 0.0, parameters.kdHeading.degrees.asRadians),
-//                    maxVel,
-//                    maxRot,
-//                    ReplanningConfig(false, true, 100.0, 100.0)
-//                ),
-//                {DriverStation.getAlliance().get()==DriverStation.Alliance.Red},
-//                object: edu.wpi.first.wpilibj2.command.Subsystem {}// What does pathplanner do with this driveSubsystem reference?  Can we create a fake drive subsystem with just enough implemented to work?
-//            )
 
             val wheelCenterOffsets = arrayOfNulls<Pose3d>(modules.indices.count())
             val returningTranslations = arrayOfNulls<Translation3d>(modules.indices.count())
@@ -377,6 +346,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                             if (isReal) DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
                         }
                         previousAngles[i] = rawEncoderAbsoluteAngle
+
+                        m.angleSetpoint = m.angle //idea to make the modules not move before setAngleOffsets
                     }
                     setpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
                     absoluteStates[i] = SwerveModuleState(absoluteSpeed, absoluteAngle.asRotation2d)
@@ -522,7 +493,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val vector = Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet)
 
-        Drive.wantedVelocityEntry.setDouble(vector.length)
+        wantedVelocityEntry.setDouble(vector.length)
         driveWithVelocity(vector, chassisSpeeds.omegaRadiansPerSecond.radians)
 
 
@@ -586,7 +557,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun initializeSteeringMotors() {
-        for (moduleCount in 0..3) { //changed to modules.indices, untested
+        for (moduleCount in 0..3) {
             val module = (modules[moduleCount] as Module)
             module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
             println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position}")

@@ -562,8 +562,7 @@ suspend fun toggleAimAtNote() {
 }
 
 suspend fun driveAlongChoreoPath(
-    traj: ChoreoTrajectory,
-    flipped: Boolean,
+    path: ChoreoTrajectory,
     resetOdometry: Boolean = false,
     useAprilTag: Boolean = false,
     extraTime: Double = 0.0,
@@ -572,9 +571,6 @@ suspend fun driveAlongChoreoPath(
     earlyExit: (percentComplete: Double) -> Boolean = {false}
 ) = use(Drive, name = "DriveAlongChoreoPath") {
     println("inside driveAlongChoreoPath")
-
-    val path = if (flipped) traj.flipped() else traj
-
 
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
