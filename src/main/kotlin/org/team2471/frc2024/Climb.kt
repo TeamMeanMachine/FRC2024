@@ -60,7 +60,7 @@ object Climb: Subsystem("Climb") {
             currentLimit(39, 60, 1)
             inverted(true)
             pid {
-                p(0.6144, 0.03)
+                p(0.6144 / 1024.0, 0.03)
             }
             coastMode()
             configSim(DCMotor.getNeo550(1), 0.000001)

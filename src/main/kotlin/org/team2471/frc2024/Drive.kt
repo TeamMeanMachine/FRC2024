@@ -693,7 +693,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(15, 20, 1)
                 pid {
-                    p(6.144, 2.33)
+                    p(6.144 / 1024.0, 2.33)
 //                    d(0.0000025 * 1024.0)
                 }
                 configSim(DCMotor.getNeo550(1), 0.0000065)
