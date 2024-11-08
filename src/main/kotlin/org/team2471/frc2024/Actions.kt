@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.units.*
+import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
 import org.team2471.frc2024.Drive.position
@@ -476,12 +477,15 @@ suspend fun pickUpSeenNote(cautious: Boolean = true, expectedPos: Vector2? = nul
 //    }
 }
 
-suspend fun lockToAmp() {
+suspend fun lockToAmp() = use(Drive) {
+    val ampPos = Vector2L(13.85.meters, 7.87.meters)
+//    val posDelta = AprilTag.position - ampPos
+//    val rotDelta = heading - 90.0.degrees
     println("inside lockToAmp()")
-    Drive.aimTarget = AimTarget.AMP
+//    Drive.aimTarget = AimTarget.AMP
     Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
-    suspendUntil(20) { !OI.driverController.b }
+    Drive.dynamicDriveBetweenPoints(heading, 90.0.degrees, AprilTag.position.asFeet, ampPos.asFeet) {!OI.driverController.b}
     Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")

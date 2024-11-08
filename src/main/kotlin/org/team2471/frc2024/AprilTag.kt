@@ -1,13 +1,10 @@
 package org.team2471.frc2024
 
+import com.team254.lib.util.InterpolatingDouble
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
-import edu.wpi.first.math.Matrix
-import edu.wpi.first.math.Nat
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.*
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics
-import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
@@ -19,11 +16,13 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.units.*
+import org.team2471.frc.lib.util.getRealFPGATimestamp
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
-import org.team2471.frc.lib.vision.GlobalPose
+import org.team2471.frc.lib.vision.VisionPoseEstimator
 import org.team2471.frc.lib.vision.getPos
 import org.team2471.frc2024.Drive.heading
+import org.team2471.frc2024.Drive.headingRate
 import org.team2471.frc2024.Drive.poseEstimator
 
 object AprilTag: Subsystem("AprilTag") {
@@ -43,7 +42,7 @@ object AprilTag: Subsystem("AprilTag") {
 
 
     val position: Vector2L
-        get() = poseEstimator.getPos()
+        get() = poseEstimator.latestPos
 
     var aprilTagsEnabled: Boolean
         get() = aprilTagsEnabledEntry.getBoolean(true)
@@ -71,14 +70,16 @@ object AprilTag: Subsystem("AprilTag") {
         Rotation3d(0.0.degrees.asRadians, -32.0.degrees.asRadians, 0.0.degrees.asRadians)
     )
 
-    // TODO(Get the values from the limelight gui)
-    var robotToCamLLShooter = Transform3d()
+    var robotToCamLLShooter = Transform3d(
+        Translation3d(-6.0.inches.asMeters, 2.5.inches.asMeters, 5.0.inches.asMeters),
+        Rotation3d(0.0.degrees.asRadians, -30.degrees.asRadians, 0.0.degrees.asRadians)
+    )
 
     val cameras: Map<String, Camera> = mapOf(
         Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, true)),
         Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, true)),
         Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, true)),
-//        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, false))
+        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, false))
     )
 
 
@@ -95,16 +96,16 @@ object AprilTag: Subsystem("AprilTag") {
 
                 try {
                     cameras.values.forEach {
-                        val pose = it.getEstimatedGlobalPose(Drive.position.feet, heading, Drive::lookupPose)
-                        poseEstimator.addVisionMeasurement(pose.pose2d, pose.timestampSeconds, VecBuilder.fill(pose.stDev, pose.stDev, 50.0.degrees.asRadians))
+                        val pose = it.getEstimatedGlobalPose(Drive.position.feet, heading, headingRate.changePerSecond, Drive::lookupPose)
+                        poseEstimator.addVisionUpdate(pose)
                     }
                 } catch (ex: Exception) {
-                    println("Error in AprilTag: $ex")
+                    println("Error in AprilTag: ${ex.message}")
                 }
 
 //                updatePosWPI(*cameraPoses.toTypedArray())
 
-                positionPublisher.set(poseEstimator.estimatedPosition)
+                positionPublisher.set(poseEstimator.latestPos.asMeters.toPose2d(heading.asRadians))
 
                 wpiStates.set(Drive.modules.map { it.wpiState }.toTypedArray())
 //                println("Drive Position: ${Drive.position}")\
@@ -118,6 +119,8 @@ object AprilTag: Subsystem("AprilTag") {
 
 //                    Logger.recordOutput("AprilTag/PositionWPI", poseEstimatorWPI.estimatedPosition)
                 } catch (_: Exception) {}
+
+//                println("haaa: ${poseEstimator.offsetHistory[poseEstimator.offsetHistory.lastKey()]}")
             }
         }
     }

@@ -11,6 +11,7 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
+import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -32,6 +33,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.isReal
+import org.team2471.frc.lib.vision.VisionPoseEstimator
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.gyro.Gyro
 import kotlin.math.abs
@@ -166,6 +168,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             gyro.reset()
             gyroOffset = gyro.angle + value
         }
+
+
     override val gyroConnected: Boolean get() = Gyro.isConnected
 
     override var headingRate: AngularVelocity = -gyro.rate.degrees.perSecond
@@ -176,6 +180,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var position = Vector2(0.0, 0.0)
         set(value) {
             field = value
+//            poseEstimator.resetPosition(-heading.asRotation2d, modules.map {it.wpiPosition}.toTypedArray(), poseEstimator.estimatedPosition)
             lastResetTime = Timer.getFPGATimestamp()
         }
 
@@ -188,8 +193,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     var modulePositions: Array<SwerveModulePosition> = modules.map { it.wpiPosition }.toTypedArray()
 
-    //                                                                                                                                                                                                                   just random numbers
-    override val poseEstimator: SwerveDrivePoseEstimator = SwerveDrivePoseEstimator(kinematics, heading.asRotation2d, modulePositions, Pose2d(), VecBuilder.fill(driveStDevM, driveStDevM, 0.0), VecBuilder.fill(1.0, 1.0, 100.0))
+    override val poseEstimator = VisionPoseEstimator()
+
 
     override var testModuleStatePublisher: StructArrayPublisher<SwerveModuleState> = table.getStructArrayTopic("Test States", SwerveModuleState.struct).publish()
 
@@ -259,7 +264,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
-            val headingEntry = table.getEntry("Heading")
+            val headingPublisher: StructPublisher<Rotation2d> = table.getStructTopic("heading", Rotation2d.struct).publish()
             val headingRadEntry = table.getEntry("Heading Rad")
             val xEntry = table.getEntry("Position X")
             val yEntry = table.getEntry("Position Y")
@@ -306,6 +311,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 returningTranslations[i] = returningTranslation
             }
 
+
             println("in init just before periodic")
             periodic {
                 recordOdometry()
@@ -318,7 +324,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 val (x, y) = position
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
-                headingEntry.setDouble(heading.asDegrees)
+                headingPublisher.set(-heading.asRotation2d)
                 headingRadEntry.setDouble(heading.asRadians)
 
                 advantagePosePublisher.setAdvantagePose(position.feet, heading)
@@ -483,11 +489,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun zeroGyro() {
-        if (isBlueAlliance) {
-            heading = 0.0.degrees
-        } else {
-            heading = 180.0.degrees
-        }
+        val newHeading = if (isBlueAlliance) 0.0.degrees else 180.0.degrees
+        heading = newHeading
+//        poseEstimator.resetPosition(Rotation2d.fromDegrees(newHeading.asDegrees), modules.map {it.wpiPosition}.toTypedArray(), poseEstimator.estimatedPosition)
         println("zeroed heading to $heading  alliance red? $isRedAlliance")
     }
 
@@ -587,7 +591,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         newPath.addEasePoint(duration, 1.0)
         newPath.addHeadingPoint(0.0, startHeading.asDegrees)
         newPath.addHeadingPoint(duration, endHeading.unWrap(startHeading).asDegrees)
-        Drive.driveAlongPath(newPath, false, earlyExit = earlyExit)
+        Drive.driveAlongPath(newPath, true, earlyExit = earlyExit)
     }
 
     fun initializeSteeringMotors() {
