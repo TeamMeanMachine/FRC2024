@@ -1,34 +1,25 @@
 package org.team2471.frc2024
 
-import com.choreo.lib.*;
-import edu.wpi.first.math.controller.PIDController
+import com.choreo.lib.Choreo
+import com.choreo.lib.ChoreoTrajectory
+import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.SubsystemBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.Vector2L
 import org.team2471.frc.lib.math.asFeet
-import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2024.AutoChooser.initialPose
-
-
-val selAuto
-    get() = SmartDashboard.getString("AutoChooser/selected", "no auto selected")
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 object AutoChooser {
 
-    private var prevAutoChoosen = ""
-    private var prevAlliance: Boolean? = null
-
-    var initialPose: Pair<Vector2, Angle> = Pair(Vector2(0.0, 0.0), 0.0.radians)
+    val selAuto
+        get() = SmartDashboard.getString("AutoChooser/selected", "no auto selected")
 
     private val lyricsChooser = SendableChooser<String?>().apply {
         setDefaultOption("Country roads", "Country roads")
@@ -45,50 +36,48 @@ object AutoChooser {
         addOption("FunSubSide", "FunSubSide")
     }
 
-    private val paths: ArrayList<Command> = arrayListOf()
+    //load choreo paths
+    val paths: MutableMap<String, ChoreoTrajectory?> = mutableMapOf(
+        *Filesystem.getDeployDirectory().toPath().resolve("choreo").listDirectoryEntries("*.traj").map {
+            val name = it.name.removeSuffix(".traj")
+            Pair(name, Choreo.getTrajectory(name))
+        }.toTypedArray()
+    )
 
     init {
+        println("loaded paths: ${paths.map { Pair(it.key, it.value?.samples?.size).toString() }}")
 
         SmartDashboard.putData("AutoChooser", autoChooser)
-
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
+
+        var isPathRed = false //all paths start blue
+        var prevPathRed: Boolean? = null
+
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 SmartDashboard.updateValues()
 
                 val autoChosen = selAuto == "no auto selected" || selAuto != "Tests" || selAuto == ""
-
-
                 SmartDashboard.putBoolean("Auto is selected", autoChosen)
 
                 val isRed = Drive.isRedAlliance
-
-                if (prevAutoChoosen != selAuto || isRed != prevAlliance) {
-                    println("Autonomous change detected")
-                    when (selAuto) {
-                        "4Close" -> {
-                            paths.addAll( arrayListOf(
-                                    initializeChoreoPath("4Close.1", true),
-                                    initializeChoreoPath("4Close.2"),
-                                    initializeChoreoPath("4Close.3")
-                            ))
-                        }
-                        "TestAuto" -> {
-                            paths.addAll(
-                                arrayListOf(
-                                    initializeChoreoPath("8Foot.1", true)
-                                )
-                            )
-                        }
-                        else -> println("no paths :(")
+                if (prevPathRed != null) {
+                    if (prevPathRed != isRed) {
+                        flipPaths()
+                        isPathRed = !isPathRed
                     }
-
-                    prevAutoChoosen = selAuto
-                    prevAlliance = isRed
+                } else {
+                    if (isRed) {
+                        flipPaths()
+                        isPathRed = !isPathRed
+                    }
                 }
+                prevPathRed = isPathRed
             }
         }
     }
+
+    private fun flipPaths() = paths.replaceAll { _, t -> t?.flipped() }
 
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun autonomous() = use(Drive, name = "Autonomous") {
@@ -100,7 +89,6 @@ object AutoChooser {
             "TestAuto" -> testAuto()
             "4Close" -> fourClose()
             "4CloseAndMid" -> fourCloseAndMid()
-            "yay" -> customFollowAuto()
             "SubSide" -> subSide()
             "FunSubSide" -> funSubSide()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
@@ -111,10 +99,13 @@ object AutoChooser {
 
     suspend fun testAuto() = use(Drive, name = "Test Auto") {
 
-        Drive.position = initialPose.first
-        Drive.heading = initialPose.second
+        val trajectory = paths["8Foot"]
 
-        executeChoreoCommand(paths[0])
+        if (trajectory != null) {
+            driveAlongChoreoPath(trajectory, true)
+        } else {
+            println("path is null")
+        }
     }
 
     suspend fun fourClose() = use(Drive, Shooter, Pivot, name = "Four Close") {
@@ -124,11 +115,6 @@ object AutoChooser {
 
         val t = Timer()
         t.start()
-
-        Drive.position = initialPose.first
-        Drive.heading = initialPose.second
-
-
 
         suspendUntil { Shooter.averageRpm > 3000.0 }
         println("shooter revved ${Robot.totalTimeTaken()}")
@@ -141,14 +127,14 @@ object AutoChooser {
         Pivot.angleSetpoint = Pivot.PODIUMPOSE - 3.0.degrees
 
 
-        var path = Choreo.getTrajectory("4Close.1")
+        var path = paths["4Close.1"]
         println("before first execute ${Robot.totalTimeTaken()}")
-        driveAlongChoreoPath(path, Drive.isRedAlliance, true)
-        path = Choreo.getTrajectory("4Close.2")
+        if (path != null) driveAlongChoreoPath(path, true)
+        path = paths["4Close.2"]
         println("after first execute ${Robot.totalTimeTaken()}")
-        driveAlongChoreoPath(path, Drive.isRedAlliance)
-        path = Choreo.getTrajectory("4Close.3")
-        driveAlongChoreoPath(path, Drive.isRedAlliance)
+        if (path != null) driveAlongChoreoPath(path)
+        path = paths["4Close.3"]
+        if (path != null) driveAlongChoreoPath(path)
 
         println("finished all ${Robot.totalTimeTaken()}")
     }
@@ -171,13 +157,13 @@ object AutoChooser {
         }
 
 
-        driveAlongChoreoPath(Choreo.getTrajectory("4Close.4"), Drive.isRedAlliance, earlyExit = noteEarlyExit)
+        paths["4Close.4"]?.let { driveAlongChoreoPath(it, earlyExit = noteEarlyExit) }
 
         if (!Intake.holdingCargo) {
             pickUpSeenNote(ignoreWrongSide = true)
         }
 
-        driveAlongChoreoPath(Choreo.getTrajectory("4Close.5"), Drive.isRedAlliance, earlyExit = rampearlyExit)
+        paths["4Close.5"]?.let { driveAlongChoreoPath(it, earlyExit = rampearlyExit) }
 
 
         aimAndShoot(false, minTime = 2.0, 0.0, 14.0)
@@ -187,197 +173,146 @@ object AutoChooser {
 //        suspendUntil { /*(Shooter.averageRpm > 4500.0 && Pivot.pivotError < 0.5) || */Robot.totalTimeTaken() > 14.0}
         println("shot at ${Robot.totalTimeTaken()}")
     }
-}
 
-fun initializeChoreoPath(pathName: String, resetOdometry: Boolean = false): Command {
-    println("Init choreo parh $pathName")
-    val trajectory = Choreo.getTrajectory(pathName)
+    suspend fun subSide() = use(Drive, name = "SubSide") {
+        println("Inside subSide")
+        Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
 
-    if (resetOdometry) {
-        val initialPos = Vector2L(trajectory.initialPose.x.meters, trajectory.initialPose.y.meters)
-
-        if (Drive.isRedAlliance) {
-            initialPose = Pair(
-                initialPos.asFeet.reflectAcrossField(),
-                (180.0.degrees - trajectory.initialPose.rotation.asAngle).wrap() // may not be correct if not 0 or 180
-            )
-        } else {
-            initialPose = Pair(
-                initialPos.asFeet,
-                trajectory.initialPose.rotation.asAngle
-            )
+        var path = paths["SubSide.1"]
+        val rampEarlyExit: (Double) -> Boolean = {
+            if (it > 0.5) {
+                Shooter.setRpms(5000.0)
+                Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+            }
+            false
         }
-    }
-    println("Trajectory:    ${Drive.getPose()}")
-
-    return Choreo.choreoSwerveCommand(
-        trajectory,
-        Drive::getPose,
-        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
-        PIDController(Drive.parameters.kpPosition.feet.asMeters / 20.0, 0.0, Drive.parameters.kdPosition.feet.asMeters / 20.0),
-        PIDController(Drive.parameters.kpHeading.feet.asMeters / 20.0, 0.0, Drive.parameters.kdHeading.feet.asMeters / 20.0),
-        Drive::driveRobotRelative,
-        Drive::isRedAlliance,
-        object : SubsystemBase() {}
-    )
-
-
-}
-
-suspend fun executeChoreoCommand(autoCommand: Command) = use(Drive, name = "Choreo Path") {
-    println("Init path. ${Robot.totalTimeTaken()}")
-    autoCommand.initialize()// for some reason this takes 1.7 seconds
-    println("Initialized path: ${Robot.totalTimeTaken()}")
-
-    var interrupted = true
-
-
-    println("Right before periodic: ${Robot.totalTimeTaken()}")
-    periodic {
-        autoCommand.execute()
-
-        if (autoCommand.isFinished) {
-            interrupted = false
-            println("Finished! ${Robot.totalTimeTaken()}")
-            this.stop()
+        val noteEarlyExit: (Double) -> Boolean = {
+            it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
         }
-    }
-    autoCommand.end(interrupted)
-    println("ended ${Robot.totalTimeTaken()}")
-    Drive.drive(Vector2(0.0, 0.0), 0.0)
-}
 
-suspend fun customFollowAuto() = use(Drive, name = "customFollowAuto") {
-    println("inside customFollowAuto")
-    var path = Choreo.getTrajectory("8Foot")
+        suspendUntil { Shooter.averageRpm > 3500.0 && Pivot.pivotError < 1.0 }
+        println("shooter revved ${Robot.totalTimeTaken()}")
 
-    driveAlongChoreoPath(path, Drive.isRedAlliance, true)
-}
+        Intake.intakeState = Intake.IntakeState.SHOOTING
 
-suspend fun subSide() = use(Drive, name = "SubSide") {
-    println("Inside subSide")
-    Shooter.setRpms(5000.0)
-    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+        delay(0.3.seconds)
 
-    var path = Choreo.getTrajectory("SubSide.1")
-    val rampEarlyExit: (Double) -> Boolean = {
-        if (it > 0.5) {
-            Shooter.setRpms(5000.0)
-            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        Shooter.setRpms(0.0)
+
+        Intake.intakeState = Intake.IntakeState.INTAKING
+
+        if (path != null) {
+            driveAlongChoreoPath(path, true, earlyExit = noteEarlyExit)
         }
-        false
-    }
-    val noteEarlyExit: (Double) -> Boolean = {
-        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
-    }
 
-    suspendUntil { Shooter.averageRpm > 3500.0 && Pivot.pivotError < 1.0}
-    println("shooter revved ${Robot.totalTimeTaken()}")
+        if (!Intake.holdingCargo) {
+            pickUpSeenNote(ignoreWrongSide = true)
+        }
 
-    Intake.intakeState = Intake.IntakeState.SHOOTING
-
-    delay(0.3.seconds)
-
-    Shooter.setRpms(0.0)
-
-    Intake.intakeState = Intake.IntakeState.INTAKING
-
-    driveAlongChoreoPath(path, Drive.isRedAlliance, true, earlyExit = noteEarlyExit)
-
-    if (!Intake.holdingCargo) {
-        pickUpSeenNote(ignoreWrongSide = true)
-    }
-
-    path = Choreo.getTrajectory("SubSide.2")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
+        path = paths["SubSide.2"]
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = rampEarlyExit)
+        }
 
 
 
-    aimAndShoot()
+        aimAndShoot()
 //    Drive.position = AprilTag.position.asFeet
-    Intake.intakeState = Intake.IntakeState.INTAKING
+        Intake.intakeState = Intake.IntakeState.INTAKING
 
-    path = Choreo.getTrajectory("SubSide.3")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
-
-    if (!Intake.holdingCargo) {
-        pickUpSeenNote(ignoreWrongSide = true)
-    }
-
-    path = Choreo.getTrajectory("SubSide.4")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit)
-
-    aimAndShoot()
-    Shooter.setRpms(0.0)
-}
-
-suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
-    println("Inside funSubSide")
-    Shooter.setRpms(5000.0)
-    Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
-    var path = Choreo.getTrajectory("FunSubSideIntake.1")
-    suspendUntil { Shooter.averageRpm > 3000.0 }
-    println("shooter revved ${Robot.totalTimeTaken()}")
-
-    Intake.intakeState = Intake.IntakeState.SHOOTING
-
-    delay(0.3.seconds)
-    Intake.intakeState = Intake.IntakeState.INTAKING
-    Shooter.setRpms(0.0)
-
-    val noteEarlyExit: (Double) -> Boolean = {
-        it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
-    }
-    val rampEarlyExit: (Double) -> Boolean = {
-        if (it > 0.10) {
-            Shooter.setRpms(5000.0)
-            Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+        path = paths["SubSide.3"]
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = noteEarlyExit)
         }
-        false
+
+        if (!Intake.holdingCargo) {
+            pickUpSeenNote(ignoreWrongSide = true)
+        }
+
+        path = paths["SubSide.4"]
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = rampEarlyExit)
+        }
+
+        aimAndShoot()
+        Shooter.setRpms(0.0)
     }
 
-    println("driving \"FunSubSideIntake.1\"")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit, resetOdometry = true)
+    suspend fun funSubSide() = use(Drive, name = "FunSubSide") {
+        println("Inside funSubSide")
+        Shooter.setRpms(5000.0)
+        Pivot.angleSetpoint = Pivot.CLOSESPEAKERPOSE
+        var path = paths["FunSubSideIntake.1"]
+        suspendUntil { Shooter.averageRpm > 3000.0 }
+        println("shooter revved ${Robot.totalTimeTaken()}")
 
-    if (!Intake.holdingCargo) {
-        pickUpSeenNote(ignoreWrongSide = true)
+        Intake.intakeState = Intake.IntakeState.SHOOTING
+
+        delay(0.3.seconds)
+        Intake.intakeState = Intake.IntakeState.INTAKING
+        Shooter.setRpms(0.0)
+
+        val noteEarlyExit: (Double) -> Boolean = {
+            it > 0.25 && NoteDetector.closestNoteIsAtPosition(Drive.position, 10.0)
+        }
+        val rampEarlyExit: (Double) -> Boolean = {
+            if (it > 0.10) {
+                Shooter.setRpms(5000.0)
+                Pivot.angleSetpoint = Pivot.getAngleFromPosition(AprilTag.position.asFeet)
+            }
+            false
+        }
+
+        println("driving \"FunSubSideIntake.1\"")
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = noteEarlyExit, resetOdometry = true)
+        }
+
+        if (!Intake.holdingCargo) {
+            pickUpSeenNote(ignoreWrongSide = true)
+        }
+
+        val odomFudge = 1.0
+
+        var pathString = if (Drive.position.y < 5.219 + odomFudge) {
+            "FunSubSideFire.1"
+        } else if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
+            "FunSubSideFire2.1"
+        } else {
+            "FunSubSideFire3.1"
+        }
+
+        path = paths[pathString]
+        println("returning path $pathString")
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
+        }
+
+        aimAndShoot()
+        Shooter.setRpms(0.0)
+
+        Intake.intakeState = Intake.IntakeState.INTAKING
+
+        path = paths["FunSubSideShooter"]
+        println("driving \"FunSubSideShooter\"")
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = noteEarlyExit)
+        }
+
+        pathString = if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
+            "FunSubSideFire2.1"
+        } else {
+            "FunSubSideFire3.1"
+        }
+
+        path = paths[pathString]
+        println("returning2 path $pathString")
+        if (path != null) {
+            driveAlongChoreoPath(path, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
+        }
+
+        aimAndShoot()
+        Shooter.setRpms(0.0)
     }
-
-    val odomFudge = 1.0
-
-    var pathString = ""
-
-    pathString = if (Drive.position.y < 5.219 + odomFudge) {
-        "FunSubSideFire.1"
-    } else if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
-        "FunSubSideFire2.1"
-    } else {
-        "FunSubSideFire3.1"
-    }
-
-    path = Choreo.getTrajectory(pathString)
-    println("returning path $pathString")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
-
-    aimAndShoot()
-    Shooter.setRpms(0.0)
-
-    Intake.intakeState = Intake.IntakeState.INTAKING
-
-    path = Choreo.getTrajectory("FunSubSideShooter")
-    println("driving \"FunSubSideShooter\"")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = noteEarlyExit)
-
-    pathString = if (Drive.position.y > 5.219 + 5.505 + odomFudge) {
-        "FunSubSideFire2.1"
-    } else {
-        "FunSubSideFire3.1"
-    }
-
-    path = Choreo.getTrajectory(pathString)
-    println("returning2 path $pathString")
-    driveAlongChoreoPath(path, Drive.isRedAlliance, earlyExit = rampEarlyExit, resetOdometry = Intake.holdingCargo)
-
-    aimAndShoot()
-    Shooter.setRpms(0.0)
 }
