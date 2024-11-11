@@ -247,6 +247,17 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
     val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
 
+    val isRedAlliance: Boolean
+        get() {
+            if (DriverStation.getAlliance().isEmpty) {
+                return true
+            } else {
+                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+            }
+        }
+
+    val isBlueAlliance: Boolean get() = !isRedAlliance
+
     init {
         println("drive init")
         initializeSteeringMotors()
@@ -496,24 +507,24 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         heading = pose.rotation.radians.radians
     }
 
-    fun getRobotRelativeSpeeds(): ChassisSpeeds {
-        return ChassisSpeeds(velocity.y.feet.asMeters, velocity.x.feet.asMeters, headingRate.changePerSecond.asRadians)
-    }
-
-    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
-//        println("vy: ${chassisSpeeds.vyMetersPerSecond.meters.asFeet}, vx%: ${chassisSpeeds.vxMetersPerSecond.meters.asFeet}, turn%: ${-chassisSpeeds.omegaRadiansPerSecond.radians.asDegrees}")
-
-        val vector = Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet)
-
-        wantedVelocityEntry.setDouble(vector.length)
-        driveWithVelocity(vector, chassisSpeeds.omegaRadiansPerSecond.radians)
-
-
-//        val velocityVector = Vector2(-chassisSpeeds.vyMetersPerSecond, chassisSpeeds.vxMetersPerSecond).meters.asFeet
-//        val turnVelocity = -chassisSpeeds.omegaRadiansPerSecond
-
-//        var translationControlField = velocityVector * parameters.kPositionFeedForward + (positionError) * parameters.kpPosition + deltaPositionError * parameters.kdPosition
-    }
+//    fun getRobotRelativeSpeeds(): ChassisSpeeds {
+//        return ChassisSpeeds(velocity.y.feet.asMeters, velocity.x.feet.asMeters, headingRate.changePerSecond.asRadians)
+//    }
+//
+//    fun driveRobotRelative(chassisSpeeds: ChassisSpeeds) {
+////        println("vy: ${chassisSpeeds.vyMetersPerSecond.meters.asFeet}, vx%: ${chassisSpeeds.vxMetersPerSecond.meters.asFeet}, turn%: ${-chassisSpeeds.omegaRadiansPerSecond.radians.asDegrees}")
+//
+//        val vector = Vector2(chassisSpeeds.vxMetersPerSecond.meters.asFeet, chassisSpeeds.vyMetersPerSecond.meters.asFeet)
+//
+//        wantedVelocityEntry.setDouble(vector.length)
+//        driveWithVelocity(vector, chassisSpeeds.omegaRadiansPerSecond.radians)
+//
+//
+////        val velocityVector = Vector2(-chassisSpeeds.vyMetersPerSecond, chassisSpeeds.vxMetersPerSecond).meters.asFeet
+////        val turnVelocity = -chassisSpeeds.omegaRadiansPerSecond
+//
+////        var translationControlField = velocityVector * parameters.kPositionFeedForward + (positionError) * parameters.kpPosition + deltaPositionError * parameters.kdPosition
+//    }
 
 
     override suspend fun default() {
