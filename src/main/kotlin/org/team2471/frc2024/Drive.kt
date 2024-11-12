@@ -247,17 +247,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val fieldDimensionsInMeters = Vector2(26.29.feet.asMeters,54.27.feet.asMeters) // field diagram & json is 26.29, 54.27 but includes side walls and barriers
     val fieldCenterOffsetInMeters = fieldDimensionsInMeters/2.0
 
-    val isRedAlliance: Boolean
-        get() {
-            if (DriverStation.getAlliance().isEmpty) {
-                return true
-            } else {
-                return DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-            }
-        }
-
-    val isBlueAlliance: Boolean get() = !isRedAlliance
-
     init {
         println("drive init")
         initializeSteeringMotors()

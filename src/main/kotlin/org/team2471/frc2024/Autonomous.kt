@@ -37,12 +37,12 @@ object AutoChooser {
     }
 
     //load choreo paths
-    val paths: MutableMap<String, ChoreoTrajectory?> = mutableMapOf(
+    val paths: MutableMap<String, ChoreoTrajectory?> = try {mutableMapOf(
         *Filesystem.getDeployDirectory().toPath().resolve("choreo").listDirectoryEntries("*.traj").map {
             val name = it.name.removeSuffix(".traj")
             Pair(name, Choreo.getTrajectory(name))
         }.toTypedArray()
-    )
+    )} catch (_: Exception) { println("failed to load auto paths"); mutableMapOf()}
 
     init {
         println("loaded paths: ${paths.map { Pair(it.key, it.value?.samples?.size).toString() }}")
