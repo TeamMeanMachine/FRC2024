@@ -482,10 +482,9 @@ suspend fun lockToAmp() = use(Drive) {
 //    val posDelta = AprilTag.position - ampPos
 //    val rotDelta = heading - 90.0.degrees
     println("inside lockToAmp()")
-//    Drive.aimTarget = AimTarget.AMP
+    Drive.aimTarget = AimTarget.AMP
     Pivot.angleSetpoint = Pivot.AMPPOSE
     println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAIMAMP ${Drive.aimTarget}")
-    Drive.dynamicDriveBetweenPoints(heading, 90.0.degrees, AprilTag.position.asFeet, ampPos.asFeet) {!OI.driverController.b}
     Drive.aimTarget = AimTarget.NONE
 
 /*    val newPath = Path2D("newPath")
