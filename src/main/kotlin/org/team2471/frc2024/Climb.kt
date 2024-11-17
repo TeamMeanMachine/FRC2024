@@ -57,7 +57,7 @@ object Climb: Subsystem("Climb") {
     init {
         climberMotor.config {
             feedbackCoefficient = 0.4331 * 1.1538//1.0/*23.68 * 0.0985 / 5.337*/ //need ticks (or rotations) per inch and maybe gear ratio
-            currentLimit(39, 60, 1)
+            currentLimit(39, 60, 1.0)
             inverted(true)
             pid {
                 p(0.6144 / 1024.0, 0.03)

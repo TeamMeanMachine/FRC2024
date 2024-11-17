@@ -63,7 +63,6 @@ object Robot : LoggedMeanlibRobot() {
         Logger.start()
 
         LedControl
-        AutoChooser
         NoteDetector
 
         // i heard the first string + double concatenations were expensive...
@@ -86,6 +85,7 @@ object Robot : LoggedMeanlibRobot() {
         LedControl.pattern = LedPatterns.DISABLED
 
         GlobalScope.launch {
+            AutoChooser
             periodic {
                 try {
                     loggedComponentPosesList.forEach { Logger.recordOutput(it.key, it.value) }

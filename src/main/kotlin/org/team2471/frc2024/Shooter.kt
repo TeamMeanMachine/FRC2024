@@ -84,8 +84,8 @@ object Shooter: Subsystem("Shooter") {
     val pitchCurve = MotionCurve()
     val rpmCurve = MotionCurve()
 
-    private val topPDController = PDController(0.00002, 0.0002)
-    private val bottomPDController = PDController(0.00002, 0.0002)
+    private val topPDController = PDController(0.00004, 0.0002)
+    private val bottomPDController = PDController(0.00004, 0.0002)
 
     private var ffTopPower: Double = 0.0
     private var ffBottomPower: Double = 0.0
@@ -157,7 +157,7 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorBottom.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            currentLimit(30, 40, 1)
+            currentLimit(30, 40, 1.0)
             coastMode()
             inverted(true)
             followersInverted(true)
@@ -166,7 +166,7 @@ object Shooter: Subsystem("Shooter") {
 
         shooterMotorTop.config {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
-            currentLimit(30, 40, 1)
+            currentLimit(30, 40, 1.0)
             coastMode()
             inverted(true)
             followersInverted(true)

@@ -47,21 +47,21 @@ object Intake: Subsystem("Intake") {
         manualIntake.setBoolean(false)
 
         intakeMotorTop.config {
-            currentLimit(35, 60, 1)
+            currentLimit(35, 60, 1.0)
             coastMode()
             inverted(true)
             followersInverted(true)
         }
 
         intakeMotorBottom.config {
-            currentLimit(35, 60, 1)
+            currentLimit(35, 60, 1.0)
             coastMode()
             inverted(true)
             followersInverted(true)
         }
 
         feederMotor.config {
-            currentLimit(38, 70, 1)
+            currentLimit(38, 70, 1.0)
             coastMode()
             inverted(false)
         }

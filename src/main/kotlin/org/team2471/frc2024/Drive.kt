@@ -195,7 +195,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val poseEstimator = VisionPoseEstimator()
 
 
-    override var testModuleStatePublisher: StructArrayPublisher<SwerveModuleState> = table.getStructArrayTopic("Test States", SwerveModuleState.struct).publish()
+    var testModuleStatePublisher: StructArrayPublisher<SwerveModuleState> = table.getStructArrayTopic("Test States", SwerveModuleState.struct).publish()
 
     var testWheelPosition: Vector2L = position.feet
 
@@ -693,7 +693,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
             feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (99.0/96.0)
-                currentLimit(55, 60, 1)
+                currentLimit(55, 60, 1.0)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
             }
@@ -703,7 +703,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 brakeMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
-                currentLimit(15, 20, 1)
+                currentLimit(15, 20, 1.0)
                 pid {
                     p(6.144 / 1024.0, 2.33)
 //                    d(0.0000025 * 1024.0)

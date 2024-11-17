@@ -15,7 +15,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.sensors.AnalogInput.LoggedAnalogInput
+import org.team2471.frc.lib.sensors.analogInput.LoggedAnalogInput
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc2024.Drive.offsetSpeakerPose
@@ -160,7 +160,7 @@ object Pivot: Subsystem("Pivot") {
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
             coastMode()
             inverted(true)
-            currentLimit(35, 40, 20)
+            currentLimit(35, 40, 0.02)
             configSim(DCMotor.getFalcon500(1), 0.0001)
         }
 
