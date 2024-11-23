@@ -19,6 +19,7 @@ import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.getRealFPGATimestamp
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
+import org.team2471.frc.lib.vision.CameraType
 import org.team2471.frc.lib.vision.VisionPoseEstimator
 import org.team2471.frc.lib.vision.getPos
 import org.team2471.frc2024.Drive.heading
@@ -76,10 +77,10 @@ object AprilTag: Subsystem("AprilTag") {
     )
 
     val cameras: Map<String, Camera> = mapOf(
-        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, true)),
-        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, true)),
-        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, true)),
-        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, false))
+        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, CameraType.PHOTONVISION)),
+        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)),
+        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)),
+        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, CameraType.LIMELIGHT))
     )
 
 
