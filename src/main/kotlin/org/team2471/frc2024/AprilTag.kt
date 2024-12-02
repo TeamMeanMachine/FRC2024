@@ -78,9 +78,9 @@ object AprilTag: Subsystem("AprilTag") {
 
     val cameras: Map<String, Camera> = mapOf(
         Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, CameraType.PHOTONVISION)),
-//        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)),
-//        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)),
-//        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, CameraType.LIMELIGHT))
+        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)),
+        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)),
+        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, CameraType.LIMELIGHT))
     )
 
 
@@ -104,7 +104,7 @@ object AprilTag: Subsystem("AprilTag") {
                     println("Error in AprilTag: ${ex.message}")
                 }
 
-                println("2d thing: ${cameras["CamSR"]?.get2DTarget(3)?.yaw}")
+//                println("2d thing: ${cameras["CamSR"]?.get2DTarget(3)?.yaw}")
 
 //                updatePosWPI(*cameraPoses.toTypedArray())
 
