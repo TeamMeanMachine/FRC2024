@@ -32,6 +32,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.isReal
+import org.team2471.frc.lib.util.isSim
 import org.team2471.frc.lib.vision.VisionPoseEstimator
 import org.team2471.frc2024.Drive.position
 import org.team2471.frc2024.gyro.Gyro
@@ -114,6 +115,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
 //    val maxVel = 19.2.feet.asMeters
 //    val maxRot = 500.0.degrees.asRadians
+
+
+    val maxTorque = 0.8
+    val torqueCoeff = 19.81 / 1000.0 //nm/a
 
 
     /**
@@ -252,7 +257,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         initializeSteeringMotors()
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
-            val headingPublisher: StructPublisher<Rotation2d> = table.getStructTopic("heading", Rotation2d.struct).publish()
+            val headingPublisher: StructPublisher<Angle> = table.getStructTopic("heading", Angle.struct).publish()
             val headingRadEntry = table.getEntry("Heading Rad")
             val xEntry = table.getEntry("Position X")
             val yEntry = table.getEntry("Position Y")
@@ -296,7 +301,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 val (x, y) = position
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
-                headingPublisher.set(-heading.asRotation2d)
+                headingPublisher.set(heading)
                 headingRadEntry.setDouble(heading.asRadians)
 
                 advantagePosePublisher.setAdvantagePose(position.feet, heading)
@@ -680,7 +685,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
-            driveMotor.setPercentOutput(power)
+            if (isSim) {
+                driveMotor.setPercentOutput(power)
+            } else {
+                driveMotor.setTorqueCurrent((power * maxTorque) / torqueCoeff)
+            }
         }
 
         val error: Angle
