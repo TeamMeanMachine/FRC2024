@@ -21,7 +21,7 @@ import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
 import org.team2471.frc.lib.vision.CameraType
 import org.team2471.frc.lib.vision.VisionPoseEstimator
-import org.team2471.frc.lib.vision.getPos
+//import org.team2471.frc.lib.vision.getPos
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.headingRate
 import org.team2471.frc2024.Drive.poseEstimator
