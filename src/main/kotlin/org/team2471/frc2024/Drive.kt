@@ -164,7 +164,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var heading: Angle
         get() = (gyroOffset - gyro.angle).wrap()
         set(value) {
-            gyro.reset()
+//            gyro.reset()
             gyroOffset = gyro.angle + value
         }
 
@@ -296,7 +296,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 val (x, y) = position
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
-                headingPublisher.set(-heading.asRotation2d)
+                headingPublisher.set(heading.asRotation2d)
                 headingRadEntry.setDouble(heading.asRadians)
 
                 advantagePosePublisher.setAdvantagePose(position.feet, heading)
@@ -382,7 +382,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
                     Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
-                    Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                    Logger.recordOutput("Drive/Heading", heading.asRotation2d)
                     Logger.recordOutput("Drive/Position", position.toPose2d(heading.asDegrees))
                 } catch (_: Exception) {}
                 totalDriveCurretEntry.setDouble(totalDriveCurrent)
@@ -483,7 +483,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun convertTMMtoWPI(x:Length, y:Length, heading: Angle): Pose2d {
         val modX = -y.asMeters + fieldCenterOffsetInMeters.y
         val modY = x.asMeters + fieldCenterOffsetInMeters.x
-        return Pose2d(modX,modY, Rotation2d((-heading+180.0.degrees).wrap().asRadians))
+        return Pose2d(modX,modY, Rotation2d((heading+180.0.degrees).wrap().asRadians))
     }
 
     fun getPose(): Pose2d {
