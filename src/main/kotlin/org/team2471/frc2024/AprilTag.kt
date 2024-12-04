@@ -1,9 +1,7 @@
 package org.team2471.frc2024
 
-import com.team254.lib.util.InterpolatingDouble
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
-import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.networktables.NetworkTableInstance
@@ -16,12 +14,9 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.util.getRealFPGATimestamp
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
 import org.team2471.frc.lib.vision.CameraType
-import org.team2471.frc.lib.vision.VisionPoseEstimator
-import org.team2471.frc.lib.vision.getPos
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.headingRate
 import org.team2471.frc2024.Drive.poseEstimator
