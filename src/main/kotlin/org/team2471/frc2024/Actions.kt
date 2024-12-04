@@ -578,7 +578,7 @@ suspend fun driveAlongChoreoPath(
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
         Drive.resetHeading()
-        Drive.heading = -path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
+        Drive.heading = path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
         println("After Reset Heading = ${Drive.heading}")
     }
 

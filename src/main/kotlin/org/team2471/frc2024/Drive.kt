@@ -387,7 +387,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
                     Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
                     Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
-                    Logger.recordOutput("Drive/Heading", -heading.asRotation2d)
+                    Logger.recordOutput("Drive/Heading", heading.asRotation2d)
                     Logger.recordOutput("Drive/Position", position.toPose2d(heading.asDegrees))
                 } catch (_: Exception) {}
                 totalDriveCurretEntry.setDouble(totalDriveCurrent)
