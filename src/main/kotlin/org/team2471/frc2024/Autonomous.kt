@@ -35,6 +35,8 @@ object AutoChooser {
         addOption("SubSide", "SubSide")
         addOption("FunSubSide", "FunSubSide")
         addOption("bunnyBotA", "bunnyBotA")
+        addOption("bunnyBotB", "bunnyBotB")
+
     }
 
     //load choreo paths
@@ -93,6 +95,7 @@ object AutoChooser {
             "SubSide" -> subSide()
             "FunSubSide" -> funSubSide()
             "bunnyBotA" -> bunnyBotA()
+            "bunnyBotB" -> bunnyBotB()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.totalTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -328,6 +331,25 @@ object AutoChooser {
         }
 
         path = paths["BunnyBotAutoA.2"]
+
+        if (path != null) {
+            Intake.intakeState = Intake.IntakeState.INTAKING
+            driveAlongChoreoPath(path)
+            Intake.intakeState = Intake.IntakeState.EMPTY
+        }
+    }
+
+
+    suspend fun bunnyBotB() = use(Drive, name = "bunnyBotA") {
+        println("Inside bunnyBotB")
+
+        var path = paths["BunnyBotAutoB.1"]
+
+        if (path != null) {
+            driveAlongChoreoPath(path, true)
+        }
+
+        path = paths["BunnyBotAutoB.2"]
 
         if (path != null) {
             Intake.intakeState = Intake.IntakeState.INTAKING

@@ -299,7 +299,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 headingPublisher.set(heading.asRotation2d)
                 headingRadEntry.setDouble(heading.asRadians)
 
-                advantagePosePublisher.setAdvantagePose(position.feet, heading)
+                advantagePosePublisher.setAdvantagePose(position.feet, -heading)
 
 //                Logger.recordOutput("deltaPos", deltaPos.length.asFeet)
 //                Logger.recordOutput("velocity", velocity.length)
