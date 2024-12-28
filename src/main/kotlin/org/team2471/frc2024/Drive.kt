@@ -624,6 +624,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             private val D = 0.00075
         }
 
+        override val gearRatio: Double = ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
+
         override val angle: Angle
             get() = turnMotor.position.degrees
 
@@ -686,13 +688,20 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val error: Angle
             get() = turnMotor.closedLoopError.degrees
 
+        override val rawWheelRotation: Angle
+            get() = driveMotor.rawPosition.rotations
+
+        override var wheelDiameter: Length
+            get() = Preferences.getDouble("Wheel ${index} Diameter", 3.0).inches
+            set(value) { Preferences.setDouble("Wheel ${index} Diameter", value.asInches) }
+
         init {
             println("Drive.module.init")
             print(angle.asDegrees)
             driveMotor.config {
                 brakeMode()
-                //                    wheel diam / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (99.0/96.0)
+                //                    / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
+            feedbackCoefficient = wheelDiameter.asFeet * Math.PI * gearRatio * (99.0/96.0)
                 currentLimit(55, 60, 1.0)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)

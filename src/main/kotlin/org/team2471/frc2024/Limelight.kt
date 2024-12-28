@@ -136,11 +136,11 @@
 //        avgDist /= poseArray.tagCount.toDouble()
 //        avgAmbiguity /= poseArray.tagCount.toDouble()
 //
-//        var stDev = limelightDistCurve.getValue(avgDist.asMeters)
+//        var stdDev = limelightDistCurve.getValue(avgDist.asMeters)
 //
-//        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stDev, Timer.FPGATimestamp)
+//        lastGlobalPose = GlobalPose(estimatedPose, Drive.heading, stdDev, Timer.FPGATimestamp)
 //
-//        stDevEntry.setDouble(stDev)
+//        stdDevEntry.setDouble(stdDev)
 //
 //        advantagePoseEntry.setAdvantagePoses(arrayOf(estimatedPose), arrayOf(poseArray.pose.rotation.radians.radians))
 //        // Todo filter more

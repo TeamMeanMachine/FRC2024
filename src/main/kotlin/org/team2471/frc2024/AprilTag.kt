@@ -95,10 +95,15 @@ object AprilTag: Subsystem("AprilTag") {
             println("In periodic apriltag")
             periodic(0.02) {
 
+                cameras.values.forEach {
+                    it.update(position, heading, headingRate.changePerSecond)
+                }
+
                 try {
-                    cameras.values.forEach {
-                        val pose = it.getEstimatedGlobalPose(Drive.position.feet, heading, headingRate.changePerSecond, Drive::lookupPose)
-                        poseEstimator.addVisionUpdate(pose)
+                    cameras.values.forEach { it1 ->
+                        it1.latestPoses.forEach {
+                            poseEstimator.addVisionUpdates(it)
+                        }
                     }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: ${ex.message}")
