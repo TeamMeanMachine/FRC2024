@@ -1,10 +1,11 @@
 package org.team2471.frc2024
 
-import com.team254.lib.util.InterpolatingDouble
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
-import edu.wpi.first.math.VecBuilder
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
@@ -13,34 +14,34 @@ import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.math.*
-import org.team2471.frc.lib.motion.following.lookupPose
-import org.team2471.frc.lib.units.*
-import org.team2471.frc.lib.util.getRealFPGATimestamp
+import org.team2471.frc.lib.math.Vector2L
+import org.team2471.frc.lib.math.asMeters
+import org.team2471.frc.lib.math.feet
+import org.team2471.frc.lib.math.toPose2d
+import org.team2471.frc.lib.units.asMeters
+import org.team2471.frc.lib.units.asRadians
+import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.inches
+import org.team2471.frc.lib.util.isSim
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
 import org.team2471.frc.lib.vision.CameraType
-import org.team2471.frc.lib.vision.VisionPoseEstimator
-//import org.team2471.frc.lib.vision.getPos
+import org.team2471.frc.lib.vision.removeTags
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.headingRate
 import org.team2471.frc2024.Drive.poseEstimator
 
-object AprilTag: Subsystem("AprilTag") {
+object AprilTag : Subsystem("AprilTag") {
     val pvTable = NetworkTableInstance.getDefault().getTable("photonvision")
     val aprilTable = NetworkTableInstance.getDefault().getTable("AprilTag")
     val aprilTagsEnabledEntry = aprilTable.getEntry("AprilTags Enabled")
 
     val positionPublisher = aprilTable.getStructTopic("Position", Pose2d.struct).publish()
 
-    val wpiStates: StructArrayPublisher<SwerveModuleState> = aprilTable.getStructArrayTopic("Test States", SwerveModuleState.struct).publish()
-
-    val aprilTagFieldLayout : AprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile)
-
-    val speakerTagHeight = 57.13.inches
-
     val excludedIDs = intArrayOf()
 
+    val aprilTagFieldLayout: AprilTagFieldLayout =
+        AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile).removeTags(excludedIDs)
 
     val position: Vector2L
         get() = poseEstimator.latestPos
@@ -77,10 +78,30 @@ object AprilTag: Subsystem("AprilTag") {
     )
 
     val cameras: Map<String, Camera> = mapOf(
-        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, CameraType.PHOTONVISION)),
-        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)),
-        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)),
-        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, CameraType.LIMELIGHT))
+        Pair(
+            "CamSR",
+            Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, CameraType.PHOTONVISION)
+        ),
+        Pair(
+            "CamIB",
+            Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)
+        ),
+        Pair(
+            "CamSL",
+            Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)
+        ),
+        Pair(
+            "limelight-shooter",
+            Camera(
+                NetworkTableInstance.getDefault().getTable("limelight-shooter"),
+                aprilTable,
+                "limelight-shooter",
+                aprilTagFieldLayout,
+                robotToCamLLShooter,
+                robotMode,
+                CameraType.LIMELIGHT
+            )
+        )
     )
 
 
@@ -96,39 +117,18 @@ object AprilTag: Subsystem("AprilTag") {
             periodic(0.02) {
 
                 cameras.values.forEach {
-                    it.update(position, heading, headingRate.changePerSecond)
+                    it.update(if (isSim) Drive.position.feet else position, heading, headingRate.changePerSecond)
                 }
 
                 try {
-                    cameras.values.forEach { it1 ->
-                        it1.latestPoses.forEach {
-                            poseEstimator.addVisionUpdates(it)
-                        }
+                    cameras.values.forEach {
+                        poseEstimator.addVisionUpdates(it.latestPoses)
                     }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: ${ex.message}")
                 }
 
-//                println("2d thing: ${cameras["CamSR"]?.get2DTarget(3)?.yaw}")
-
-//                updatePosWPI(*cameraPoses.toTypedArray())
-
-                positionPublisher.set(poseEstimator.latestPos.asMeters.toPose2d(heading.asRadians))
-
-                wpiStates.set(Drive.modules.map { it.wpiState }.toTypedArray())
-//                println("Drive Position: ${Drive.position}")\
-
-                // In a try bc sometimes it likes to log before the table is ready :(
-                try {
-//                    Logger.recordOutput(
-//                        "AprilTag/Position",
-//                        Pose2d(position.asMeters.toTranslation2d(), Rotation2d(heading.asRadians))
-//                    )
-
-//                    Logger.recordOutput("AprilTag/PositionWPI", poseEstimatorWPI.estimatedPosition)
-                } catch (_: Exception) {}
-
-//                println("haaa: ${poseEstimator.offsetHistory[poseEstimator.offsetHistory.lastKey()]}")
+                positionPublisher.set(poseEstimator.latestPos.asMeters.toPose2d(-heading.asRadians))
             }
         }
     }

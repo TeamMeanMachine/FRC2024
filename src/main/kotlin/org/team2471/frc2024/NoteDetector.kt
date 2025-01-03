@@ -116,7 +116,7 @@ object NoteDetector {
                 if (camera.isConnected && latestResult != null && latestResult.hasTargets()) {
                     for (target in latestResult.targets) {
                         val robotCoords = getTargetRobotCoords(target)
-                        val poseDiff = Drive.poseDiff(latestResult.latencyMillis / 1000.0)
+                        val poseDiff = Drive.poseDiff(latestResult.timestampSeconds)
                         var fieldCoords = robotCoordsToFieldCoords(robotCoords)
                         if (poseDiff != null) {
                             fieldCoords -= poseDiff.position
@@ -126,7 +126,7 @@ object NoteDetector {
                                 robotCoords,
                                 fieldCoords,
                                 target.yaw,
-                                Timer.getFPGATimestamp() - latestResult.latencyMillis / 1000.0
+                                latestResult.timestampSeconds
                             )
                         )
 //                        println(("pitch: ${target.pitch}"))

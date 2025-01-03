@@ -1,6 +1,6 @@
 package org.team2471.frc2024
 
-import com.choreo.lib.ChoreoTrajectory
+import choreo.trajectory.Trajectory
 import edu.wpi.first.wpilibj.DriverStation
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.coroutines.delay
@@ -565,19 +565,20 @@ suspend fun toggleAimAtNote() {
 }
 
 suspend fun driveAlongChoreoPath(
-    path: ChoreoTrajectory,
+    path: Trajectory<*>?,
     resetOdometry: Boolean = false,
-    useAprilTag: Boolean = false,
     extraTime: Double = 0.0,
     inResetGyro: Boolean? = null,
     turnOverride: () -> Double? = {null},
     earlyExit: (percentComplete: Double) -> Boolean = {false}
 ) = use(Drive, name = "DriveAlongChoreoPath") {
-    println("inside driveAlongChoreoPath")
+    println("inside driveAlongChoreoPath ${path?.name()}")
+
+    if (path == null || path.getInitialPose(false).isEmpty) { println("path is null or empty"); return@use } //exit if path is null
 
     if (inResetGyro ?: resetOdometry) {
         println("Heading = ${Drive.heading}")
-        Drive.heading = path.initialPose.rotation.asAngle// * if (flipped) -1.0 else 1.0 //path.headingCurve.getValue(0.0).degrees
+        Drive.heading = path.getInitialPose(false).get().rotation.asAngle
         println("After Reset Heading = ${Drive.heading}")
     }
 
@@ -587,7 +588,7 @@ suspend fun driveAlongChoreoPath(
         println("Position after odometryReset = $position")
 
         // set to the numbers required for the start of the path
-        position = path.initialPose.translation.asVector2().meters.asFeet
+        position = path.getInitialPose(false).get().translation.asVector2().meters.asFeet
 //        AprilTag.position = path.initialPose.translation.asVector2().meters
 //        prevPosition = position
 
@@ -599,8 +600,6 @@ suspend fun driveAlongChoreoPath(
 
     val timer = org.team2471.frc.lib.util.Timer()
     timer.start()
-    var prevPathPosition = path.initialPose.translation.asVector2().meters
-    var prevPathHeading = path.initialPose.rotation.asAngle
     var prevPositionError = Vector2(0.0, 0.0).meters
     var prevHeadingError = 0.0.degrees
     suspendUntil(10) { timer.get() != 0.0}
@@ -608,18 +607,16 @@ suspend fun driveAlongChoreoPath(
     periodic {
         val t = timer.get()
         val dt = if (t - prevTime != 0.0) t - prevTime else 0.02
-        val pathSample = path.sample(t)
+        val pathSample = path.sampleAt(t, false).get()
 
         // position error
-        val pathPosition = Vector2(pathSample.x, pathSample.y).meters//path.getPosition(t)
-        val currentPosition = if (useAprilTag) AprilTag.position else position.feet
+        val pathPosition = Vector2(pathSample.pose.x, pathSample.pose.y).meters//path.getPosition(t)
+        val currentPosition = position.feet
         val positionError = pathPosition - currentPosition
 //        println("time=$t   dt=$dt    pathPosition=$pathPosition position=$currentPosition positionError=$positionError")
 
         // position feed forward
-        val pathVelocity = Vector2(pathSample.velocityX, pathSample.velocityY).meters//(pathPosition - prevPathPosition) / dt
-//        val pathVelocity = (pathPosition - prevPathPosition) / dt
-        prevPathPosition = pathPosition
+        val pathVelocity = Vector2(pathSample.chassisSpeeds.vxMetersPerSecond, pathSample.chassisSpeeds.vyMetersPerSecond).meters//(pathPosition - prevPathPosition) / dt
 
         // position d
         val deltaPositionError = positionError - prevPositionError
@@ -634,14 +631,12 @@ suspend fun driveAlongChoreoPath(
 
         // heading error
         val robotHeading = Drive.heading
-        val pathHeading = pathSample.heading.radians//  * if (flipped) -1.0 else 1.0//path.getAbsoluteHeadingDegreesAt(t).degrees
+        val pathHeading = pathSample.pose.rotation.asAngle
         val headingError = (robotHeading - pathHeading).wrap()
 //        println("Heading Error: $headingError. pathHeading: $pathHeading")
 
         // heading feed forward
-//        val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
-        val headingVelocity = pathSample.angularVelocity.radians.asDegrees// * if (flipped) -1.0 else 1.0//(pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
-        prevPathHeading = pathHeading
+        val headingVelocity = pathSample.chassisSpeeds.omegaRadiansPerSecond.radians.asDegrees
 
         // heading d
         val deltaHeadingError = headingError - prevHeadingError
@@ -681,4 +676,3 @@ suspend fun driveAlongChoreoPath(
 //    actualRoute.setDoubleArray(doubleArrayOf())
 //    plannedPath.setString("")
 }
-

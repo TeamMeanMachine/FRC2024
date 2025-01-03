@@ -346,7 +346,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += m.turnMotor.current
 
                     if (Robot.isDisabled) {
-                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition
+                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.get()
                         if (rawEncoderAbsoluteAngle == previousAngles[i]) {
                             encoderCounterList[i]++
                         } else {
@@ -635,7 +635,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val absoluteAngle: Angle
             get() = if (encoderConnected) {
-                    (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
+                    (digitalEncoder.get().rotations * 360.0 - angleOffset).wrap()
                 } else {
 //                    encoder not connected, assume wheel is zeroed
                     0.0.degrees
@@ -732,7 +732,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         fun setAngleOffset() {
-            val digitalAngle = (digitalEncoder.absolutePosition * 360.0).degrees.wrap().asDegrees
+            val digitalAngle = (digitalEncoder.get() * 360.0).degrees.wrap().asDegrees
             angleOffset = digitalAngle.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
             println("Angle Offset $index = $digitalAngle")

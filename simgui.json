@@ -15,10 +15,12 @@
   },
   "NTProvider": {
     "types": {
+      "/AdvantageKit/RealOutputs/ChoreoAlert": "Alerts",
       "/FMSInfo": "FMSInfo",
       "/SmartDashboard/AutoChooser": "String Chooser",
       "/SmartDashboard/Autos": "String Chooser",
       "/SmartDashboard/Best Song Lyrics": "String Chooser",
+      "/SmartDashboard/ChoreoAlert": "Alerts",
       "/SmartDashboard/RobotTests": "String Chooser",
       "/SmartDashboard/Tests": "String Chooser",
       "/SmartDashboard/VisionSystemSim-CamIB/Sim Field": "Field2d",
