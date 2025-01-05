@@ -299,7 +299,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 headingPublisher.set(heading.asRotation2d)
                 headingRadEntry.setDouble(heading.asRadians)
 
-                advantagePosePublisher.setAdvantagePose(position.feet, -heading)
+                advantagePosePublisher.setAdvantagePose(position.feet, heading)
 
 //                Logger.recordOutput("deltaPos", deltaPos.length.asFeet)
 //                Logger.recordOutput("velocity", velocity.length)
@@ -614,7 +614,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var angleOffset: Angle,
         digitalInputID: Int,
         private val odometerEntry: NetworkTableEntry,
-        val index: Int
+        val index: Int,
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983
@@ -625,6 +625,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         override val gearRatio: Double = ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
+
 
         override val angle: Angle
             get() = turnMotor.position.degrees

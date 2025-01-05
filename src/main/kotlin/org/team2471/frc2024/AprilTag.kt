@@ -14,10 +14,7 @@ import kotlinx.coroutines.launch
 import org.photonvision.PhotonCamera
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.math.Vector2L
-import org.team2471.frc.lib.math.asMeters
-import org.team2471.frc.lib.math.feet
-import org.team2471.frc.lib.math.toPose2d
+import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.units.asMeters
 import org.team2471.frc.lib.units.asRadians
 import org.team2471.frc.lib.units.degrees
@@ -128,7 +125,7 @@ object AprilTag : Subsystem("AprilTag") {
                     println("Error in AprilTag: ${ex.message}")
                 }
 
-                positionPublisher.set(poseEstimator.latestPos.asMeters.toPose2d(-heading.asRadians))
+                positionPublisher.setAdvantagePose(position, heading)
             }
         }
     }
