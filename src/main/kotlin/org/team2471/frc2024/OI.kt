@@ -99,7 +99,8 @@ object OI : Subsystem("OI") {
 //                Pivot.angleSetpoint = 25.0.degrees }
         }
         driverController::start.whenTrue {
-            Drive.position = Vector2(0.0, 0.0)
+            test()
+//            Drive.position = Vector2(0.0, 0.0)
         }
 //        driverController::x.whenTrue { Drive.xPose(); println("xpose") }
 

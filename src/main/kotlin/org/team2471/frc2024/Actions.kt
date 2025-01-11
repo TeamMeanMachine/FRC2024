@@ -16,6 +16,7 @@ import org.team2471.frc.lib.units.*
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.isBlueAlliance
 import org.team2471.frc2024.Drive.isRedAlliance
+import org.team2471.frc2024.Drive.parameters
 import org.team2471.frc2024.Drive.position
 import kotlin.math.absoluteValue
 import kotlin.math.sign
@@ -675,4 +676,10 @@ suspend fun driveAlongChoreoPath(
     Drive.drive(Vector2(0.0, 0.0), 0.0, true)
 //    actualRoute.setDoubleArray(doubleArrayOf())
 //    plannedPath.setString("")
+}
+
+suspend fun test() = use(Drive) {
+    val point = position.getClosestPoint(*(reefPoints.map {it.asFeet}).toTypedArray()).feet
+    val angle =
+    Drive.driveToNearestPoint(reefPoints) { !OI.driverController.start }
 }

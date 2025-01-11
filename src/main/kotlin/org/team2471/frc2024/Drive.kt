@@ -90,6 +90,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val distanceEntry = table.getEntry("Distance From Speaker Drive")
 
     private val advantagePosePublisher = table.getStructTopic("Drive Advantage Pose", Pose2d.struct).publish()
+    val testPublisher = table.getStructTopic("Drive Test Pose", Pose2d.struct).publish()
 
     private val deltaPosEntry = table.getEntry("DeltaPos")
     private val deltaPosSecEntry = table.getEntry("DeltaPos 2")

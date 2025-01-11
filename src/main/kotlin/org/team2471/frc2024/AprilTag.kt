@@ -38,7 +38,7 @@ object AprilTag : Subsystem("AprilTag") {
     val excludedIDs = intArrayOf()
 
     val aprilTagFieldLayout: AprilTagFieldLayout =
-        AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile).removeTags(excludedIDs)
+        AprilTagFieldLayout("C:\\Users\\teamm\\IdeaProjects\\FRC2024\\src\\main\\kotlin\\org\\team2471\\frc2024\\2025-reefscape.json")
 
     val position: Vector2L
         get() = poseEstimator.latestPos
