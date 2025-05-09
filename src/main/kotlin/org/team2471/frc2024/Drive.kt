@@ -129,7 +129,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",if (Robot.isCompBot) 27.39 else 81.876).degrees,
+            Preferences.getDouble("Angle Offset 0",if (!Robot.isCompBot) 27.39 else 81.876).degrees,
             DigitalSensors.FRONT_LEFT,
             odometer0Entry,
             0
@@ -138,7 +138,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 1",if (Robot.isCompBot) 135.5 else -35.897).degrees,
+            Preferences.getDouble("Angle Offset 1",if (!Robot.isCompBot) 135.5 else -35.897).degrees,
             DigitalSensors.FRONT_RIGHT,
             odometer1Entry,
             1
@@ -147,7 +147,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 2",if (Robot.isCompBot) -37.18 else -150.539).degrees,
+            Preferences.getDouble("Angle Offset 2",if (!Robot.isCompBot) -37.18 else -150.539).degrees,
             DigitalSensors.BACK_RIGHT,
             odometer2Entry,
             2
@@ -156,7 +156,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",if (Robot.isCompBot) -165.2 else -104.767).degrees,
+            Preferences.getDouble("Angle Offset 3",if (!Robot.isCompBot) -165.2 else -104.767).degrees,
             DigitalSensors.BACK_LEFT,
             odometer3Entry,
             3
@@ -629,6 +629,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             private val D = 0.00075
         }
 
+        override val gearRatio: Double
+            get() = ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
+        override var wheelDiameter: Length
+            get() = 3.0.inches
+            set(value) {}
+
         override val angle: Angle
             get() = turnMotor.position.degrees
 
@@ -682,6 +688,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 field = value.unWrap(angle)
                 turnMotor.setPositionSetpoint(field.asDegrees)
             }
+        override val rawWheelRotation: Angle
+            get() = TODO("Not yet implemented")
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
@@ -701,7 +709,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 //                    wheel diam / 12 in per foot * pi / gear ratio                                          * fudge (Should have gone 8ft, went 8ft 2in)
-            feedbackCoefficient = 3.0 / 12.0 * Math.PI * ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0) * (99.0/96.0)
+            feedbackCoefficient = wheelDiameter.asInches / 12.0 * Math.PI * gearRatio * (99.0/96.0)
                 currentLimit(55, 60, 1.0)
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
