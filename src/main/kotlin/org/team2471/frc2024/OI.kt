@@ -65,7 +65,7 @@ object OI : Subsystem("OI") {
     init {
         driverController::back.whenTrue {
             Drive.zeroGyro()
-            Drive.initializeSteeringMotors() //not needed 02/05
+//            Drive.initializeSteeringMotors() //not needed 02/05
         }
 
         driverController::leftBumper.whenTrue {

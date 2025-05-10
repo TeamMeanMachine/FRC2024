@@ -576,7 +576,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) {
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
+            module.turnMotor.setRawOffset(if (module.encoderConnected) module.absoluteAngle.asDegrees else 0.0)
             println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position}")
         }
     }
@@ -720,7 +720,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 brakeMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
                 setRawOffsetConfig(absoluteAngle.asDegrees)
-                currentLimit(15, 20, 1.0)
+                currentLimit(5, 10, 1.0)
                 pid {
                     p(6.144 / 1024.0, 2.33)
 //                    d(0.0000025 * 1024.0)
