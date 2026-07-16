@@ -26,11 +26,6 @@ object AnalogSensors {
 }
 
 object DigitalSensors {
-    const val BACK_LEFT = 0
-    const val BACK_RIGHT = 3
-    const val FRONT_RIGHT = 9
-    const val FRONT_LEFT = 2
-
     const val BOTTOM_BREAK = 5
     const val TOP_BREAK = 7
     const val CLIMBER = 1
@@ -54,7 +49,10 @@ object Falcons {
 }
 
 object CANCoders {
-
+    const val BACK_LEFT = 99
+    const val BACK_RIGHT = 99
+    const val FRONT_RIGHT = 99
+    const val FRONT_LEFT = 99
 }
 
 object Solenoids {

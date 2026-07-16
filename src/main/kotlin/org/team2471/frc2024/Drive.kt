@@ -1,5 +1,6 @@
 package org.team2471.frc2024
 
+import com.ctre.phoenix6.hardware.CANcoder
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -130,7 +131,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(-10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 0",if (!Robot.isCompBot) 27.39 else 81.876).degrees,
-            DigitalSensors.FRONT_LEFT,
+            CANCoders.FRONT_LEFT,
             odometer0Entry,
             0
         ),
@@ -139,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 1",if (!Robot.isCompBot) 135.5 else -35.897).degrees,
-            DigitalSensors.FRONT_RIGHT,
+            CANCoders.FRONT_RIGHT,
             odometer1Entry,
             1
         ),
@@ -148,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 2",if (!Robot.isCompBot) -37.18 else -150.539).degrees,
-            DigitalSensors.BACK_RIGHT,
+            CANCoders.BACK_RIGHT,
             odometer2Entry,
             2
         ),
@@ -157,7 +158,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 3",if (!Robot.isCompBot) -165.2 else -104.767).degrees,
-            DigitalSensors.BACK_LEFT,
+            CANCoders.BACK_LEFT,
             odometer3Entry,
             3
         )
@@ -351,7 +352,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += m.turnMotor.current
 
                     if (Robot.isDisabled) {
-                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition
+                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition.valueAsDouble.rotations.asDegrees
                         if (rawEncoderAbsoluteAngle == previousAngles[i]) {
                             encoderCounterList[i]++
                         } else {
@@ -617,7 +618,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val turnMotor: MotorController,
         override val modulePosition: Vector2L,
         override var angleOffset: Angle,
-        digitalInputID: Int,
+        canCoderID: Int,
         private val odometerEntry: NetworkTableEntry,
         val index: Int
     ) : SwerveDrive.Module {
@@ -640,11 +641,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         var encoderConnected: Boolean = true
 
-        val digitalEncoder : DutyCycleEncoder = DutyCycleEncoder(digitalInputID)
+        val digitalEncoder : CANcoder = CANcoder(canCoderID)
 
         val absoluteAngle: Angle
             get() = if (encoderConnected) {
-                    (digitalEncoder.absolutePosition.degrees * 360.0 - angleOffset).wrap()
+                    (digitalEncoder.absolutePosition.valueAsDouble.rotations - angleOffset).wrap()
                 } else {
 //                    encoder not connected, assume wheel is zeroed
                     0.0.degrees
@@ -740,7 +741,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         fun setAngleOffset() {
-            val digitalAngle = (digitalEncoder.absolutePosition * 360.0).degrees.wrap().asDegrees
+            val digitalAngle = digitalEncoder.absolutePosition.valueAsDouble.rotations.wrap().asDegrees
             angleOffset = digitalAngle.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
             println("Angle Offset $index = $digitalAngle")
