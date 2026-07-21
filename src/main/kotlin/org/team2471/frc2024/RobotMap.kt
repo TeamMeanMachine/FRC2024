@@ -49,10 +49,10 @@ object Falcons {
 }
 
 object CANCoders {
-    const val BACK_LEFT = 99
-    const val BACK_RIGHT = 99
-    const val FRONT_RIGHT = 99
-    const val FRONT_LEFT = 99
+    const val BACK_LEFT = 37
+    const val BACK_RIGHT = 22
+    const val FRONT_RIGHT = 1
+    const val FRONT_LEFT = 21
 }
 
 object Solenoids {
