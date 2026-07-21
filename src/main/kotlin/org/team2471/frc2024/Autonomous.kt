@@ -1,7 +1,8 @@
 package org.team2471.frc2024
 
-import com.choreo.lib.Choreo
-import com.choreo.lib.ChoreoTrajectory
+import choreo.Choreo
+import choreo.trajectory.SwerveSample
+import choreo.trajectory.Trajectory
 import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -15,6 +16,7 @@ import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.Timer
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.jvm.optionals.getOrNull
 
 object AutoChooser {
 
@@ -37,15 +39,15 @@ object AutoChooser {
     }
 
     //load choreo paths
-    val paths: MutableMap<String, ChoreoTrajectory?> = try {mutableMapOf(
+    val paths: MutableMap<String, Trajectory<SwerveSample>?> = try {mutableMapOf(
         *Filesystem.getDeployDirectory().toPath().resolve("choreo").listDirectoryEntries("*.traj").map {
             val name = it.name.removeSuffix(".traj")
-            Pair(name, Choreo.getTrajectory(name))
+            Pair(name, Choreo.loadTrajectory<SwerveSample>(name).getOrNull())
         }.toTypedArray()
     )} catch (_: Exception) { println("failed to load auto paths"); mutableMapOf()}
 
     init {
-        println("loaded paths: ${paths.map { Pair(it.key, it.value?.samples?.size).toString() }}")
+        println("loaded paths: ${paths.map { Pair(it.key, it.value?.samples()?.size).toString() }}")
 
         SmartDashboard.putData("AutoChooser", autoChooser)
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)

@@ -2,7 +2,6 @@
 
 package org.team2471.frc2024
 
-import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
@@ -60,7 +59,7 @@ object Robot : LoggedMeanlibRobot() {
             Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
         }
 
-        Logger.start()
+//        Logger.start()
 
         LedControl
         NoteDetector

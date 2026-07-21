@@ -27,6 +27,7 @@ import org.team2471.frc.lib.control.PDVelocityController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.internal.akitLoggers.SimpleLogger
 import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.Path2D
@@ -194,9 +195,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     //                   feet seconds fps fudge
     val driveStDevM = (2.5 / 30.0 / 50.0 * 15.0).feet.asMeters
 
-    val kinematics: SwerveDriveKinematics = SwerveDriveKinematics(*modules.map { it.modulePositionWpi }.toTypedArray())
-
-    var modulePositions: Array<SwerveModulePosition> = modules.map { it.wpiPosition }.toTypedArray()
+//    val kinematics: SwerveDriveKinematics = SwerveDriveKinematics(*modules.map { it.modulePositionWpi }.toTypedArray())
+//
+//    var modulePositions: Array<SwerveModulePosition> = modules.map { it.wpiPosition }.toTypedArray()
 
     override val poseEstimator = VisionPoseEstimator()
 
@@ -385,11 +386,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     }
                 }
                 try {
-                    Logger.recordOutput("SwerveStates/Setpoints", *setpointStates)
-                    Logger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
-                    Logger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
-                    Logger.recordOutput("Drive/Heading", heading.asRotation2d)
-                    Logger.recordOutput("Drive/Position", position.toPose2d(heading.asDegrees))
+//                    SimpleLogger.recordOutput("SwerveStates/Setpoints", *setpointStates)
+//                    SimpleLogger.recordOutput("SwerveStates/AbsoluteAngles", *absoluteStates)
+//                    SimpleLogger.recordOutput("SwerveStates/MotorAngles", *motorAngleStates)
+                    SimpleLogger.recordOutput("Drive/Heading", heading.asRotation2d)
+                    SimpleLogger.recordOutput("Drive/Position", position.toPose2d(heading.asDegrees))
                 } catch (_: Exception) {}
                 totalDriveCurretEntry.setDouble(totalDriveCurrent)
                 totalTurnCurrentEntry.setDouble(totalTurnCurrent)
@@ -620,7 +621,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var angleOffset: Angle,
         canCoderID: Int,
         private val odometerEntry: NetworkTableEntry,
-        val index: Int
+        override val index: Int
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983
@@ -672,6 +673,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = driveMotor.position
 
         override var prevDistance: Double = 0.0
+        override var prevSpeed: Double = 0.0
         override var prevAngle: Angle = angle
 
         override var odometer: Double
@@ -699,6 +701,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             } else {
                 driveMotor.setTorqueCurrent((power * maxTorque) / torqueCoeff)
             }
+        }
+
+        override fun setDriveVelocityVoltage(velocity: LinearVelocity) {
+            driveMotor.setVelocitySetpointVoltage(velocity.lengthPerSecond.asFeet)
         }
 
         val error: Angle

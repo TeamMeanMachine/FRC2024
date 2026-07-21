@@ -16,6 +16,7 @@ import org.team2471.frc.lib.motion.following.lookupPose
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.robotMode
 import org.team2471.frc.lib.vision.Camera
+import org.team2471.frc.lib.vision.CameraIntrinsics
 import org.team2471.frc.lib.vision.CameraType
 import org.team2471.frc2024.Drive.heading
 import org.team2471.frc2024.Drive.headingRate
@@ -72,10 +73,10 @@ object AprilTag: Subsystem("AprilTag") {
     )
 
     val cameras: Map<String, Camera> = mapOf(
-        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, robotMode, CameraType.PHOTONVISION)),
-        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, robotMode, CameraType.PHOTONVISION)),
-        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, robotMode, CameraType.PHOTONVISION)),
-        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, robotMode, CameraType.LIMELIGHT))
+        Pair("CamSR", Camera(pvTable, aprilTable, "CamSR", aprilTagFieldLayout, robotToCamSR, CameraIntrinsics.GenericCamera, robotMode)),
+        Pair("CamIB", Camera(pvTable, aprilTable, "CamIB", aprilTagFieldLayout, robotToCamIB, CameraIntrinsics.GenericCamera, robotMode)),
+        Pair("CamSL", Camera(pvTable, aprilTable, "CamSL", aprilTagFieldLayout, robotToCamSL, CameraIntrinsics.GenericCamera, robotMode)),
+        Pair("limelight-shooter", Camera(NetworkTableInstance.getDefault().getTable("limelight-shooter"), aprilTable, "limelight-shooter", aprilTagFieldLayout, robotToCamLLShooter, CameraIntrinsics.GenericCamera, robotMode))
     )
 
 
@@ -92,8 +93,8 @@ object AprilTag: Subsystem("AprilTag") {
 
                 try {
                     cameras.values.forEach {
-                        val pose = it.getEstimatedGlobalPose(Drive.position.feet, heading, headingRate.changePerSecond, Drive::lookupPose)
-                        poseEstimator.addVisionUpdate(pose)
+//                        val pose = it.getEstimatedGlobalPose(Drive.position.feet, heading, headingRate.changePerSecond, Drive::lookupPose)
+//                        poseEstimator.addVisionUpdate(pose)
                     }
                 } catch (ex: Exception) {
                     println("Error in AprilTag: ${ex.message}")
@@ -105,7 +106,7 @@ object AprilTag: Subsystem("AprilTag") {
 
                 positionPublisher.set(poseEstimator.latestPos.asMeters.toPose2d(heading.asRadians))
 
-                wpiStates.set(Drive.modules.map { it.wpiState }.toTypedArray())
+//                wpiStates.set(Drive.modules.map { it.wpiState }.toTypedArray())
 //                println("Drive Position: ${Drive.position}")\
 
                 // In a try bc sometimes it likes to log before the table is ready :(

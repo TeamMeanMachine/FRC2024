@@ -2,8 +2,8 @@ import edu.wpi.first.gradlerio.GradleRIOPlugin
 
 plugins {
     id "java"
-    id "org.jetbrains.kotlin.jvm" version "1.9.21"
-    id "edu.wpi.first.GradleRIO" version "2024.3.2"
+    id "org.jetbrains.kotlin.jvm" version "2.1.0"
+    id "edu.wpi.first.GradleRIO" version "2026.1.1"
     id "com.github.gmazzo.buildconfig" version "3.0.0"
 }
 
@@ -44,7 +44,7 @@ deploy {
 }
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
-var advantageKitVersion = "3.2.0"
+var advantageKitVersion = "26.0.2"
 
 repositories {
     mavenCentral()
@@ -98,10 +98,10 @@ dependencies {
     implementation("org.photonvision:photontargeting-java:v2024.3.1")
 
     //AdvantageKit libs
-    implementation("org.littletonrobotics.akit.junction:junction-core:$advantageKitVersion")
-    implementation("org.littletonrobotics.akit.junction:wpilib-shim:$advantageKitVersion")
-    implementation("org.littletonrobotics.akit.conduit:conduit-api:$advantageKitVersion")
-    implementation("org.littletonrobotics.akit.conduit:conduit-wpilibio:$advantageKitVersion")
+    implementation("org.littletonrobotics.akit:akit-java:$advantageKitVersion")
+//    implementation("org.littletonrobotics.akit.junction:wpilib-shim:$advantageKitVersion")
+//    implementation("org.littletonrobotics.akit.conduit:conduit-api:$advantageKitVersion")
+    implementation("org.littletonrobotics.akit:akit-wpilibio:$advantageKitVersion")
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
@@ -134,12 +134,6 @@ wrapper {
 //    exclude("edu.wpi.first.wpilibj")
 //}
 
-tasks.register('checkAkitInstall', JavaExec) {
-    dependsOn "classes"
-    mainClass = "org.littletonrobotics.junction.CheckInstall"
-    classpath = sourceSets.main.runtimeClasspath
-}
-compileJava.finalizedBy checkAkitInstall
 
 compileKotlin {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_17
