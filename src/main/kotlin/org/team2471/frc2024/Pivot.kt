@@ -122,9 +122,9 @@ object Pivot: Subsystem("Pivot") {
             // For amp shot edge case
             if (!Robot.isAutonomous) Shooter.manualShootState = Shooter.manualShootState
 //            println("feed: ")
-            pivotMotor.setPositionSetpoint(angleSetpoint.asDegrees, feedForward)
+            pivotMotor.setPositionSetpoint(field.asDegrees, feedForward)
 
-//            println("set pivot angle to $field")
+            println("set pivot angle to $field")
         }
 
     val feedForward: Double
@@ -159,9 +159,10 @@ object Pivot: Subsystem("Pivot") {
             //                              ticks / gear ratio   fudge factor
             feedbackCoefficient = (360.0 / 2048.0 / GEARRATIO) * (107.0 / 305.0)
             coastMode()
-            inverted(true)
-            currentLimit(35, 40, 0.02)
+            inverted(false)
+            currentLimit(2, 5, 0.02)
             configSim(DCMotor.getFalcon500(1), 0.0001)
+            encoderContinuous(false)
         }
 
 

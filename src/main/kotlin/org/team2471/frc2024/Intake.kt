@@ -49,21 +49,21 @@ object Intake: Subsystem("Intake") {
         intakeMotorTop.config {
             currentLimit(35, 60, 1.0)
             coastMode()
-            inverted(true)
-            followersInverted(true)
+            inverted(false)
+            followersInverted(false)
         }
 
         intakeMotorBottom.config {
             currentLimit(35, 60, 1.0)
             coastMode()
-            inverted(true)
-            followersInverted(true)
+            inverted(false)
+            followersInverted(false)
         }
 
         feederMotor.config {
             currentLimit(38, 70, 1.0)
             coastMode()
-            inverted(false)
+            inverted(true)
         }
 
         GlobalScope.launch {

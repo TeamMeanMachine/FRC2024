@@ -159,8 +159,8 @@ object Shooter: Subsystem("Shooter") {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
             currentLimit(30, 40, 1.0)
             coastMode()
-            inverted(true)
-            followersInverted(true)
+            inverted(false)
+            followersInverted(false)
             configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 
@@ -168,8 +168,8 @@ object Shooter: Subsystem("Shooter") {
             feedbackCoefficient = 53.0 * (400.0 / 350.0)
             currentLimit(30, 40, 1.0)
             coastMode()
-            inverted(true)
-            followersInverted(true)
+            inverted(false)
+            followersInverted(false)
             configSim(DCMotor.getKrakenX60Foc(1), 0.005)
         }
 

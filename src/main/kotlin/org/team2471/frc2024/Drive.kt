@@ -1,6 +1,9 @@
 package org.team2471.frc2024
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration
+import com.ctre.phoenix6.configs.MagnetSensorConfigs
 import com.ctre.phoenix6.hardware.CANcoder
+import com.ctre.phoenix6.signals.SensorDirectionValue
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -32,6 +35,7 @@ import org.team2471.frc.lib.math.*
 import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
+import org.team2471.frc.lib.sensors.canCoder.LoggedCANCoder
 import org.team2471.frc.lib.units.*
 import org.team2471.frc.lib.util.isReal
 import org.team2471.frc.lib.util.isSim
@@ -130,36 +134,36 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         Module(
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
-            Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",if (!Robot.isCompBot) 27.39 else 81.876).degrees,
-            CANCoders.FRONT_LEFT,
+            Vector2(10.75, 10.75).inches,
+            Preferences.getDouble("Angle Offset 0",93.1640625).degrees,
+            LoggedCANCoder(CANCoders.FRONT_LEFT, "FL"),
             odometer0Entry,
             0
         ),
         Module(
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
-            Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 1",if (!Robot.isCompBot) 135.5 else -35.897).degrees,
-            CANCoders.FRONT_RIGHT,
+            Vector2(10.75, -10.75).inches,
+            Preferences.getDouble("Angle Offset 1",-29.53125).degrees,
+            LoggedCANCoder(CANCoders.FRONT_RIGHT, "FR"),
             odometer1Entry,
             1
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
-            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
-            Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 2",if (!Robot.isCompBot) -37.18 else -150.539).degrees,
-            CANCoders.BACK_RIGHT,
+            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
+            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
+            Vector2(-10.75, 10.75).inches,
+            Preferences.getDouble("Angle Offset 2",-90.615234375).degrees,
+            LoggedCANCoder(CANCoders.BACK_LEFT, "BL"),
             odometer2Entry,
             2
         ),
         Module(
-            MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
-            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
+            MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
+            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",if (!Robot.isCompBot) -165.2 else -104.767).degrees,
-            CANCoders.BACK_LEFT,
+            Preferences.getDouble("Angle Offset 3",26.19140625).degrees,
+            LoggedCANCoder(CANCoders.BACK_RIGHT, "BR"),
             odometer3Entry,
             3
         )
@@ -169,10 +173,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     private var gyroOffset = 0.0.degrees
 
     override var heading: Angle
-        get() = (gyroOffset - gyro.angle).wrap()
+        get() = -(gyro.angle - gyroOffset).wrap()
         set(value) {
-            gyro.reset()
-            gyroOffset = gyro.angle + value
+//            gyro.reset()
+            gyroOffset = gyro.angle - value
         }
 
 
@@ -341,6 +345,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 var totalDriveCurrent = 0.0
                 var totalTurnCurrent = 0.0
 
+                if (Robot.isDisabled) {
+                    initializeSteeringMotors()
+                }
+
                 for (i in modules.indices) {
                     val m = modules[i] as Module
                     val absoluteAngle = m.absoluteAngle
@@ -353,21 +361,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     totalTurnCurrent += m.turnMotor.current
 
                     if (Robot.isDisabled) {
-                        val rawEncoderAbsoluteAngle = (modules[i] as Module).digitalEncoder.absolutePosition.valueAsDouble.rotations.asDegrees
-                        if (rawEncoderAbsoluteAngle == previousAngles[i]) {
-                            encoderCounterList[i]++
-                        } else {
-                            m.encoderConnected = true
-                            encoderCounterList[i] = 0
-                        }
-                        if (encoderCounterList[i] >= 40) {
-                            //encoder has not sent updates after a certain threshold
-                            m.encoderConnected = false
-//                            println("module #$i absolute encoder has been static for more then 40 ticks")
-                            if (isReal) DriverStation.reportError("module #$i absolute encoder has been static for more then 40 ticks", false)
-                        }
-                        previousAngles[i] = rawEncoderAbsoluteAngle
-
                         m.angleSetpoint = m.angle //idea to make the modules not move before setAngleOffsets
                     }
                     setpointStates[i] = SwerveModuleState(speedSetpoint, angleSetpoint.asRotation2d)
@@ -470,10 +463,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun zeroGyro() {
-        val newHeading = if (isBlueAlliance) 0.0.degrees else 180.0.degrees
-        heading = newHeading
-//        poseEstimator.resetPosition(Rotation2d.fromDegrees(newHeading.asDegrees), modules.map {it.wpiPosition}.toTypedArray(), poseEstimator.estimatedPosition)
-        println("zeroed heading to $heading  alliance red? $isRedAlliance")
+            if (isBlueAlliance) {
+                heading = 0.0.degrees
+            } else {
+                heading = 180.0.degrees
+            }
+            println("zeroed heading to $heading  alliance red? $isRedAlliance")
     }
 
     fun frontSpeakerResetOdom() {
@@ -555,7 +550,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 translation * maxTranslation,
                 turn * maxRotation,
                 useGyro2,
-                aimTarget == AimTarget.NONE  // true for teleop, false when aiming
+                false//aimTarget == AimTarget.NONE  // true for teleop, false when aiming
             )
         }
     }
@@ -578,7 +573,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) {
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.setRawOffset(if (module.encoderConnected) module.absoluteAngle.asDegrees else 0.0)
+            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
             println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position}")
         }
     }
@@ -619,9 +614,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val turnMotor: MotorController,
         override val modulePosition: Vector2L,
         override var angleOffset: Angle,
-        canCoderID: Int,
+        val absoluteEncoder: LoggedCANCoder,
         private val odometerEntry: NetworkTableEntry,
-        override val index: Int
+        override val index: Int,
+//        invertDrive: Boolean,
+//        invertSteer: Boolean,
+//        invertEncoder: Boolean
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983
@@ -633,27 +631,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override val gearRatio: Double
             get() = ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
-        override var wheelDiameter: Length
-            get() = 3.0.inches
-            set(value) {}
 
         override val angle: Angle
             get() = turnMotor.position.degrees
 
-        var encoderConnected: Boolean = true
-
-        val digitalEncoder : CANcoder = CANcoder(canCoderID)
-
         val absoluteAngle: Angle
-            get() = if (encoderConnected) {
-                    (digitalEncoder.absolutePosition.valueAsDouble.rotations - angleOffset).wrap()
-                } else {
-//                    encoder not connected, assume wheel is zeroed
-                    0.0.degrees
-                }
+            get() = (absoluteEncoder.position - angleOffset).wrap()
 
         override val treadWear: Double
-            get() = linearMap(0.0, 19000.0, 1.0, (1.0-kTread), odometer).coerceIn((1.0- kTread), 1.0)
+            get() = linearMap(0.0, 19000.0, 1.0, (1.0 - kTread), odometer).coerceIn((1.0 - kTread), 1.0)
 
         val driveCurrent: Double
             get() = driveMotor.current
@@ -676,6 +662,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var prevSpeed: Double = 0.0
         override var prevAngle: Angle = angle
 
+        var openLoopRamp: Double = 1.0
+            set(value) {
+
+                driveMotor.openLoopRamp(value)
+
+                field = value
+            }
+
         override var odometer: Double
             get() = odometerEntry.getDouble(0.0)
             set(value) {
@@ -691,16 +685,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 field = value.unWrap(angle)
                 turnMotor.setPositionSetpoint(field.asDegrees)
             }
-        override val rawWheelRotation: Angle
-            get() = TODO("Not yet implemented")
 
         override fun setDrivePower(power: Double) {
 //            println("Drive power: ${power.round(6)}")
-            if (isSim) {
-                driveMotor.setPercentOutput(power)
-            } else {
-                driveMotor.setTorqueCurrent((power * maxTorque) / torqueCoeff)
-            }
+            driveMotor.setPercentOutput(power)
         }
 
         override fun setDriveVelocityVoltage(velocity: LinearVelocity) {
@@ -709,6 +697,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         val error: Angle
             get() = turnMotor.closedLoopError.degrees
+
+        override val rawWheelRotation: Angle
+            get() = driveMotor.rawPosition.rotations
+
+        override var wheelDiameter: Length
+            get() = Preferences.getDouble("Wheel $index Diameter", 3.0).inches
+            set(value) { Preferences.setDouble("Wheel $index Diameter", value.asInches) }
 
         init {
             println("Drive.module.init")
@@ -721,12 +716,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 openLoopRamp(0.1)
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
             }
+            absoluteEncoder.setInverted(true)
             turnMotor.config {
                 feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
-                inverted(true)
-                brakeMode()
+                inverted(false)
+                coastMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
-                setRawOffsetConfig(absoluteAngle.asDegrees)
                 currentLimit(5, 10, 1.0)
                 pid {
                     p(6.144 / 1024.0, 2.33)
@@ -734,6 +729,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 configSim(DCMotor.getNeo550(1), 0.0000065)
             }
+            absoluteEncoder.setSimAngleSupplier { angle }
         }
 
         override fun driveWithDistance(angle: Angle, distance: Length) {
@@ -747,10 +743,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         fun setAngleOffset() {
-            val digitalAngle = digitalEncoder.absolutePosition.valueAsDouble.rotations.wrap().asDegrees
-            angleOffset = digitalAngle.degrees
+            val encoder = (absoluteEncoder.position).wrap().asDegrees
+            angleOffset = encoder.degrees
             Preferences.setDouble("Angle Offset $index", angleOffset.asDegrees)
-            println("Angle Offset $index = $digitalAngle")
+            println("Angle Offset $index = $encoder")
         }
     }
     fun setAngleOffsets() {
