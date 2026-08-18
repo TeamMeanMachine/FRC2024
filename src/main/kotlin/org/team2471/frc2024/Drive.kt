@@ -135,7 +135,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
             MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
             Vector2(10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 0",93.1640625).degrees,
+            Preferences.getDouble("Angle Offset 0", -87.8027).degrees,
             LoggedCANCoder(CANCoders.FRONT_LEFT, "FL"),
             odometer0Entry,
             0
@@ -144,7 +144,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
             MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
             Vector2(10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 1",-29.53125).degrees,
+            Preferences.getDouble("Angle Offset 1", 25.5313).degrees,
             LoggedCANCoder(CANCoders.FRONT_RIGHT, "FR"),
             odometer1Entry,
             1
@@ -153,7 +153,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
             MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
             Vector2(-10.75, 10.75).inches,
-            Preferences.getDouble("Angle Offset 2",-90.615234375).degrees,
+            Preferences.getDouble("Angle Offset 2",-30.5859).degrees,
             LoggedCANCoder(CANCoders.BACK_LEFT, "BL"),
             odometer2Entry,
             2
@@ -162,7 +162,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
             MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
             Vector2(-10.75, -10.75).inches,
-            Preferences.getDouble("Angle Offset 3",26.19140625).degrees,
+            Preferences.getDouble("Angle Offset 3",93.3398).degrees,
             LoggedCANCoder(CANCoders.BACK_RIGHT, "BR"),
             odometer3Entry,
             3
