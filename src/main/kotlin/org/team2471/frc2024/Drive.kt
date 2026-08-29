@@ -729,6 +729,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
                 configSim(DCMotor.getNeo550(1), 0.0000065)
             }
+            turnMotor.applyConfig()
             absoluteEncoder.setSimAngleSupplier { angle }
         }
 

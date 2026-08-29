@@ -65,6 +65,7 @@ object Climb: Subsystem("Climb") {
             coastMode()
             configSim(DCMotor.getNeo550(1), 0.000001)
         }
+        climberMotor.applyConfig()
         climberMotor.setRawOffset(MIN_CLIMB_INCHES)
         climbSetpoint = MIN_CLIMB_INCHES.inches
 
