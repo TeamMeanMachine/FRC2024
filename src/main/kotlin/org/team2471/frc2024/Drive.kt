@@ -4,6 +4,8 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.MagnetSensorConfigs
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.signals.SensorDirectionValue
+import com.revrobotics.spark.SparkBase
+import com.revrobotics.spark.SparkLowLevel
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -46,6 +48,11 @@ import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
 import kotlin.math.min
+import com.revrobotics.spark.SparkMax
+import org.team2471.frc.lib.hardware.rev.applyConfiguration
+import org.team2471.frc.lib.hardware.rev.coastMode
+import org.team2471.frc.lib.hardware.rev.p
+import org.team2471.frc.lib.hardware.rev.positionConversionFactor
 
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -133,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val modules: Array<SwerveDrive.Module> = arrayOf(
         Module(
             MotorController(FalconID(Falcons.FRONT_LEFT_DRIVE, "Drive/FLD")),
-            MotorController(SparkMaxID(Sparks.FRONT_LEFT_STEER, "Drive/FLS")),
+            SparkMax(Sparks.FRONT_LEFT_STEER, SparkLowLevel.MotorType.kBrushless),
             Vector2(10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 0", -87.8027).degrees,
             LoggedCANCoder(CANCoders.FRONT_LEFT, "FL"),
@@ -142,7 +149,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         ),
         Module(
             MotorController(FalconID(Falcons.FRONT_RIGHT_DRIVE, "Drive/FRD")),
-            MotorController(SparkMaxID(Sparks.FRONT_RIGHT_STEER, "Drive/FRS")),
+            SparkMax(Sparks.FRONT_RIGHT_STEER, SparkLowLevel.MotorType.kBrushless),
             Vector2(10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 1", 25.5313).degrees,
             LoggedCANCoder(CANCoders.FRONT_RIGHT, "FR"),
@@ -151,7 +158,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         ),
         Module(
             MotorController(FalconID(Falcons.BACK_LEFT_DRIVE, "Drive/BLD")),
-            MotorController(SparkMaxID(Sparks.BACK_LEFT_STEER, "Drive/BLS")),
+            SparkMax(Sparks.BACK_LEFT_STEER, SparkLowLevel.MotorType.kBrushless),
             Vector2(-10.75, 10.75).inches,
             Preferences.getDouble("Angle Offset 2",-30.5859).degrees,
             LoggedCANCoder(CANCoders.BACK_LEFT, "BL"),
@@ -160,7 +167,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         ),
         Module(
             MotorController(FalconID(Falcons.BACK_RIGHT_DRIVE, "Drive/BRD")),
-            MotorController(SparkMaxID(Sparks.BACK_RIGHT_STEER, "Drive/BRS")),
+            SparkMax(Sparks.BACK_RIGHT_STEER, SparkLowLevel.MotorType.kBrushless),
             Vector2(-10.75, -10.75).inches,
             Preferences.getDouble("Angle Offset 3",93.3398).degrees,
             LoggedCANCoder(CANCoders.BACK_RIGHT, "BR"),
@@ -358,7 +365,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     val speedSetpoint = m.power
 
                     totalDriveCurrent += m.driveCurrent
-                    totalTurnCurrent += m.turnMotor.current
+                    totalTurnCurrent += m.turnMotor.outputCurrent
 
                     if (Robot.isDisabled) {
                         m.angleSetpoint = m.angle //idea to make the modules not move before setAngleOffsets
@@ -391,10 +398,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 gyroIsConnectedEntry.setBoolean(gyro.isConnected)
 
                 if (!Robot.inComp) {
-                    turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.current)
-                    turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.current)
-                    turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.current)
-                    turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.current)
+                    turnMotor0CurrentEntry.setDouble((modules[0] as Module).turnMotor.outputCurrent)
+                    turnMotor1CurrentEntry.setDouble((modules[1] as Module).turnMotor.outputCurrent)
+                    turnMotor2CurrentEntry.setDouble((modules[2] as Module).turnMotor.outputCurrent)
+                    turnMotor3CurrentEntry.setDouble((modules[3] as Module).turnMotor.outputCurrent)
 
                     driveMotor0CurrentEntry.setDouble((modules[0] as Module).driveCurrent)
                     driveMotor1CurrentEntry.setDouble((modules[1] as Module).driveCurrent)
@@ -573,8 +580,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun initializeSteeringMotors() {
         for (moduleCount in 0..3) {
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.setRawOffset(module.absoluteAngle.asDegrees)
-            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.position}")
+            module.turnMotor.encoder.setPosition(module.absoluteAngle.asDegrees)
+            println("Module: $moduleCount analogAngle: ${module.absoluteAngle} motor: ${module.turnMotor.encoder.position}")
         }
     }
 
@@ -589,7 +596,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun resetSteeringMotors() {
         for (moduleCount in modules.indices) {
             val module = (modules[moduleCount] as Module)
-            module.turnMotor.restoreFactoryDefaults()
+            module.turnMotor.applyConfiguration {  }
             println("For module $moduleCount, turn motor's factory defaults were restored.")
         }
     }
@@ -611,7 +618,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     class Module(
         val driveMotor: MotorController,
-        val turnMotor: MotorController,
+        val turnMotor: SparkMax,
         override val modulePosition: Vector2L,
         override var angleOffset: Angle,
         val absoluteEncoder: LoggedCANCoder,
@@ -633,7 +640,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = ((if (Robot.isCompBot) 12.0 else 13.0)/22.0 * 15.0/45.0 * 21.0/12.0)
 
         override val angle: Angle
-            get() = turnMotor.position.degrees
+            get() = turnMotor.encoder.position.degrees
 
         val absoluteAngle: Angle
             get() = (absoluteEncoder.position - angleOffset).wrap()
@@ -683,7 +690,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override var angleSetpoint: Angle = 0.0.degrees
             set(value) {
                 field = value.unWrap(angle)
-                turnMotor.setPositionSetpoint(field.asDegrees)
+                turnMotor.closedLoopController.setSetpoint(field.asDegrees, SparkBase.ControlType.kPosition)
             }
 
         override fun setDrivePower(power: Double) {
@@ -696,7 +703,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
 
         val error: Angle
-            get() = turnMotor.closedLoopError.degrees
+            get() = turnMotor.closedLoopController.setpoint.degrees - angle
 
         override val rawWheelRotation: Angle
             get() = driveMotor.rawPosition.rotations
@@ -717,19 +724,19 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 configSim(DCMotor.getKrakenX60Foc(1), 0.005)
             }
             absoluteEncoder.setInverted(true)
-            turnMotor.config {
-                feedbackCoefficient = (360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04)
+            turnMotor.applyConfiguration {
                 inverted(false)
                 coastMode()
                 println("Absolute Angle: ${absoluteAngle.asDegrees}")
-                currentLimit(5, 10, 1.0)
-                pid {
-                    p(6.144 / 1024.0, 2.33)
+                smartCurrentLimit(5, 5)
+
+                positionConversionFactor((360.0 / 1.0 / 12.0 / 5.08) * (360.5 / 274.04))
+
+                p(6.144 / 1024.0)
 //                    d(0.0000025 * 1024.0)
-                }
-                configSim(DCMotor.getNeo550(1), 0.0000065)
+
+//                configSim(DCMotor.getNeo550(1), 0.0000065)
             }
-            turnMotor.applyConfig()
             absoluteEncoder.setSimAngleSupplier { angle }
         }
 

@@ -1,6 +1,7 @@
 package org.team2471.frc2024.testing
 
 
+import com.revrobotics.spark.SparkBase
 import org.team2471.frc2024.Drive
 import org.team2471.frc2024.OI
 import org.team2471.frc.lib.coroutines.delay
@@ -129,16 +130,16 @@ suspend fun Drive.currentTest() = use(this) {
 
         var currModule = modules[0] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
+        currModule.turnMotor.closedLoopController.setSetpoint(0.0, SparkBase.ControlType.kPosition)
         currModule = modules[1] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
+        currModule.turnMotor.closedLoopController.setSetpoint(0.0, SparkBase.ControlType.kPosition)
         currModule = modules[2] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
+        currModule.turnMotor.closedLoopController.setSetpoint(0.0, SparkBase.ControlType.kPosition)
         currModule = modules[3] as Drive.Module
         currModule.driveMotor.setPercentOutput(power)
-        currModule.turnMotor.setPositionSetpoint(0.0)
+        currModule.turnMotor.closedLoopController.setSetpoint(0.0, SparkBase.ControlType.kPosition)
 
         println("current: ${round(currModule.driveCurrent, 2)}  power: $power")
     }
